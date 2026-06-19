@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Church Membership Management",
+  title: "CBT-database",
   description: "Manage church members, ministries, and reports efficiently.",
 };
 

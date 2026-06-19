@@ -1,8 +1,9 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, PieChart, Shield, X, Menu, Church } from "lucide-react"
+import { Home, Users, PieChart, Shield, X, Menu } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
+import Image from "next/image"
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -49,7 +50,7 @@ export function Sidebar({
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-background sm:flex">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
-            <Church className="h-6 w-6" />
+            <Image src="/logo.svg" alt="CBT Logo" width={32} height={32} className="object-contain" />
             <span className="">CBT Directory</span>
           </Link>
         </div>
@@ -69,7 +70,7 @@ export function Sidebar({
       )}>
         <div className="flex h-14 items-center justify-between border-b px-4">
           <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
-            <Church className="h-6 w-6" />
+            <Image src="/logo.svg" alt="CBT Logo" width={32} height={32} className="object-contain" />
             <span>CBT Directory</span>
           </Link>
           <button onClick={() => setIsMobileMenuOpen(false)} className="text-muted-foreground hover:text-primary">

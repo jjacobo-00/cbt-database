@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Church } from "lucide-react"
+import Image from "next/image"
 
 export default function LoginPage({
   searchParams,
@@ -14,12 +14,12 @@ export default function LoginPage({
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
       <Card className="w-full max-w-[400px] shadow-lg">
         <CardHeader className="space-y-1 items-center">
-          <div className="bg-primary/10 p-3 rounded-full mb-4">
-            <Church className="w-8 h-8 text-primary" />
+          <div className="mb-4 flex items-center justify-center p-2">
+            <Image src="/logo.svg" alt="CBT Logo" width={64} height={64} className="object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">Admin Login</CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access the management system.
+            Enter the master password to access the database.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -29,13 +29,10 @@ export default function LoginPage({
                 {searchParams.error}
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="staff@example.com" required />
-            </div>
+            <input type="hidden" name="email" value="admin@cbt-database.com" />
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
+              <Input id="password" name="password" type="password" required autoFocus />
             </div>
             <Button className="w-full" type="submit">
               Sign In
