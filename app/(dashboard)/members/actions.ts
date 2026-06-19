@@ -29,3 +29,31 @@ export async function createMember(formData: FormData) {
   revalidatePath("/members")
   redirect(`/members/${data.id}`)
 }
+
+export async function updateMember(formData: FormData) {
+  const supabase = await createClient()
+
+  const id = formData.get("id") as string
+  const first_name = formData.get("first_name") as string
+  const last_name = formData.get("last_name") as string
+  const contact_number = formData.get("contact_number") as string
+  const city = formData.get("city") as string
+  const occupation = formData.get("occupation") as string
+
+  const { error } = await supabase.from("members").update({
+    first_name,
+    last_name,
+    contact_number,
+    city,
+    occupation
+  }).eq("id", id)
+
+  if (error) {
+    console.error("Error updating member:", error)
+    throw new Error("Failed to update member")
+  }
+
+  revalidatePath("/members")
+  revalidatePath(`/members/${id}`)
+  redirect(`/members/${id}`)
+}
