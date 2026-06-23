@@ -18,7 +18,7 @@ const memberSchema = z.object({
   last_name: z.string().min(1, "Last name is required"),
   birth_date: z.string().min(1, "Date of birth is required"),
   gender: z.string().min(1, "Gender is required"),
-  contact_number: z.string().min(1, "Contact is required"),
+  contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
   address: z.string().min(1, "Address is required"),
   
   // Step 2
@@ -202,38 +202,38 @@ export function MemberForm({ initialData }: { initialData?: any }) {
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
             <h3 className="text-xl font-semibold mb-4 border-b pb-2">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              <div className="grid gap-2.5">
-                <Label>First Name<R/></Label>
-                <Input {...form.register("first_name")} className="h-12 bg-transparent" />
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">First Name<R/></Label>
+                <Input {...form.register("first_name")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
                 {form.formState.errors.first_name && <p className="text-sm text-destructive">{form.formState.errors.first_name.message}</p>}
               </div>
-              <div className="grid gap-2.5">
-                <Label>Last Name<R/></Label>
-                <Input {...form.register("last_name")} className="h-12 bg-transparent" />
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Last Name<R/></Label>
+                <Input {...form.register("last_name")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
                 {form.formState.errors.last_name && <p className="text-sm text-destructive">{form.formState.errors.last_name.message}</p>}
               </div>
-              <div className="grid gap-2.5">
-                <Label>Date of Birth<R/></Label>
-                <Input type="date" {...form.register("birth_date")} className="h-12 bg-transparent" />
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Date of Birth<R/></Label>
+                <Input type="date" {...form.register("birth_date")} className="h-12 bg-transparent [color-scheme:dark] focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
                 {form.formState.errors.birth_date && <p className="text-sm text-destructive">{form.formState.errors.birth_date.message}</p>}
               </div>
-              <div className="grid gap-2.5">
-                <Label>Gender<R/></Label>
-                <select {...form.register("gender")} className="flex h-12 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-base shadow-sm">
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Gender<R/></Label>
+                <select {...form.register("gender")} className="flex h-12 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0">
                   <option value="" className="bg-background">Select...</option>
                   <option value="Male" className="bg-background">Male</option>
                   <option value="Female" className="bg-background">Female</option>
                 </select>
                 {form.formState.errors.gender && <p className="text-sm text-destructive">{form.formState.errors.gender.message}</p>}
               </div>
-              <div className="grid gap-2.5 md:col-span-2">
-                <Label>Address<R/></Label>
-                <Input {...form.register("address")} className="h-12 bg-transparent" />
+              <div className="grid gap-2 md:col-span-2">
+                <Label className="text-[13px] text-muted-foreground">Address<R/></Label>
+                <textarea {...form.register("address")} className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Street, Barangay, City, Province, ZIP Code" />
                 {form.formState.errors.address && <p className="text-sm text-destructive">{form.formState.errors.address.message}</p>}
               </div>
-              <div className="grid gap-2.5 md:col-span-2">
-                <Label>Contact Number<R/></Label>
-                <Input {...form.register("contact_number")} className="h-12 bg-transparent" />
+              <div className="grid gap-2 md:col-span-2">
+                <Label className="text-[13px] text-muted-foreground">Contact Number<R/></Label>
+                <Input {...form.register("contact_number")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="09XX XXX XXXX" />
                 {form.formState.errors.contact_number && <p className="text-sm text-destructive">{form.formState.errors.contact_number.message}</p>}
               </div>
             </div>
