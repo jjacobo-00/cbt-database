@@ -53,7 +53,7 @@ const memberSchema = z.object({
     school_name: z.string().min(1, "School name required"),
     year_started: z.string().min(1, "Year started required"),
     year_graduated: z.string().optional(),
-    is_currently_enrolled: z.boolean().default(false),
+    is_currently_enrolled: z.boolean(),
   })),
   awards_honors: z.string().optional(),
 }).superRefine((data, ctx) => {
