@@ -84,21 +84,37 @@ const STEPS = [
 export function MemberForm({ initialData }: { initialData?: any }) {
   const [step, setStep] = useState(1)
   
-  const form = useForm<z.infer<typeof memberSchema>>({
+  const form = useForm({
     resolver: zodResolver(memberSchema),
     mode: "onChange",
     defaultValues: {
-      first_name: "", last_name: "", birth_date: "", gender: "", contact_number: "", address: "",
-      employment_status: "None", student_school: "", student_year_level: "", student_course: "", company: "", position: "",
-      father_name: "", father_occupation: "", father_contact_number: "",
-      mother_name: "", mother_occupation: "", mother_contact_number: "", parents_civil_status: "",
-      siblings: [],
-      emergency_contact_name: "", emergency_contact_relationship: "", emergency_contact_number: "",
-      highest_educational_attainment: "",
-      education_details: [{ level: "Elementary", school_name: "", year_started: "", year_graduated: "", is_currently_enrolled: false }],
-      awards_honors: "",
-      ministries: [],
-      ...(initialData || {})
+      first_name: initialData?.first_name || "",
+      last_name: initialData?.last_name || "",
+      birth_date: initialData?.birth_date || "",
+      gender: initialData?.gender || "",
+      contact_number: initialData?.contact_number || "",
+      address: initialData?.address || "",
+      employment_status: initialData?.employment_status || "None",
+      student_school: initialData?.student_school || "",
+      student_year_level: initialData?.student_year_level || "",
+      student_course: initialData?.student_course || "",
+      company: initialData?.company || "",
+      position: initialData?.position || "",
+      father_name: initialData?.father_name || "",
+      father_occupation: initialData?.father_occupation || "",
+      father_contact_number: initialData?.father_contact_number || "",
+      mother_name: initialData?.mother_name || "",
+      mother_occupation: initialData?.mother_occupation || "",
+      mother_contact_number: initialData?.mother_contact_number || "",
+      parents_civil_status: initialData?.parents_civil_status || "",
+      siblings: initialData?.siblings || [],
+      emergency_contact_name: initialData?.emergency_contact_name || "",
+      emergency_contact_relationship: initialData?.emergency_contact_relationship || "",
+      emergency_contact_number: initialData?.emergency_contact_number || "",
+      highest_educational_attainment: initialData?.highest_educational_attainment || "",
+      education_details: initialData?.education_details || [{ level: "Elementary", school_name: "", year_started: "", year_graduated: "", is_currently_enrolled: false }],
+      awards_honors: initialData?.awards_honors || "",
+      ministries: initialData?.ministries || [],
     }
   })
 
