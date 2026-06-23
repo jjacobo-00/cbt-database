@@ -23,28 +23,28 @@ const memberSchema = z.object({
   
   // Step 2
   employment_status: z.enum(["Student", "Employed", "None"]),
-  student_school: z.string().optional(),
-  student_year_level: z.string().optional(),
-  student_course: z.string().optional(),
-  company: z.string().optional(),
-  position: z.string().optional(),
+  student_school: z.string().default(""),
+  student_year_level: z.string().default(""),
+  student_course: z.string().default(""),
+  company: z.string().default(""),
+  position: z.string().default(""),
   
   // Step 3
-  father_name: z.string().optional(),
-  father_occupation: z.string().optional(),
-  father_contact_number: z.string().optional(),
-  mother_name: z.string().optional(),
-  mother_occupation: z.string().optional(),
-  mother_contact_number: z.string().optional(),
-  parents_civil_status: z.string().optional(),
+  father_name: z.string().default(""),
+  father_occupation: z.string().default(""),
+  father_contact_number: z.string().default(""),
+  mother_name: z.string().default(""),
+  mother_occupation: z.string().default(""),
+  mother_contact_number: z.string().default(""),
+  parents_civil_status: z.string().default(""),
   siblings: z.array(z.object({
-    name: z.string().optional(),
-    age: z.string().optional(),
-    relationship: z.string().optional(),
+    name: z.string().default(""),
+    age: z.string().default(""),
+    relationship: z.string().default(""),
   })).default([]),
-  emergency_contact_name: z.string().optional(),
-  emergency_contact_relationship: z.string().optional(),
-  emergency_contact_number: z.string().optional(),
+  emergency_contact_name: z.string().default(""),
+  emergency_contact_relationship: z.string().default(""),
+  emergency_contact_number: z.string().default(""),
 
   // Step 4
   highest_educational_attainment: z.string().min(1, "Highest attainment required"),
@@ -52,10 +52,11 @@ const memberSchema = z.object({
     level: z.string().min(1, "Level required"),
     school_name: z.string().min(1, "School name required"),
     year_started: z.string().min(1, "Year started required"),
-    year_graduated: z.string().optional(),
+    year_graduated: z.string().default(""),
     is_currently_enrolled: z.boolean(),
-  })),
-  awards_honors: z.string().optional(),
+  })).default([]),
+  awards_honors: z.string().default(""),
+  ministries: z.array(z.string()).default([]),
 }).superRefine((data, ctx) => {
   // Step 2 Validations
   if (data.employment_status === "Employed") {
@@ -86,7 +87,7 @@ export function MemberForm({ initialData }: { initialData?: any }) {
   const form = useForm<z.infer<typeof memberSchema>>({
     resolver: zodResolver(memberSchema),
     mode: "onChange",
-    defaultValues: initialData || {
+    defaultValues: {
       first_name: "", last_name: "", birth_date: "", gender: "", contact_number: "", address: "",
       employment_status: "None", student_school: "", student_year_level: "", student_course: "", company: "", position: "",
       father_name: "", father_occupation: "", father_contact_number: "",
@@ -96,6 +97,8 @@ export function MemberForm({ initialData }: { initialData?: any }) {
       highest_educational_attainment: "",
       education_details: [{ level: "Elementary", school_name: "", year_started: "", year_graduated: "", is_currently_enrolled: false }],
       awards_honors: "",
+      ministries: [],
+      ...(initialData || {})
     }
   })
 
