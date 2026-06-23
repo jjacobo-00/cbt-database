@@ -41,7 +41,7 @@ const memberSchema = z.object({
     name: z.string().optional(),
     age: z.string().optional(),
     relationship: z.string().optional(),
-  })).optional(),
+  })).default([]),
   emergency_contact_name: z.string().optional(),
   emergency_contact_relationship: z.string().optional(),
   emergency_contact_number: z.string().optional(),
@@ -453,17 +453,17 @@ export function MemberForm({ initialData }: { initialData?: any }) {
             
             <div className="bg-muted/10 border rounded-xl p-6 space-y-4">
               <h4 className="font-bold border-b pb-2">Personal</h4>
-              <p><strong>Name:</strong> {form.getValues("first_name")} {form.getValues("last_name")}</p>
-              <p><strong>Status:</strong> {form.getValues("employment_status")}</p>
+              <p><strong>Name:</strong> {form.getValues("first_name") ?? "—"} {form.getValues("last_name") ?? "—"}</p>
+              <p><strong>Status:</strong> {form.getValues("employment_status") ?? "—"}</p>
               
               <h4 className="font-bold border-b pb-2 mt-6">Family</h4>
-              <p><strong>Father:</strong> {form.getValues("father_name")}</p>
-              <p><strong>Mother:</strong> {form.getValues("mother_name")}</p>
-              <p><strong>Siblings:</strong> {form.getValues("siblings").length} recorded</p>
+              <p><strong>Father:</strong> {form.getValues("father_name") || "—"}</p>
+              <p><strong>Mother:</strong> {form.getValues("mother_name") || "—"}</p>
+              <p><strong>Siblings:</strong> {(form.getValues("siblings") ?? []).length} recorded</p>
               
               <h4 className="font-bold border-b pb-2 mt-6">Education</h4>
-              <p><strong>Highest Attainment:</strong> {form.getValues("highest_educational_attainment")}</p>
-              <p><strong>History:</strong> {form.getValues("education_details").length} schools recorded</p>
+              <p><strong>Highest Attainment:</strong> {form.getValues("highest_educational_attainment") ?? "—"}</p>
+              <p><strong>History:</strong> {(form.getValues("education_details") ?? []).length} schools recorded</p>
             </div>
             <p className="text-sm text-center italic text-muted-foreground">Click Submit to save this member to the database.</p>
           </div>
