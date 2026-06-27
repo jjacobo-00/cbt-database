@@ -102,7 +102,9 @@ const STEPS = [
   { id: 6, title: "Review" },
 ]
 
-export function MemberForm({ initialData }: { initialData?: any }) {
+type Ministry = { id: string; name: string }
+
+export function MemberForm({ initialData, ministries = [] }: { initialData?: any; ministries?: Ministry[] }) {
   const [step, setStep] = useState(1)
   
   const form = useForm({
@@ -214,7 +216,7 @@ export function MemberForm({ initialData }: { initialData?: any }) {
         <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/80">
           <Link href="/members"><ChevronLeft className="h-6 w-6" /></Link>
         </Button>
-        <h2 className="text-2xl font-bold tracking-tight">{initialData ? "Edit Member" : "New Member Wizard"}</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{initialData ? "Edit Member" : "New Member Form"}</h2>
       </div>
 
       {/* Sticky Top Stepper */}
@@ -508,28 +510,47 @@ export function MemberForm({ initialData }: { initialData?: any }) {
 
         {/* STEP 5: MINISTRIES */}
         {step === 5 && (
-          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-10">
+          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
             <h3 className="text-xl font-semibold border-b pb-2">Ministries</h3>
             <p className="text-muted-foreground">Select the ministries you are currently serving in or wish to join.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Placeholder for ministries checklist */}
-              <div className="border rounded-xl p-6 flex items-center gap-4">
-                <input type="checkbox" className="w-5 h-5" id="min_music" />
-                <Label htmlFor="min_music" className="text-lg">Music Ministry</Label>
+            {ministries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 border rounded-xl text-muted-foreground gap-3">
+                <p className="text-sm">No ministries available. Ask an admin to add them via the Ministries page.</p>
               </div>
-              <div className="border rounded-xl p-6 flex items-center gap-4">
-                <input type="checkbox" className="w-5 h-5" id="min_youth" />
-                <Label htmlFor="min_youth" className="text-lg">Youth Ministry</Label>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ministries.map((ministry) => {
+                  const selected: string[] = form.watch("ministries") || []
+                  const isChecked = selected.includes(ministry.id)
+                  return (
+                    <label
+                      key={ministry.id}
+                      htmlFor={`min_${ministry.id}`}
+                      className={cn(
+                        "flex items-center gap-4 rounded-xl border p-5 cursor-pointer transition-all",
+                        isChecked ? "border-primary bg-primary/10" : "hover:border-muted-foreground/50"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        id={`min_${ministry.id}`}
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const current: string[] = form.getValues("ministries") || []
+                          if (e.target.checked) {
+                            form.setValue("ministries", [...current, ministry.id])
+                          } else {
+                            form.setValue("ministries", current.filter((id) => id !== ministry.id))
+                          }
+                        }}
+                        className="w-5 h-5 accent-primary"
+                      />
+                      <span className="text-base font-medium">{ministry.name}</span>
+                    </label>
+                  )
+                })}
               </div>
-              <div className="border rounded-xl p-6 flex items-center gap-4">
-                <input type="checkbox" className="w-5 h-5" id="min_kids" />
-                <Label htmlFor="min_kids" className="text-lg">Kids Ministry</Label>
-              </div>
-              <div className="border rounded-xl p-6 flex items-center gap-4">
-                <input type="checkbox" className="w-5 h-5" id="min_tech" />
-                <Label htmlFor="min_tech" className="text-lg">Tech & Media Ministry</Label>
-              </div>
-            </div>
+            )}
           </div>
         )}
 

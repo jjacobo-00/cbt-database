@@ -1,9 +1,12 @@
 import { MemberForm } from "@/components/members/MemberForm"
+import { getMinistries } from "@/app/(dashboard)/ministries/actions"
 
-export default function NewMemberPage() {
+export default async function NewMemberPage() {
+  const ministries = await getMinistries()
+
   return (
     <div className="max-w-6xl mx-auto py-6">
-      <MemberForm />
+      <MemberForm ministries={ministries} />
     </div>
   )
 }
