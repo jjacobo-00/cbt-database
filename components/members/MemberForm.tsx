@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
-import { Check, ChevronLeft, GraduationCap, Briefcase, UserX, Plus, Trash2 } from "lucide-react"
+import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
 
@@ -233,16 +233,35 @@ export function MemberForm({ initialData }: { initialData?: any }) {
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Date of Birth<R/></Label>
-                <Input type="date" {...form.register("birth_date")} className="h-12 bg-transparent [color-scheme:dark] focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
+                <div className="relative flex items-center">
+                  <Input 
+                    type="date" 
+                    {...form.register("birth_date")} 
+                    className={cn(
+                      "h-12 w-full bg-transparent [color-scheme:dark] focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0",
+                      "[&::-webkit-calendar-picker-indicator]:opacity-50 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-3",
+                      !form.watch("birth_date") && "text-muted-foreground"
+                    )} 
+                  />
+                </div>
                 {form.formState.errors.birth_date && <p className="text-sm text-destructive">{form.formState.errors.birth_date.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Gender<R/></Label>
-                <select {...form.register("gender")} className="flex h-12 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0">
-                  <option value="" className="bg-background">Select...</option>
-                  <option value="Male" className="bg-background">Male</option>
-                  <option value="Female" className="bg-background">Female</option>
-                </select>
+                <div className="relative flex items-center">
+                  <select 
+                    {...form.register("gender")} 
+                    className={cn(
+                      "flex appearance-none h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0",
+                      !form.watch("gender") ? "text-muted-foreground" : "text-foreground"
+                    )}
+                  >
+                    <option value="" className="bg-card text-muted-foreground">Select...</option>
+                    <option value="Male" className="bg-card text-foreground">Male</option>
+                    <option value="Female" className="bg-card text-foreground">Female</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 h-4 w-4 text-muted-foreground opacity-50 pointer-events-none" />
+                </div>
                 {form.formState.errors.gender && <p className="text-sm text-destructive">{form.formState.errors.gender.message}</p>}
               </div>
               <div className="grid gap-2 md:col-span-2">
