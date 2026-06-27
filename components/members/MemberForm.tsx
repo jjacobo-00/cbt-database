@@ -55,11 +55,11 @@ const memberSchema = z.object({
   // Step 4
   highest_educational_attainment: z.string().min(1, "Highest attainment required"),
   education_details: z.array(z.object({
-    level: z.string().min(1, "Level required"),
-    school_name: z.string().min(1, "School name required"),
-    year_started: z.string().min(1, "Year started required"),
+    level: z.string().default(""),
+    school_name: z.string().default(""),
+    year_started: z.string().default(""),
     year_graduated: z.string().default(""),
-    is_currently_enrolled: z.boolean(),
+    is_currently_enrolled: z.boolean().default(false),
   })).default([]),
   awards_honors: z.string().default(""),
   ministries: z.array(z.string()).default([]),
@@ -70,10 +70,25 @@ const memberSchema = z.object({
     if (!data.position) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["position"], message: "Required" })
   }
   
-  // Step 4 Conditional validation
+  // Step 4 Conditional validation — only the highest level row is required
+  const highestLevel = data.highest_educational_attainment
   data.education_details.forEach((edu, idx) => {
-    if (!edu.is_currently_enrolled && !edu.year_graduated) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_graduated"], message: "Year graduated required if not currently enrolled" })
+    const isHighestRow = edu.level === highestLevel
+    if (isHighestRow) {
+      if (!edu.school_name || edu.school_name.trim() === "") {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "school_name"], message: "School name is required for your highest attainment" })
+      }
+      if (!edu.year_started || edu.year_started.trim() === "") {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_started"], message: "Year started is required for your highest attainment" })
+      }
+      if (!edu.is_currently_enrolled && (!edu.year_graduated || edu.year_graduated.trim() === "")) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_graduated"], message: "Year graduated is required (or mark as currently enrolled)" })
+      }
+    } else {
+      // For lower levels, only validate year_graduated if they started filling in the row
+      if (!edu.is_currently_enrolled && edu.year_started && !edu.year_graduated) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_graduated"], message: "Year graduated required if not currently enrolled" })
+      }
     }
   })
 })
@@ -416,7 +431,7 @@ export function MemberForm({ initialData }: { initialData?: any }) {
         {step === 4 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-10">
             <h3 className="text-xl font-semibold border-b pb-2">Education Background</h3>
-            <p className="text-muted-foreground italic text-sm">Fill in your education history based on your highest attainment. All fields are required unless you are currently enrolled.</p>
+            <p className="text-muted-foreground italic text-sm">Only your <strong>highest level</strong> of education is required. Lower levels are optional — fill them in if you have the information.</p>
             
             <div className="grid gap-2.5 max-w-md">
               <Label>Highest Educational Attainment<R/></Label>
@@ -447,18 +462,22 @@ export function MemberForm({ initialData }: { initialData?: any }) {
 
                 return (
                   <div key={field.id} className={cn("grid grid-cols-1 md:grid-cols-12 gap-6 p-6 border rounded-xl bg-card shadow-sm relative animate-in slide-in-from-bottom-4 fade-in border-l-4", borderColor)}>
-                    <div className="col-span-12">
+                    <div className="col-span-12 flex items-center justify-between">
                       <h4 className="font-bold text-lg text-primary">{levelName}</h4>
+                      {isHighest
+                        ? <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/20 text-primary">Required</span>
+                        : <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Optional</span>
+                      }
                     </div>
                     
                     <div className="col-span-12 md:col-span-6 grid gap-2">
-                      <Label>School Name<R/></Label>
+                      <Label>School Name{isHighest && <R/>}</Label>
                       <Input {...form.register(`education_details.${index}.school_name`)} className="bg-transparent" />
                       {form.formState.errors.education_details?.[index]?.school_name && <p className="text-sm text-destructive">{form.formState.errors.education_details[index]?.school_name?.message}</p>}
                     </div>
                     
                     <div className="col-span-12 md:col-span-3 grid gap-2">
-                      <Label>Year Started<R/></Label>
+                      <Label>Year Started{isHighest && <R/>}</Label>
                       <Input type="number" {...form.register(`education_details.${index}.year_started`)} className="bg-transparent" />
                       {form.formState.errors.education_details?.[index]?.year_started && <p className="text-sm text-destructive">{form.formState.errors.education_details[index]?.year_started?.message}</p>}
                     </div>
