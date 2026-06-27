@@ -20,6 +20,12 @@ const memberSchema = z.object({
   gender: z.string().min(1, "Gender is required"),
   contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
   address: z.string().min(1, "Address is required"),
+  // New address components
+  street: z.string().default(""),
+  barangay: z.string().default(""),
+  city: z.string().default(""),
+  province: z.string().default(""),
+  zip_code: z.string().default(""),
   
   // Step 2
   employment_status: z.enum(["Student", "Employed", "None"]),
@@ -94,6 +100,11 @@ export function MemberForm({ initialData }: { initialData?: any }) {
       gender: initialData?.gender || "",
       contact_number: initialData?.contact_number || "",
       address: initialData?.address || "",
+      street: initialData?.street || "",
+      barangay: initialData?.barangay || "",
+      city: initialData?.city || "",
+      province: initialData?.province || "",
+      zip_code: initialData?.zip_code || "",
       employment_status: initialData?.employment_status || "None",
       student_school: initialData?.student_school || "",
       student_year_level: initialData?.student_year_level || "",
@@ -166,7 +177,7 @@ export function MemberForm({ initialData }: { initialData?: any }) {
 
   const validateStep = async () => {
     let fieldsToValidate: any[] = []
-    if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "address"]
+    if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "address", "street", "barangay", "city", "province", "zip_code"]
     if (step === 2) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
     if (step === 3) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
     if (step === 4) fieldsToValidate = ["highest_educational_attainment", "education_details"]
@@ -266,8 +277,28 @@ export function MemberForm({ initialData }: { initialData?: any }) {
               </div>
               <div className="grid gap-2 md:col-span-2">
                 <Label className="text-[13px] text-muted-foreground">Address<R/></Label>
-                <textarea {...form.register("address")} className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Street, Barangay, City, Province, ZIP Code" />
+                <textarea {...form.register("address")} className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Full Address Details" />
                 {form.formState.errors.address && <p className="text-sm text-destructive">{form.formState.errors.address.message}</p>}
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Street</Label>
+                <Input {...form.register("street")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Barangay</Label>
+                <Input {...form.register("barangay")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">City</Label>
+                <Input {...form.register("city")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Province</Label>
+                <Input {...form.register("province")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">ZIP Code</Label>
+                <Input {...form.register("zip_code")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
               </div>
               <div className="grid gap-2 md:col-span-2">
                 <Label className="text-[13px] text-muted-foreground">Contact Number<R/></Label>
