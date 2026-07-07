@@ -27,6 +27,12 @@ const memberSchema = z.object({
   province: z.string().default(""),
   zip_code: z.string().default(""),
   
+  // Baptism info
+  baptism_date: z.string().default(""),
+  baptized_by: z.string().default(""),
+  witness_by: z.string().default(""),
+  place_of_baptism: z.string().default(""),
+  
   // Step 2
   employment_status: z.enum(["Student", "Employed", "None"]),
   student_school: z.string().default(""),
@@ -143,6 +149,10 @@ export function MemberForm({ initialData, ministries = [] }: { initialData?: any
       education_details: initialData?.education_details || [{ level: "Elementary", school_name: "", year_started: "", year_graduated: "", is_currently_enrolled: false }],
       awards_honors: initialData?.awards_honors || "",
       ministries: initialData?.ministries || [],
+      baptism_date: initialData?.baptism_date || "",
+      baptized_by: initialData?.baptized_by || "",
+      witness_by: initialData?.witness_by || "",
+      place_of_baptism: initialData?.place_of_baptism || "",
     }
   })
 
@@ -321,6 +331,34 @@ export function MemberForm({ initialData, ministries = [] }: { initialData?: any
                 <Label className="text-[13px] text-muted-foreground">Contact Number<R/></Label>
                 <Input {...form.register("contact_number")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="09XX XXX XXXX" />
                 {form.formState.errors.contact_number && <p className="text-sm text-destructive">{form.formState.errors.contact_number.message}</p>}
+              </div>
+
+              {/* Baptism details */}
+              <div className="col-span-1 md:col-span-2 mt-4 mb-2">
+                <h4 className="font-semibold text-lg border-b pb-2">Spiritual Background</h4>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Baptism Date</Label>
+                <div className="relative flex items-center">
+                  <Input 
+                    type="date" 
+                    {...form.register("baptism_date")} 
+                    className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" 
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Baptized By</Label>
+                <Input {...form.register("baptized_by")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Name of Pastor" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Witness By</Label>
+                <Input {...form.register("witness_by")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Witnesses" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Place of Baptism</Label>
+                <Input {...form.register("place_of_baptism")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Church Name / Location" />
               </div>
             </div>
           </div>

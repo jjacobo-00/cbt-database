@@ -18,6 +18,12 @@ export async function createMember(payloadStr: string) {
     house_number: data.address, // Mapping address to existing fields or a new one, we'll map to street for simplicity
     street: data.address,
     
+    // Baptism Info
+    baptism_date: data.baptism_date,
+    baptized_by: data.baptized_by,
+    witness_by: data.witness_by,
+    place_of_baptism: data.place_of_baptism,
+    
     // Step 2: Status
     employment_status: data.employment_status,
     student_school: data.student_school,
@@ -67,6 +73,12 @@ export async function updateMember(payloadStr: string) {
     sex: data.gender,
     contact_number: data.contact_number,
     street: data.address,
+    
+    // Baptism Info
+    baptism_date: data.baptism_date,
+    baptized_by: data.baptized_by,
+    witness_by: data.witness_by,
+    place_of_baptism: data.place_of_baptism,
     
     // Step 2: Status
     employment_status: data.employment_status,
