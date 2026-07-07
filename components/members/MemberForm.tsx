@@ -427,6 +427,7 @@ export function MemberForm({ initialData, ministries = [] }: { initialData?: any
                 <select {...form.register("parents_civil_status")} className="flex h-11 w-full rounded-md border border-input bg-background text-foreground px-3 py-1">
                   <option value="" className="bg-background">Select...</option>
                   <option value="Married" className="bg-background">Married</option>
+                  <option value="Live-in" className="bg-background">Live-in</option>
                   <option value="Separated" className="bg-background">Separated</option>
                   <option value="Widowed" className="bg-background">Widowed/Deceased</option>
                   <option value="Single" className="bg-background">Single Parent</option>
