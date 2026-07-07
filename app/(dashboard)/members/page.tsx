@@ -20,6 +20,11 @@ export default async function MembersPage() {
     created_at: members.created_at
   }).from(members).orderBy(asc(members.last_name))
 
+  const formattedMembers = membersList.map(member => ({
+    ...member,
+    created_at: member.created_at?.toISOString() || ""
+  }))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -28,7 +33,7 @@ export default async function MembersPage() {
           <Link href="/members/new"><UserPlus className="mr-2 h-4 w-4" /> Add Member</Link>
         </Button>
       </div>
-      <DataTable columns={columns} data={membersList} />
+      <DataTable columns={columns} data={formattedMembers} />
     </div>
   )
 }
