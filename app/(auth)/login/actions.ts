@@ -2,23 +2,24 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createSession } from "@/lib/session"
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
-
-  const email = formData.get("email") as string
   const password = formData.get("password") as string
+  const masterPassword = process.env.MASTER_PASSWORD || "admin123"
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-
-  if (error) {
+  if (password !== masterPassword) {
     redirect("/login?error=Invalid login credentials")
   }
 
+  await createSession()
+
   revalidatePath("/", "layout")
   redirect("/dashboard")
+}
+
+export async function logout() {
+  const { destroySession } = await import("@/lib/session")
+  await destroySession()
+  redirect("/login")
 }

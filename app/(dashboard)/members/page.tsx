@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { members } from "@/db/schema"
+import { asc } from "drizzle-orm"
 import { columns } from "@/components/members/columns"
 import { DataTable } from "@/components/members/data-table"
 import { Button } from "@/components/ui/button"
@@ -8,16 +10,15 @@ import Link from "next/link"
 export const revalidate = 0 // Disable cache for this page to always show fresh members
 
 export default async function MembersPage() {
-  const supabase = await createClient()
-
-  const { data: members, error } = await supabase
-    .from("members")
-    .select("id, first_name, last_name, contact_number, city, occupation, created_at")
-    .order("last_name", { ascending: true })
-
-  if (error) {
-    console.error("Error fetching members:", error)
-  }
+  const membersList = await db.select({
+    id: members.id,
+    first_name: members.first_name,
+    last_name: members.last_name,
+    contact_number: members.contact_number,
+    city: members.city,
+    occupation: members.occupation,
+    created_at: members.created_at
+  }).from(members).orderBy(asc(members.last_name))
 
   return (
     <div className="space-y-6">
@@ -27,7 +28,7 @@ export default async function MembersPage() {
           <Link href="/members/new"><UserPlus className="mr-2 h-4 w-4" /> Add Member</Link>
         </Button>
       </div>
-      <DataTable columns={columns} data={members || []} />
+      <DataTable columns={columns} data={membersList} />
     </div>
   )
 }

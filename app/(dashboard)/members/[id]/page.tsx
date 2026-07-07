@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { members } from "@/db/schema"
+import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,15 +9,9 @@ import { Printer, Edit, ArrowLeft, User, MapPin, Briefcase } from "lucide-react"
 import Link from "next/link"
 
 export default async function MemberProfilePage({ params }: { params: { id: string } }) {
-  const supabase = await createClient()
+  const [member] = await db.select().from(members).where(eq(members.id, params.id))
 
-  const { data: member, error } = await supabase
-    .from("members")
-    .select("*")
-    .eq("id", params.id)
-    .single()
-
-  if (error || !member) {
+  if (!member) {
     notFound()
   }
 

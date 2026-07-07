@@ -1,23 +1,29 @@
-import { MemberForm } from "@/components/members/MemberForm"
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { members } from "@/db/schema"
+import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
+import { MemberForm } from "@/components/members/MemberForm"
+import { getMinistries } from "@/app/(dashboard)/ministries/actions"
 
 export default async function EditMemberPage({ params }: { params: { id: string } }) {
-  const supabase = await createClient()
+  const [member] = await db.select().from(members).where(eq(members.id, params.id))
 
-  const { data: member, error } = await supabase
-    .from("members")
-    .select("*")
-    .eq("id", params.id)
-    .single()
-
-  if (error || !member) {
+  if (!member) {
     notFound()
+  }
+
+  const ministriesList = await getMinistries()
+
+  // Map database format back to form expected format
+  const mappedMember = {
+    ...member,
+    gender: member.sex,
+    address: member.street || member.house_number || "",
   }
 
   return (
     <div className="max-w-6xl mx-auto py-6">
-      <MemberForm initialData={member} />
+      <MemberForm initialData={mappedMember} ministries={ministriesList} />
     </div>
   )
 }

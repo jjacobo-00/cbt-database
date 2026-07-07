@@ -1,27 +1,30 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { ministries } from "@/db/schema"
+import { eq, asc } from "drizzle-orm"
 
 export async function getMinistries() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("ministries")
-    .select("id, name, created_at")
-    .order("name", { ascending: true })
-
-  if (error) {
+  try {
+    const data = await db.select({
+      id: ministries.id,
+      name: ministries.name,
+      created_at: ministries.created_at,
+    }).from(ministries).orderBy(asc(ministries.name))
+    
+    // We stringify dates so Client Components don't complain about Date objects
+    return data.map(m => ({ ...m, created_at: m.created_at?.toISOString() || "" }))
+  } catch (error) {
     console.error("Error fetching ministries:", error)
     return []
   }
-  return data
 }
 
 export async function createMinistry(name: string) {
-  const supabase = await createClient()
-  const { error } = await supabase.from("ministries").insert({ name: name.trim() })
-
-  if (error) {
+  try {
+    await db.insert(ministries).values({ name: name.trim() })
+  } catch (error: any) {
     if (error.code === "23505") throw new Error("A ministry with that name already exists.")
     console.error("Error creating ministry:", error)
     throw new Error("Failed to create ministry.")
@@ -30,10 +33,9 @@ export async function createMinistry(name: string) {
 }
 
 export async function deleteMinistry(id: string) {
-  const supabase = await createClient()
-  const { error } = await supabase.from("ministries").delete().eq("id", id)
-
-  if (error) {
+  try {
+    await db.delete(ministries).where(eq(ministries.id, id))
+  } catch (error) {
     console.error("Error deleting ministry:", error)
     throw new Error("Failed to delete ministry.")
   }

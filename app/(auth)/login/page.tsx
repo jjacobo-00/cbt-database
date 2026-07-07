@@ -5,11 +5,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string }
+  searchParams: Promise<{ error?: string }>
 }) {
+  const resolvedSearchParams = await searchParams;
+  
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
       <Card className="w-full max-w-[400px] shadow-lg">
@@ -24,9 +26,9 @@ export default function LoginPage({
         </CardHeader>
         <CardContent>
           <form action={login} className="space-y-4">
-            {searchParams?.error && (
+            {resolvedSearchParams?.error && (
               <div className="p-3 rounded bg-destructive/15 text-destructive text-sm font-medium">
-                {searchParams.error}
+                {resolvedSearchParams.error}
               </div>
             )}
             <input type="hidden" name="email" value="admin@cbt-database.com" />

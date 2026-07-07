@@ -1,15 +1,22 @@
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { members } from "@/db/schema"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ExportButton } from "@/components/reports/ExportButton"
 
 export default async function ReportsPage() {
-  const supabase = await createClient()
-
   // Fetch data for reports and export
-  const { data: members } = await supabase.from("members").select("first_name, last_name, sex, city, occupation, contact_number, created_at")
+  const membersData = await db.select({
+    first_name: members.first_name,
+    last_name: members.last_name,
+    sex: members.sex,
+    city: members.city,
+    occupation: members.occupation,
+    contact_number: members.contact_number,
+    created_at: members.created_at
+  }).from(members)
   
   // Aggregate data
-  const cityCount = members?.reduce((acc, curr) => {
+  const cityCount = membersData.reduce((acc, curr) => {
     const city = curr.city || "Unknown"
     acc[city] = (acc[city] || 0) + 1
     return acc
@@ -21,7 +28,7 @@ export default async function ReportsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Reports & Analytics</h1>
-        <ExportButton data={members || []} />
+        <ExportButton data={membersData} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

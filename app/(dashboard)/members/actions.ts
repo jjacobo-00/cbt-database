@@ -2,20 +2,21 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { members } from "@/db/schema"
+import { eq } from "drizzle-orm"
 
 export async function createMember(payloadStr: string) {
-  const supabase = await createClient()
   const data = JSON.parse(payloadStr)
 
-  const { data: member, error } = await supabase.from("members").insert({
+  const [member] = await db.insert(members).values({
     // Step 1: Personal
     first_name: data.first_name,
     last_name: data.last_name,
     birth_date: data.birth_date,
     sex: data.gender,
     contact_number: data.contact_number,
-    house_number: data.address, // Mapping address to existing fields or a new one, we'll map to street for simplicity
+    house_number: data.address,
     street: data.address,
     
     // Baptism Info
@@ -49,10 +50,9 @@ export async function createMember(payloadStr: string) {
     highest_educational_attainment: data.highest_educational_attainment,
     education_details: data.education_details,
     awards_honors: data.awards_honors,
-  }).select().single()
+  }).returning()
 
-  if (error) {
-    console.error("Error creating member:", error)
+  if (!member) {
     throw new Error("Failed to create member")
   }
 
@@ -61,11 +61,10 @@ export async function createMember(payloadStr: string) {
 }
 
 export async function updateMember(payloadStr: string) {
-  const supabase = await createClient()
   const data = JSON.parse(payloadStr)
   const id = data.id
 
-  const { error } = await supabase.from("members").update({
+  await db.update(members).set({
     // Step 1: Personal
     first_name: data.first_name,
     last_name: data.last_name,
@@ -105,12 +104,7 @@ export async function updateMember(payloadStr: string) {
     highest_educational_attainment: data.highest_educational_attainment,
     education_details: data.education_details,
     awards_honors: data.awards_honors,
-  }).eq("id", id)
-
-  if (error) {
-    console.error("Error updating member:", error)
-    throw new Error("Failed to update member")
-  }
+  }).where(eq(members.id, id))
 
   revalidatePath("/members")
   revalidatePath(`/members/${id}`)

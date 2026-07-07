@@ -1,32 +1,45 @@
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { members, ministries } from "@/db/schema"
+import { eq, isNotNull, desc, sql } from "drizzle-orm"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, UserPlus, FileText, Activity } from "lucide-react"
 import Link from "next/link"
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
   // Fetch counts in parallel
   const [
-    { count: totalMembers },
-    { count: totalMales },
-    { count: totalFemales },
-    { count: totalBaptized },
-    { count: totalMinistries },
-    { data: recentMembers }
+    totalMembersResult,
+    totalMalesResult,
+    totalFemalesResult,
+    totalBaptizedResult,
+    totalMinistriesResult,
+    recentMembers
   ] = await Promise.all([
-    supabase.from("members").select("*", { count: "exact", head: true }),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("sex", "Male"),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("sex", "Female"),
-    supabase.from("members").select("*", { count: "exact", head: true }).not("date_baptized", "is", null),
-    supabase.from("ministries").select("*", { count: "exact", head: true }),
-    supabase.from("members").select("id, first_name, last_name, contact_number, city, created_at").order("created_at", { ascending: false }).limit(5)
+    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
+    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(eq(members.sex, "Male")),
+    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(eq(members.sex, "Female")),
+    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(isNotNull(members.date_baptized)),
+    db.select({ count: sql<number>`cast(count(*) as int)` }).from(ministries),
+    db.select({
+      id: members.id,
+      first_name: members.first_name,
+      last_name: members.last_name,
+      contact_number: members.contact_number,
+      city: members.city,
+      created_at: members.created_at
+    }).from(members).orderBy(desc(members.created_at)).limit(5)
   ])
 
-  const malePercentage = totalMembers ? Math.round(((totalMales || 0) / totalMembers) * 100) : 0
-  const femalePercentage = totalMembers ? Math.round(((totalFemales || 0) / totalMembers) * 100) : 0
-  const baptizedPercentage = totalMembers ? Math.round(((totalBaptized || 0) / totalMembers) * 100) : 0
+  const totalMembers = totalMembersResult[0]?.count || 0
+  const totalMales = totalMalesResult[0]?.count || 0
+  const totalFemales = totalFemalesResult[0]?.count || 0
+  const totalBaptized = totalBaptizedResult[0]?.count || 0
+  const totalMinistries = totalMinistriesResult[0]?.count || 0
+
+  const malePercentage = totalMembers ? Math.round((totalMales / totalMembers) * 100) : 0
+  const femalePercentage = totalMembers ? Math.round((totalFemales / totalMembers) * 100) : 0
+  const baptizedPercentage = totalMembers ? Math.round((totalBaptized / totalMembers) * 100) : 0
 
   return (
     <div className="space-y-6">
@@ -49,7 +62,7 @@ export default async function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalMembers || 0}</div>
+            <div className="text-2xl font-bold">{totalMembers}</div>
             <p className="text-xs text-muted-foreground">Registered in the database</p>
           </CardContent>
         </Card>
@@ -75,7 +88,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{baptizedPercentage}%</div>
-            <p className="text-xs text-muted-foreground">{totalBaptized || 0} members baptized</p>
+            <p className="text-xs text-muted-foreground">{totalBaptized} members baptized</p>
           </CardContent>
         </Card>
 
@@ -85,7 +98,7 @@ export default async function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalMinistries || 0}</div>
+            <div className="text-2xl font-bold">{totalMinistries}</div>
             <p className="text-xs text-muted-foreground">Available to join</p>
           </CardContent>
         </Card>
@@ -109,13 +122,13 @@ export default async function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentMembers?.map((member) => (
+                {recentMembers.map((member) => (
                   <tr key={member.id} className="border-b last:border-0 hover:bg-muted/50">
                     <td className="px-4 py-3 font-medium whitespace-nowrap">{member.first_name} {member.last_name}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.contact_number || "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.city || "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {new Date(member.created_at).toLocaleDateString()}
+                      {member.created_at ? new Date(member.created_at).toLocaleDateString() : "-"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="ghost" size="sm" asChild>
@@ -124,7 +137,7 @@ export default async function DashboardPage() {
                     </td>
                   </tr>
                 ))}
-                {!recentMembers?.length && (
+                {!recentMembers.length && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                       No members found.
