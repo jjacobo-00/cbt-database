@@ -1,4 +1,4 @@
-import { pgTable, text, integer, date, timestamp, uuid, jsonb, primaryKey } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, date, timestamp, uuid, jsonb, primaryKey, boolean } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -12,6 +12,7 @@ export const ministries = pgTable('ministries', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull().unique(),
   description: text('description'),
+  for_everyone: boolean('for_everyone').default(false).notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 

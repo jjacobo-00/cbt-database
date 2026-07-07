@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
-import { members } from "@/db/schema"
+import { members, ministries, member_ministries } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 export async function createMember(payloadStr: string) {
@@ -54,6 +54,21 @@ export async function createMember(payloadStr: string) {
 
   if (!member) {
     throw new Error("Failed to create member")
+  }
+
+  // Auto-enroll new member in all "for everyone" ministries
+  const forEveryoneMinistries = await db
+    .select({ id: ministries.id })
+    .from(ministries)
+    .where(eq(ministries.for_everyone, true))
+
+  if (forEveryoneMinistries.length > 0) {
+    await db.insert(member_ministries).values(
+      forEveryoneMinistries.map(m => ({
+        member_id: member.id,
+        ministry_id: m.id,
+      }))
+    ).onConflictDoNothing()
   }
 
   revalidatePath("/members")

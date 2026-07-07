@@ -107,7 +107,7 @@ const STEPS = [
   { id: 6, title: "Review" },
 ]
 
-type Ministry = { id: string; name: string }
+type Ministry = { id: string; name: string; for_everyone?: boolean }
 
 export function MemberForm({ initialData, ministries = [] }: { initialData?: any; ministries?: Ministry[] }) {
   const [step, setStep] = useState(1)
