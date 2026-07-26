@@ -105,7 +105,7 @@ export function OfferingsClient({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Tabs Header */}
       <div className="flex border-b gap-6">
         <button

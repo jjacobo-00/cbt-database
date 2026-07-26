@@ -8,31 +8,45 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
-import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2 } from "lucide-react"
+import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
 
 const memberSchema = z.object({
-  // Step 1
+  // Step 1: Personal
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   birth_date: z.string().min(1, "Date of birth is required"),
   gender: z.string().min(1, "Gender is required"),
   contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
-  // Address components
-  street: z.string().default(""),
-  barangay: z.string().default(""),
-  city: z.string().default(""),
-  province: z.string().default(""),
-  zip_code: z.string().default(""),
   
   // Baptism info
   baptism_date: z.string().default(""),
   baptized_by: z.string().default(""),
   witness_by: z.string().default(""),
   place_of_baptism: z.string().default(""),
+
+  // Step 2: Address
+  house_number: z.string().default(""),
+  unit_number: z.string().default(""),
+  street: z.string().default(""),
+  barangay: z.string().default(""),
+  city: z.string().default(""),
+  province: z.string().default(""),
+  zip_code: z.string().default(""),
+  country: z.string().default("Philippines"),
+
+  is_perm_same_as_current: z.boolean().default(true),
+  perm_house_number: z.string().default(""),
+  perm_unit_number: z.string().default(""),
+  perm_street: z.string().default(""),
+  perm_barangay: z.string().default(""),
+  perm_city: z.string().default(""),
+  perm_province: z.string().default(""),
+  perm_zip_code: z.string().default(""),
+  perm_country: z.string().default("Philippines"),
   
-  // Step 2
+  // Step 3: Status
   employment_status: z.enum(["Student", "Employed", "None"]),
   student_school: z.string().default(""),
   student_year_level: z.string().default(""),
@@ -40,7 +54,7 @@ const memberSchema = z.object({
   company: z.string().default(""),
   position: z.string().default(""),
   
-  // Step 3
+  // Step 4: Family
   father_name: z.string().default(""),
   father_occupation: z.string().default(""),
   father_contact_number: z.string().default(""),
@@ -57,7 +71,7 @@ const memberSchema = z.object({
   emergency_contact_relationship: z.string().default(""),
   emergency_contact_number: z.string().default(""),
 
-  // Step 4
+  // Step 5: Education
   highest_educational_attainment: z.string().min(1, "Highest attainment required"),
   education_details: z.array(z.object({
     level: z.string().default(""),
@@ -70,13 +84,13 @@ const memberSchema = z.object({
   ministries: z.array(z.string()).default([]),
   offerings: z.array(z.string()).default([]),
 }).superRefine((data, ctx) => {
-  // Step 2 Validations
+  // Step 3 Validations
   if (data.employment_status === "Employed") {
     if (!data.company) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["company"], message: "Required" })
     if (!data.position) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["position"], message: "Required" })
   }
   
-  // Step 4 Conditional validation — only the highest level row is required
+  // Step 5 Conditional validation — only the highest level row is required
   const highestLevel = data.highest_educational_attainment
   data.education_details.forEach((edu, idx) => {
     const isHighestRow = edu.level === highestLevel
@@ -91,7 +105,6 @@ const memberSchema = z.object({
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_graduated"], message: "Year graduated is required (or mark as currently enrolled)" })
       }
     } else {
-      // For lower levels, only validate year_graduated if they started filling in the row
       if (!edu.is_currently_enrolled && edu.year_started && !edu.year_graduated) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_graduated"], message: "Year graduated required if not currently enrolled" })
       }
@@ -101,11 +114,12 @@ const memberSchema = z.object({
 
 const STEPS = [
   { id: 1, title: "Personal" },
-  { id: 2, title: "Status" },
-  { id: 3, title: "Family" },
-  { id: 4, title: "Education" },
-  { id: 5, title: "Commitment" },
-  { id: 6, title: "Review" },
+  { id: 2, title: "Address" },
+  { id: 3, title: "Status" },
+  { id: 4, title: "Family" },
+  { id: 5, title: "Education" },
+  { id: 6, title: "Commitment" },
+  { id: 7, title: "Review" },
 ]
 
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
@@ -123,11 +137,28 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       birth_date: initialData?.birth_date || "",
       gender: initialData?.gender || "",
       contact_number: initialData?.contact_number || "",
+      
+      // Current Address
+      house_number: initialData?.house_number || "",
+      unit_number: initialData?.unit_number || "",
       street: initialData?.street || "",
       barangay: initialData?.barangay || "",
       city: initialData?.city || "",
       province: initialData?.province || "",
       zip_code: initialData?.zip_code || "",
+      country: initialData?.country || "Philippines",
+
+      // Permanent Address
+      is_perm_same_as_current: initialData?.is_perm_same_as_current ?? true,
+      perm_house_number: initialData?.perm_house_number || "",
+      perm_unit_number: initialData?.perm_unit_number || "",
+      perm_street: initialData?.perm_street || "",
+      perm_barangay: initialData?.perm_barangay || "",
+      perm_city: initialData?.perm_city || "",
+      perm_province: initialData?.perm_province || "",
+      perm_zip_code: initialData?.perm_zip_code || "",
+      perm_country: initialData?.perm_country || "Philippines",
+
       employment_status: initialData?.employment_status || "None",
       student_school: initialData?.student_school || "",
       student_year_level: initialData?.student_year_level || "",
@@ -157,7 +188,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
   })
 
   const { fields: siblingFields, append: appendSibling, remove: removeSibling } = useFieldArray({ control: form.control, name: "siblings" })
-  const { fields: eduFields, append: appendEdu, remove: removeEdu } = useFieldArray({ control: form.control, name: "education_details" })
+  const { fields: eduFields } = useFieldArray({ control: form.control, name: "education_details" })
 
   const onSubmit = async (values: z.infer<typeof memberSchema>) => {
     const payload = JSON.stringify({ id: initialData?.id, ...values })
@@ -170,9 +201,11 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
 
   const employmentStatus = form.watch("employment_status")
   const highestAttainment = form.watch("highest_educational_attainment")
+  const isPermSame = form.watch("is_perm_same_as_current")
 
   React.useEffect(() => {
     const levelsMap: Record<string, string[]> = {
+      "None": [],
       "Elementary": ["Elementary"],
       "High School": ["Elementary", "High School"],
       "Senior High School": ["Elementary", "High School", "Senior High School"],
@@ -198,16 +231,17 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     })
     
     if (changed || newFields.length !== currentFields.length) {
-      form.setValue("education_details", newFields as any, { shouldValidate: step === 4 })
+      form.setValue("education_details", newFields as any, { shouldValidate: step === 5 })
     }
   }, [highestAttainment, form, step])
 
   const validateStep = async () => {
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number"]
-    if (step === 2) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
-    if (step === 3) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
-    if (step === 4) fieldsToValidate = ["highest_educational_attainment", "education_details"]
+    if (step === 2) fieldsToValidate = [] // Address step
+    if (step === 3) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
+    if (step === 4) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
+    if (step === 5) fieldsToValidate = ["highest_educational_attainment", "education_details"]
     
     if (fieldsToValidate.length > 0) {
       const isValid = await form.trigger(fieldsToValidate as any)
@@ -252,9 +286,8 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
         })}
       </div>
 
-      <form id="member-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
-        
-        {/* STEP 1: PERSONAL */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* STEP 1: PERSONAL INFORMATION */}
         {step === 1 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
             <h3 className="text-xl font-semibold mb-4 border-b pb-2">Personal Information</h3>
@@ -303,26 +336,6 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 {form.formState.errors.gender && <p className="text-sm text-destructive">{form.formState.errors.gender.message}</p>}
               </div>
 
-              <div className="grid gap-2">
-                <Label className="text-[13px] text-muted-foreground">Street</Label>
-                <Input {...form.register("street")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-[13px] text-muted-foreground">Barangay</Label>
-                <Input {...form.register("barangay")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-[13px] text-muted-foreground">City</Label>
-                <Input {...form.register("city")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-[13px] text-muted-foreground">Province</Label>
-                <Input {...form.register("province")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-[13px] text-muted-foreground">ZIP Code</Label>
-                <Input {...form.register("zip_code")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
-              </div>
               <div className="grid gap-2 md:col-span-2">
                 <Label className="text-[13px] text-muted-foreground">Contact Number<R/></Label>
                 <Input {...form.register("contact_number")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="09XX XXX XXXX" />
@@ -336,72 +349,192 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
               
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Baptism Date</Label>
-                <div className="relative flex items-center">
-                  <Input 
-                    type="date" 
-                    {...form.register("baptism_date")} 
-                    className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" 
-                  />
-                </div>
+                <Input type="date" {...form.register("baptism_date")} className="h-12 bg-transparent" />
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Baptized By</Label>
-                <Input {...form.register("baptized_by")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Name of Pastor" />
+                <Input {...form.register("baptized_by")} className="h-12 bg-transparent" placeholder="Name of Pastor" />
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Witness By</Label>
-                <Input {...form.register("witness_by")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Witnesses" />
+                <Input {...form.register("witness_by")} className="h-12 bg-transparent" placeholder="Witnesses" />
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Place of Baptism</Label>
-                <Input {...form.register("place_of_baptism")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Church Name / Location" />
+                <Input {...form.register("place_of_baptism")} className="h-12 bg-transparent" placeholder="Church Name / Location" />
               </div>
             </div>
           </div>
         )}
 
-        {/* STEP 2: STATUS */}
+        {/* STEP 2: ADDRESS (Dedicated Wizard Step) */}
         {step === 2 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
-            <h3 className="text-xl font-semibold mb-6 border-b pb-2">Employment / Student Status</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {[
-                { id: "Student", icon: GraduationCap, label: "Student", desc: "Currently enrolled" },
-                { id: "Employed", icon: Briefcase, label: "Employed", desc: "Currently working" },
-                { id: "None", icon: UserX, label: "None / Unemployed", desc: "Neither studying nor working" },
-              ].map(opt => (
-                <div 
-                  key={opt.id} 
-                  onClick={() => form.setValue("employment_status", opt.id as any, { shouldValidate: true })}
-                  className={cn(
-                    "cursor-pointer border-2 rounded-xl p-6 flex flex-col items-center text-center transition-all hover:border-primary/50",
-                    employmentStatus === opt.id ? "border-primary bg-primary/5 shadow-md" : "border-border"
-                  )}
-                >
-                  <opt.icon className={cn("w-10 h-10 mb-4", employmentStatus === opt.id ? "text-primary" : "text-muted-foreground")} />
-                  <h4 className="font-bold text-lg">{opt.label}</h4>
-                  <p className="text-sm text-muted-foreground mt-2">{opt.desc}</p>
+            <div>
+              <h3 className="text-xl font-semibold mb-2 border-b pb-2 flex items-center gap-2">
+                <Home className="h-5 w-5 text-primary" /> Current Residence Address
+              </h3>
+              <p className="text-xs text-muted-foreground mb-6">Please enter your present living address.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">House / Lot No.</Label>
+                  <Input {...form.register("house_number")} className="h-12 bg-transparent" placeholder="e.g. 123" />
                 </div>
-              ))}
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Unit / Apt No.</Label>
+                  <Input {...form.register("unit_number")} className="h-12 bg-transparent" placeholder="e.g. Unit 4B" />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Street</Label>
+                  <Input {...form.register("street")} className="h-12 bg-transparent" placeholder="e.g. Main Street" />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Barangay</Label>
+                  <Input {...form.register("barangay")} className="h-12 bg-transparent" placeholder="e.g. Brgy. San Jose" />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">City / Municipality</Label>
+                  <Input {...form.register("city")} className="h-12 bg-transparent" placeholder="e.g. Quezon City" />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Province</Label>
+                  <Input {...form.register("province")} className="h-12 bg-transparent" placeholder="e.g. Metro Manila" />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">ZIP Code</Label>
+                  <Input {...form.register("zip_code")} className="h-12 bg-transparent" placeholder="e.g. 1100" />
+                </div>
+                <div className="grid gap-2 md:col-span-2">
+                  <Label className="text-[13px] text-muted-foreground">Country</Label>
+                  <Input {...form.register("country")} className="h-12 bg-transparent" defaultValue="Philippines" />
+                </div>
+              </div>
+            </div>
+
+            {/* Same address Checkbox */}
+            <div className="pt-4 border-t">
+              <label className="flex items-center gap-3 cursor-pointer select-none group w-fit p-4 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isPermSame ? "bg-primary border-primary" : "border-muted-foreground/40 group-hover:border-primary"}`}>
+                  {isPermSame && <Check className="h-3.5 w-3.5 text-primary-foreground" />}
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={isPermSame} 
+                  onChange={e => {
+                    const checked = e.target.checked
+                    form.setValue("is_perm_same_as_current", checked)
+                    if (checked) {
+                      form.setValue("perm_house_number", form.getValues("house_number"))
+                      form.setValue("perm_unit_number", form.getValues("unit_number"))
+                      form.setValue("perm_street", form.getValues("street"))
+                      form.setValue("perm_barangay", form.getValues("barangay"))
+                      form.setValue("perm_city", form.getValues("city"))
+                      form.setValue("perm_province", form.getValues("province"))
+                      form.setValue("perm_zip_code", form.getValues("zip_code"))
+                      form.setValue("perm_country", form.getValues("country"))
+                    }
+                  }} 
+                />
+                <div>
+                  <span className="font-semibold text-sm">Permanent address is the same as Current address</span>
+                  <p className="text-xs text-muted-foreground">Uncheck this if your permanent home address is different</p>
+                </div>
+              </label>
+            </div>
+
+            {/* Permanent Address */}
+            <div className="pt-2">
+              <h3 className="text-xl font-semibold mb-2 border-b pb-2 flex items-center gap-2">
+                <Building className="h-5 w-5 text-primary" /> Permanent Address
+              </h3>
+
+              {isPermSame ? (
+                <div className="p-4 rounded-xl border bg-primary/5 border-primary/20 text-sm text-muted-foreground flex items-center gap-3">
+                  <Check className="h-5 w-5 text-primary shrink-0" />
+                  <span>Permanent address is automatically synchronized with Current Address.</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 animate-in fade-in duration-300">
+                  <div className="grid gap-2">
+                    <Label className="text-[13px] text-muted-foreground">House / Lot No.</Label>
+                    <Input {...form.register("perm_house_number")} className="h-12 bg-transparent" placeholder="e.g. 123" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-[13px] text-muted-foreground">Unit / Apt No.</Label>
+                    <Input {...form.register("perm_unit_number")} className="h-12 bg-transparent" placeholder="e.g. Unit 4B" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-[13px] text-muted-foreground">Street</Label>
+                    <Input {...form.register("perm_street")} className="h-12 bg-transparent" placeholder="e.g. Main Street" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-[13px] text-muted-foreground">Barangay</Label>
+                    <Input {...form.register("perm_barangay")} className="h-12 bg-transparent" placeholder="e.g. Brgy. San Jose" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-[13px] text-muted-foreground">City / Municipality</Label>
+                    <Input {...form.register("perm_city")} className="h-12 bg-transparent" placeholder="e.g. Quezon City" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-[13px] text-muted-foreground">Province</Label>
+                    <Input {...form.register("perm_province")} className="h-12 bg-transparent" placeholder="e.g. Metro Manila" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-[13px] text-muted-foreground">ZIP Code</Label>
+                    <Input {...form.register("perm_zip_code")} className="h-12 bg-transparent" placeholder="e.g. 1100" />
+                  </div>
+                  <div className="grid gap-2 md:col-span-2">
+                    <Label className="text-[13px] text-muted-foreground">Country</Label>
+                    <Input {...form.register("perm_country")} className="h-12 bg-transparent" defaultValue="Philippines" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: EMPLOYMENT & ACADEMIC STATUS */}
+        {step === 3 && (
+          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-6">
+            <h3 className="text-xl font-semibold border-b pb-2">Employment & Status</h3>
+            <div className="grid gap-2 max-w-xs">
+              <Label className="text-[13px] text-muted-foreground">Status<R/></Label>
+              <select {...form.register("employment_status")} className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-1">
+                <option value="None">None / Unemployed</option>
+                <option value="Student">Student</option>
+                <option value="Employed">Employed</option>
+              </select>
             </div>
 
             {employmentStatus === "Student" && (
-              <p className="text-muted-foreground italic text-sm mt-4 text-center animate-in fade-in slide-in-from-bottom-2">
-                Your school details will be collected on the Education page.
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 rounded-xl border bg-muted/20">
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">School / University</Label>
+                  <Input {...form.register("student_school")} className="h-12 bg-transparent" />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Year Level</Label>
+                  <Input {...form.register("student_year_level")} className="h-12 bg-transparent" placeholder="e.g. 3rd Year" />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Course / Track</Label>
+                  <Input {...form.register("student_course")} className="h-12 bg-transparent" placeholder="e.g. BS IT" />
+                </div>
+              </div>
             )}
 
             {employmentStatus === "Employed" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 animate-in fade-in slide-in-from-bottom-2">
-                <div className="grid gap-2.5">
-                  <Label>Company Name<R/></Label>
-                  <Input {...form.register("company")} className="h-12" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl border bg-muted/20">
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Company / Organization<R/></Label>
+                  <Input {...form.register("company")} className="h-12 bg-transparent" />
                   {form.formState.errors.company && <p className="text-sm text-destructive">{form.formState.errors.company.message}</p>}
                 </div>
-                <div className="grid gap-2.5">
-                  <Label>Position / Role<R/></Label>
-                  <Input {...form.register("position")} className="h-12" />
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground">Position / Title<R/></Label>
+                  <Input {...form.register("position")} className="h-12 bg-transparent" />
                   {form.formState.errors.position && <p className="text-sm text-destructive">{form.formState.errors.position.message}</p>}
                 </div>
               </div>
@@ -409,71 +542,71 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
           </div>
         )}
 
-        {/* STEP 3: FAMILY */}
-        {step === 3 && (
-          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-10">
-            <h3 className="text-xl font-semibold border-b pb-2">Family Information</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 p-6 border rounded-xl bg-muted/10">
-              <h4 className="col-span-full font-bold text-primary">Parents' Details (Optional)</h4>
-              <div className="grid gap-2.5"><Label>Father's Name</Label><Input {...form.register("father_name")} className="h-11" /></div>
-              <div className="grid gap-2.5"><Label>Father's Occupation</Label><Input {...form.register("father_occupation")} className="h-11" /></div>
-              <div className="grid gap-2.5"><Label>Father's Contact</Label><Input {...form.register("father_contact_number")} className="h-11" /></div>
-              
-              <div className="grid gap-2.5"><Label>Mother's Name</Label><Input {...form.register("mother_name")} className="h-11" /></div>
-              <div className="grid gap-2.5"><Label>Mother's Occupation</Label><Input {...form.register("mother_occupation")} className="h-11" /></div>
-              <div className="grid gap-2.5"><Label>Mother's Contact</Label><Input {...form.register("mother_contact_number")} className="h-11" /></div>
-              
-              <div className="grid gap-2.5 col-span-full md:col-span-1">
-                <Label>Parents' Civil Status</Label>
-                <select {...form.register("parents_civil_status")} className="flex h-11 w-full rounded-md border border-input bg-background text-foreground px-3 py-1">
-                  <option value="" className="bg-background">Select...</option>
-                  <option value="Married" className="bg-background">Married</option>
-                  <option value="Live-in" className="bg-background">Live-in</option>
-                  <option value="Separated" className="bg-background">Separated</option>
-                  <option value="Widowed" className="bg-background">Widowed/Deceased</option>
-                  <option value="Single" className="bg-background">Single Parent</option>
-                </select>
+        {/* STEP 4: FAMILY & EMERGENCY CONTACT */}
+        {step === 4 && (
+          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
+            <h3 className="text-xl font-semibold border-b pb-2">Family & Emergency Contact</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 rounded-xl border space-y-4">
+                <h4 className="font-semibold text-primary">Father's Info</h4>
+                <Input {...form.register("father_name")} placeholder="Father's Name" className="h-11 bg-transparent" />
+                <Input {...form.register("father_occupation")} placeholder="Father's Occupation" className="h-11 bg-transparent" />
+                <Input {...form.register("father_contact_number")} placeholder="Father's Contact Number" className="h-11 bg-transparent" />
+              </div>
+              <div className="p-4 rounded-xl border space-y-4">
+                <h4 className="font-semibold text-primary">Mother's Info</h4>
+                <Input {...form.register("mother_name")} placeholder="Mother's Name" className="h-11 bg-transparent" />
+                <Input {...form.register("mother_occupation")} placeholder="Mother's Occupation" className="h-11 bg-transparent" />
+                <Input {...form.register("mother_contact_number")} placeholder="Mother's Contact Number" className="h-11 bg-transparent" />
               </div>
             </div>
 
-            <div className="p-6 border rounded-xl bg-muted/10">
-              <div className="flex justify-between items-center mb-6">
-                <h4 className="font-bold text-primary">Siblings ({siblingFields.length})</h4>
-                <Button type="button" variant="outline" size="sm" onClick={() => appendSibling({ name: "", age: "", relationship: "" })}>
-                  <Plus className="w-4 h-4 mr-2" /> Add Sibling
+            <div className="grid gap-2 max-w-sm">
+              <Label className="text-[13px] text-muted-foreground">Parents' Civil Status</Label>
+              <Input {...form.register("parents_civil_status")} className="h-11 bg-transparent" placeholder="e.g. Married, Separated, Single" />
+            </div>
+
+            {/* Siblings */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h4 className="font-semibold text-lg">Siblings</h4>
+                <Button type="button" variant="outline" size="sm" onClick={() => appendSibling({ name: "", age: "", relationship: "Sibling" })} className="gap-1.5">
+                  <Plus className="h-4 w-4" /> Add Sibling
                 </Button>
               </div>
               {siblingFields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 items-end">
-                  <div className="grid gap-2"><Label>Name</Label><Input {...form.register(`siblings.${index}.name`)} /></div>
-                  <div className="grid gap-2"><Label>Age</Label><Input type="number" {...form.register(`siblings.${index}.age`)} /></div>
-                  <div className="grid gap-2"><Label>Relationship</Label><Input {...form.register(`siblings.${index}.relationship`)} placeholder="Brother/Sister" /></div>
-                  <Button type="button" variant="destructive" size="icon" onClick={() => removeSibling(index)}><Trash2 className="w-4 h-4" /></Button>
+                <div key={field.id} className="flex gap-3 items-center">
+                  <Input {...form.register(`siblings.${index}.name`)} placeholder="Sibling Name" className="h-11 bg-transparent" />
+                  <Input {...form.register(`siblings.${index}.age`)} placeholder="Age" className="h-11 w-24 bg-transparent" />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeSibling(index)} className="text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
-              {siblingFields.length === 0 && <p className="text-sm text-muted-foreground italic">No siblings added.</p>}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 p-6 border rounded-xl bg-muted/10">
-              <h4 className="col-span-full font-bold text-primary">Emergency Contact (Optional)</h4>
-              <div className="grid gap-2.5"><Label>Contact Name</Label><Input {...form.register("emergency_contact_name")} className="h-11" /></div>
-              <div className="grid gap-2.5"><Label>Relationship</Label><Input {...form.register("emergency_contact_relationship")} className="h-11" /></div>
-              <div className="grid gap-2.5"><Label>Contact Number</Label><Input {...form.register("emergency_contact_number")} className="h-11" /></div>
+            {/* Emergency Contact */}
+            <div className="p-4 rounded-xl border bg-amber-500/5 border-amber-500/20 space-y-4">
+              <h4 className="font-semibold text-amber-600 dark:text-amber-400">Emergency Contact Person</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input {...form.register("emergency_contact_name")} placeholder="Name" className="h-11 bg-transparent" />
+                <Input {...form.register("emergency_contact_relationship")} placeholder="Relationship" className="h-11 bg-transparent" />
+                <Input {...form.register("emergency_contact_number")} placeholder="Mobile Number" className="h-11 bg-transparent" />
+              </div>
             </div>
           </div>
         )}
 
-        {/* STEP 4: EDUCATION */}
-        {step === 4 && (
-          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-10">
+        {/* STEP 5: EDUCATION BACKGROUND */}
+        {step === 5 && (
+          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
             <h3 className="text-xl font-semibold border-b pb-2">Education Background</h3>
-            <p className="text-muted-foreground italic text-sm">Only your <strong>highest level</strong> of education is required. Lower levels are optional — fill them in if you have the information.</p>
             
             <div className="grid gap-2.5 max-w-md">
               <Label>Highest Educational Attainment<R/></Label>
               <select {...form.register("highest_educational_attainment")} className="flex h-12 w-full rounded-md border border-input bg-background text-foreground px-3 py-1">
                 <option value="" className="bg-background">Select...</option>
+                <option value="None" className="bg-background">None</option>
                 <option value="Elementary" className="bg-background">Elementary</option>
                 <option value="High School" className="bg-background">High School</option>
                 <option value="Senior High School" className="bg-background">Senior High School</option>
@@ -488,250 +621,120 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 const isEnrolled = form.watch(`education_details.${index}.is_currently_enrolled`)
                 const levelName = form.getValues(`education_details.${index}.level`)
                 const isHighest = levelName === highestAttainment
-                
-                let borderColor = "border-l-gray-500"
-                if (levelName === "Elementary") borderColor = "border-l-green-500"
-                if (levelName === "High School") borderColor = "border-l-blue-500"
-                if (levelName === "Senior High School") borderColor = "border-l-indigo-500"
-                if (levelName === "Vocational") borderColor = "border-l-yellow-500"
-                if (levelName === "College") borderColor = "border-l-purple-500"
-                if (levelName === "Postgraduate") borderColor = "border-l-rose-500"
 
                 return (
-                  <div key={field.id} className={cn("grid grid-cols-1 md:grid-cols-12 gap-6 p-6 border rounded-xl bg-card shadow-sm relative animate-in slide-in-from-bottom-4 fade-in border-l-4", borderColor)}>
-                    <div className="col-span-12 flex items-center justify-between">
-                      <h4 className="font-bold text-lg text-primary">{levelName}</h4>
-                      {isHighest
-                        ? <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/20 text-primary">Required</span>
-                        : <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Optional</span>
-                      }
+                  <div key={field.id} className="p-5 rounded-xl border bg-card space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-lg">{levelName}</span>
+                      {isHighest && <span className="text-xs bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-medium">Highest Level</span>}
                     </div>
-                    
-                    <div className="col-span-12 md:col-span-6 grid gap-2">
-                      <Label>School Name{isHighest && <R/>}</Label>
-                      <Input {...form.register(`education_details.${index}.school_name`)} className="bg-transparent" />
-                      {form.formState.errors.education_details?.[index]?.school_name && <p className="text-sm text-destructive">{form.formState.errors.education_details[index]?.school_name?.message}</p>}
-                    </div>
-                    
-                    <div className="col-span-12 md:col-span-3 grid gap-2">
-                      <Label>Year Started{isHighest && <R/>}</Label>
-                      <Input type="number" {...form.register(`education_details.${index}.year_started`)} className="bg-transparent" />
-                      {form.formState.errors.education_details?.[index]?.year_started && <p className="text-sm text-destructive">{form.formState.errors.education_details[index]?.year_started?.message}</p>}
-                    </div>
-                    
-                    <div className="col-span-12 md:col-span-3 grid gap-2">
-                      <Label>Year Graduated {!isEnrolled && <R/>}</Label>
-                      <Input type={isEnrolled ? "text" : "number"} value={isEnrolled ? "Present" : undefined} disabled={isEnrolled} {...(isEnrolled ? {} : form.register(`education_details.${index}.year_graduated`))} className={cn("bg-transparent", isEnrolled && "font-bold text-primary")} />
-                      {form.formState.errors.education_details?.[index]?.year_graduated && <p className="text-sm text-destructive">{form.formState.errors.education_details[index]?.year_graduated?.message}</p>}
-                    </div>
-                    
-                    {isHighest && (
-                      <div className="col-span-12 flex items-center gap-2 mt-2">
-                        <input type="checkbox" id={`enroll_${index}`} {...form.register(`education_details.${index}.is_currently_enrolled`)} className="w-4 h-4 accent-primary" />
-                        <Label htmlFor={`enroll_${index}`} className="cursor-pointer">I am currently enrolled here</Label>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid gap-2 md:col-span-3">
+                        <Label className="text-xs text-muted-foreground">School Name</Label>
+                        <Input {...form.register(`education_details.${index}.school_name`)} className="h-11 bg-transparent" />
                       </div>
-                    )}
+                      <div className="grid gap-2">
+                        <Label className="text-xs text-muted-foreground">Year Started</Label>
+                        <Input {...form.register(`education_details.${index}.year_started`)} placeholder="e.g. 2015" className="h-11 bg-transparent" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label className="text-xs text-muted-foreground">Year Graduated</Label>
+                        <Input {...form.register(`education_details.${index}.year_graduated`)} disabled={isEnrolled} placeholder={isEnrolled ? "Enrolled" : "e.g. 2019"} className="h-11 bg-transparent" />
+                      </div>
+                      <div className="flex items-center gap-2 pt-6">
+                        <input type="checkbox" id={`enrolled-${index}`} {...form.register(`education_details.${index}.is_currently_enrolled`)} className="rounded" />
+                        <label htmlFor={`enrolled-${index}`} className="text-xs cursor-pointer select-none">Currently Enrolled</label>
+                      </div>
+                    </div>
                   </div>
                 )
               })}
             </div>
-
-            <div className="grid gap-2.5">
-              <Label>Awards or Honors Received (Optional)</Label>
-              <textarea {...form.register("awards_honors")} className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm" placeholder="List any honors or awards..." />
-            </div>
           </div>
         )}
 
-        {/* STEP 5: MINISTRIES */}
-        {step === 5 && (
-          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
-            <h3 className="text-xl font-semibold border-b pb-2">Ministries</h3>
-            <p className="text-muted-foreground">Select the ministries you are currently serving in or wish to join.</p>
-            {ministries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 border rounded-xl text-muted-foreground gap-3">
-                <p className="text-sm">No ministries available. Ask an admin to add them via the Ministries page.</p>
-              </div>
-            ) : (() => {
-              const parents = ministries.filter(m => !m.parent_id)
-              const getChildren = (pid: string) => ministries.filter(m => m.parent_id === pid)
-              const selected: string[] = form.watch("ministries") || []
-
-              const toggle = (id: string) => {
-                const current: string[] = form.getValues("ministries") || []
-                if (current.includes(id)) {
-                  form.setValue("ministries", current.filter(x => x !== id))
-                } else {
-                  form.setValue("ministries", [...current, id])
-                }
-              }
-
-              return (
-                <div className="space-y-4">
-                  {parents.map(parent => {
-                    const children = getChildren(parent.id)
-                    const hasChildren = children.length > 0
-
-                    if (!hasChildren) {
-                      /* Standalone ministry — normal checkbox card */
-                      const isChecked = selected.includes(parent.id)
-                      return (
-                        <label
-                          key={parent.id}
-                          htmlFor={`min_${parent.id}`}
-                          className={cn(
-                            "flex items-center gap-4 rounded-xl border p-5 cursor-pointer transition-all",
-                            isChecked ? "border-primary bg-primary/10" : "hover:border-muted-foreground/50"
-                          )}
-                        >
-                          <input
-                            type="checkbox"
-                            id={`min_${parent.id}`}
-                            checked={isChecked}
-                            onChange={() => toggle(parent.id)}
-                            className="w-5 h-5 accent-primary"
-                          />
-                          <span className="text-base font-medium">{parent.name}</span>
-                        </label>
-                      )
-                    }
-
-                    /* Ministry with children — parent is a section header, only children are selectable */
-                    const checkedCount = children.filter(c => selected.includes(c.id)).length
-                    return (
-                      <div key={parent.id} className="rounded-xl border overflow-hidden">
-                        <div className="flex items-center justify-between px-5 py-4 bg-muted/20">
-                          <span className="text-base font-semibold">{parent.name}</span>
-                          {checkedCount > 0 && (
-                            <span className="text-xs font-medium bg-primary/15 text-primary px-2 py-0.5 rounded-full">
-                              {checkedCount} selected
-                            </span>
-                          )}
-                        </div>
-                        <div className="border-t divide-y">
-                          {children.map(child => {
-                            const isChildChecked = selected.includes(child.id)
-                            return (
-                              <label
-                                key={child.id}
-                                htmlFor={`min_${child.id}`}
-                                className={cn(
-                                  "flex items-center gap-4 pl-8 pr-5 py-4 cursor-pointer transition-all",
-                                  isChildChecked ? "bg-primary/5" : "hover:bg-muted/30"
-                                )}
-                              >
-                                <input
-                                  type="checkbox"
-                                  id={`min_${child.id}`}
-                                  checked={isChildChecked}
-                                  onChange={() => toggle(child.id)}
-                                  className="w-4 h-4 accent-primary"
-                                />
-                                <span className="text-sm font-medium">{child.name}</span>
-                              </label>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })()}
-
-            {/* Offerings Section */}
-            {offeringCategories.length > 0 && (
-              <div className="space-y-4 pt-4">
-                <h3 className="text-xl font-semibold border-b pb-2">Offerings</h3>
-                <p className="text-muted-foreground">Select the offerings you wish to commit to for {new Date().getFullYear()}.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {offeringCategories.map(off => {
-                    const selected: string[] = form.watch("offerings") || []
-                    const isChecked = selected.includes(off.id)
-                    return (
-                      <label
-                        key={off.id}
-                        htmlFor={`off_${off.id}`}
-                        className={cn(
-                          "flex items-center gap-4 rounded-xl border p-4 cursor-pointer transition-all",
-                          isChecked ? "border-amber-500/50 bg-amber-500/10" : "hover:border-muted-foreground/50"
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          id={`off_${off.id}`}
-                          checked={isChecked}
-                          onChange={() => {
-                            const current: string[] = form.getValues("offerings") || []
-                            if (current.includes(off.id)) {
-                              form.setValue("offerings", current.filter(x => x !== off.id))
-                            } else {
-                              form.setValue("offerings", [...current, off.id])
-                            }
-                          }}
-                          className="w-4 h-4 accent-amber-500"
-                        />
-                        <span className="text-sm font-medium">{off.name}</span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* STEP 6: REVIEW */}
+        {/* STEP 6: COMMITMENT & MINISTRIES */}
         {step === 6 && (
-          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-10">
-            <h3 className="text-xl font-semibold border-b pb-2 text-primary">Summary & Review</h3>
-            <p className="text-muted-foreground">Please review your information before final submission.</p>
+          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
+            <h3 className="text-xl font-semibold border-b pb-2">Ministries & Pledges</h3>
             
-            <div className="bg-muted/10 border rounded-xl p-6 space-y-4">
-              <h4 className="font-bold border-b pb-2">Personal</h4>
-              <p><strong>Name:</strong> {form.getValues("first_name") ?? "—"} {form.getValues("last_name") ?? "—"}</p>
-              <p><strong>Status:</strong> {form.getValues("employment_status") ?? "—"}</p>
-              
-              <h4 className="font-bold border-b pb-2 mt-6">Family</h4>
-              <p><strong>Father:</strong> {form.getValues("father_name") || "—"}</p>
-              <p><strong>Mother:</strong> {form.getValues("mother_name") || "—"}</p>
-              <p><strong>Siblings:</strong> {(form.getValues("siblings") ?? []).length} recorded</p>
-              
-              <h4 className="font-bold border-b pb-2 mt-6">Education</h4>
-              <p><strong>Highest Attainment:</strong> {form.getValues("highest_educational_attainment") ?? "—"}</p>
-              <p><strong>History:</strong> {(form.getValues("education_details") ?? []).length} schools recorded</p>
+            <div className="space-y-4">
+              <h4 className="font-semibold text-base">Select Ministries</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {ministries.map((m) => {
+                  const currentMins: string[] = form.watch("ministries") || []
+                  const isSelected = currentMins.includes(m.id)
+                  return (
+                    <div 
+                      key={m.id} 
+                      onClick={() => {
+                        if (isSelected) {
+                          form.setValue("ministries", currentMins.filter(id => id !== m.id))
+                        } else {
+                          form.setValue("ministries", [...currentMins, m.id])
+                        }
+                      }}
+                      className={cn(
+                        "p-4 rounded-xl border cursor-pointer select-none transition-all flex items-center justify-between",
+                        isSelected ? "border-primary bg-primary/5 font-medium" : "hover:border-primary/50"
+                      )}
+                    >
+                      <span>{m.name}</span>
+                      <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", isSelected && "bg-primary text-primary-foreground border-primary")}>
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-            <p className="text-sm text-center italic text-muted-foreground">Click Submit to save this member to the database.</p>
           </div>
         )}
 
-        {/* Footer Actions */}
-        <div className="flex justify-between items-center pt-8 border-t border-border mt-12">
+        {/* STEP 7: REVIEW */}
+        {step === 7 && (
+          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-6">
+            <h3 className="text-xl font-semibold border-b pb-2">Review Summary</h3>
+            <div className="p-6 rounded-xl border bg-muted/20 space-y-4 text-sm">
+              <p><strong>Name:</strong> {form.watch("first_name")} {form.watch("last_name")}</p>
+              <p><strong>Gender:</strong> {form.watch("gender")}</p>
+              <p><strong>Birth Date:</strong> {form.watch("birth_date")}</p>
+              <p><strong>Contact Number:</strong> {form.watch("contact_number")}</p>
+              <p><strong>Current Address:</strong> {form.watch("house_number")} {form.watch("street")} {form.watch("barangay")} {form.watch("city")} {form.watch("province")}</p>
+              <p><strong>Permanent Address:</strong> {isPermSame ? "Same as Current Address" : `${form.watch("perm_house_number")} ${form.watch("perm_street")} ${form.watch("perm_barangay")} ${form.watch("perm_city")} ${form.watch("perm_province")}`}</p>
+              <p><strong>Employment Status:</strong> {form.watch("employment_status")}</p>
+              <p><strong>Highest Education:</strong> {form.watch("highest_educational_attainment")}</p>
+            </div>
+          </div>
+        )}
+
+        {/* BOTTOM NAVIGATION BUTTONS */}
+        <div className="flex items-center justify-between pt-6 border-t mt-8">
           <Button 
-            type="button"
+            type="button" 
             variant="outline" 
-            className="h-12 px-8 rounded-md font-medium"
             onClick={() => setStep(s => Math.max(1, s - 1))}
             disabled={step === 1}
+            className="h-11 px-6"
           >
             Back
           </Button>
-          
+
           {step < STEPS.length ? (
             <Button 
               type="button" 
-              className="h-12 px-10 bg-primary text-primary-foreground rounded-md font-medium" 
               onClick={validateStep}
+              className="h-11 px-6 gap-2"
             >
-              Next
+              Next Step
             </Button>
           ) : (
             <Button 
               type="submit" 
-              form="member-form" 
-              className="h-12 px-10 bg-green-600 hover:bg-green-700 text-white rounded-md font-bold text-lg shadow-lg"
+              className="h-11 px-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
             >
-              Submit Form
+              <Check className="h-4 w-4" /> Save Member Record
             </Button>
           )}
         </div>

@@ -28,7 +28,7 @@ export const members = pgTable('members', {
   birth_place: text('birth_place'),
   contact_number: text('contact_number'),
   
-  // Address
+  // Address - Current
   house_number: text('house_number'),
   unit_number: text('unit_number'),
   street: text('street'),
@@ -37,6 +37,17 @@ export const members = pgTable('members', {
   province: text('province'),
   zip_code: text('zip_code'),
   country: text('country').default('Philippines'),
+
+  // Address - Permanent
+  is_perm_same_as_current: boolean('is_perm_same_as_current').default(true),
+  perm_house_number: text('perm_house_number'),
+  perm_unit_number: text('perm_unit_number'),
+  perm_street: text('perm_street'),
+  perm_barangay: text('perm_barangay'),
+  perm_city: text('perm_city'),
+  perm_province: text('perm_province'),
+  perm_zip_code: text('perm_zip_code'),
+  perm_country: text('perm_country').default('Philippines'),
   
   // Work / Student
   occupation: text('occupation'),

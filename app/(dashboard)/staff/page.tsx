@@ -3,7 +3,7 @@ import { Shield } from "lucide-react"
 
 export default async function StaffPage() {
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
         <div className="bg-primary/10 p-3 rounded-full">
           <Shield className="h-8 w-8 text-primary" />

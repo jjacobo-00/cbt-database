@@ -16,8 +16,25 @@ export async function createMember(payloadStr: string) {
     birth_date: data.birth_date,
     sex: data.gender,
     contact_number: data.contact_number,
-    house_number: data.address,
-    street: data.address,
+    house_number: data.house_number || "",
+    unit_number: data.unit_number || "",
+    street: data.street || data.address || "",
+    barangay: data.barangay || "",
+    city: data.city || "",
+    province: data.province || "",
+    zip_code: data.zip_code || "",
+    country: data.country || "Philippines",
+    
+    // Permanent Address
+    is_perm_same_as_current: data.is_perm_same_as_current ?? true,
+    perm_house_number: data.is_perm_same_as_current ? (data.house_number || "") : (data.perm_house_number || ""),
+    perm_unit_number: data.is_perm_same_as_current ? (data.unit_number || "") : (data.perm_unit_number || ""),
+    perm_street: data.is_perm_same_as_current ? (data.street || data.address || "") : (data.perm_street || ""),
+    perm_barangay: data.is_perm_same_as_current ? (data.barangay || "") : (data.perm_barangay || ""),
+    perm_city: data.is_perm_same_as_current ? (data.city || "") : (data.perm_city || ""),
+    perm_province: data.is_perm_same_as_current ? (data.province || "") : (data.perm_province || ""),
+    perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
+    perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
     
     // Baptism Info
     baptism_date: data.baptism_date,
@@ -112,7 +129,25 @@ export async function updateMember(payloadStr: string) {
     birth_date: data.birth_date,
     sex: data.gender,
     contact_number: data.contact_number,
-    street: data.address,
+    house_number: data.house_number || "",
+    unit_number: data.unit_number || "",
+    street: data.street || data.address || "",
+    barangay: data.barangay || "",
+    city: data.city || "",
+    province: data.province || "",
+    zip_code: data.zip_code || "",
+    country: data.country || "Philippines",
+    
+    // Permanent Address
+    is_perm_same_as_current: data.is_perm_same_as_current ?? true,
+    perm_house_number: data.is_perm_same_as_current ? (data.house_number || "") : (data.perm_house_number || ""),
+    perm_unit_number: data.is_perm_same_as_current ? (data.unit_number || "") : (data.perm_unit_number || ""),
+    perm_street: data.is_perm_same_as_current ? (data.street || data.address || "") : (data.perm_street || ""),
+    perm_barangay: data.is_perm_same_as_current ? (data.barangay || "") : (data.perm_barangay || ""),
+    perm_city: data.is_perm_same_as_current ? (data.city || "") : (data.perm_city || ""),
+    perm_province: data.is_perm_same_as_current ? (data.province || "") : (data.perm_province || ""),
+    perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
+    perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
     
     // Baptism Info
     baptism_date: data.baptism_date,
@@ -151,3 +186,10 @@ export async function updateMember(payloadStr: string) {
   revalidatePath(`/members/${id}`)
   redirect(`/members/${id}`)
 }
+
+export async function deleteMember(id: string) {
+  await db.delete(members).where(eq(members.id, id))
+  revalidatePath("/members")
+  redirect("/members")
+}
+

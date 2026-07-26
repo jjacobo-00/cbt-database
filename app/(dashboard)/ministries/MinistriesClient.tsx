@@ -228,7 +228,7 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
   }
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="space-y-8">
       {/* Add Ministry */}
       <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
         <h3 className="font-semibold text-lg">Add New Ministry</h3>
