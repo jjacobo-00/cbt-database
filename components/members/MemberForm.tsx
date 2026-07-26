@@ -565,58 +565,71 @@ export function MemberForm({ initialData, ministries = [] }: { initialData?: any
               }
 
               return (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {parents.map(parent => {
                     const children = getChildren(parent.id)
-                    const isParentChecked = selected.includes(parent.id)
+                    const hasChildren = children.length > 0
 
-                    return (
-                      <div key={parent.id} className="rounded-xl border overflow-hidden">
-                        {/* Parent ministry header */}
+                    if (!hasChildren) {
+                      /* Standalone ministry — normal checkbox card */
+                      const isChecked = selected.includes(parent.id)
+                      return (
                         <label
+                          key={parent.id}
                           htmlFor={`min_${parent.id}`}
                           className={cn(
-                            "flex items-center gap-4 p-5 cursor-pointer transition-all",
-                            isParentChecked ? "bg-primary/10" : "hover:bg-muted/30"
+                            "flex items-center gap-4 rounded-xl border p-5 cursor-pointer transition-all",
+                            isChecked ? "border-primary bg-primary/10" : "hover:border-muted-foreground/50"
                           )}
                         >
                           <input
                             type="checkbox"
                             id={`min_${parent.id}`}
-                            checked={isParentChecked}
+                            checked={isChecked}
                             onChange={() => toggle(parent.id)}
                             className="w-5 h-5 accent-primary"
                           />
-                          <span className="text-base font-semibold">{parent.name}</span>
+                          <span className="text-base font-medium">{parent.name}</span>
                         </label>
+                      )
+                    }
 
-                        {/* Children sub-ministries */}
-                        {children.length > 0 && (
-                          <div className="border-t divide-y bg-muted/5">
-                            {children.map(child => {
-                              const isChildChecked = selected.includes(child.id)
-                              return (
-                                <label
-                                  key={child.id}
-                                  htmlFor={`min_${child.id}`}
-                                  className={cn(
-                                    "flex items-center gap-4 pl-12 pr-5 py-3.5 cursor-pointer transition-all",
-                                    isChildChecked ? "bg-primary/5" : "hover:bg-muted/30"
-                                  )}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    id={`min_${child.id}`}
-                                    checked={isChildChecked}
-                                    onChange={() => toggle(child.id)}
-                                    className="w-4 h-4 accent-primary"
-                                  />
-                                  <span className="text-sm">{child.name}</span>
-                                </label>
-                              )
-                            })}
-                          </div>
-                        )}
+                    /* Ministry with children — parent is a section header, only children are selectable */
+                    const checkedCount = children.filter(c => selected.includes(c.id)).length
+                    return (
+                      <div key={parent.id} className="rounded-xl border overflow-hidden">
+                        <div className="flex items-center justify-between px-5 py-4 bg-muted/20">
+                          <span className="text-base font-semibold">{parent.name}</span>
+                          {checkedCount > 0 && (
+                            <span className="text-xs font-medium bg-primary/15 text-primary px-2 py-0.5 rounded-full">
+                              {checkedCount} selected
+                            </span>
+                          )}
+                        </div>
+                        <div className="border-t divide-y">
+                          {children.map(child => {
+                            const isChildChecked = selected.includes(child.id)
+                            return (
+                              <label
+                                key={child.id}
+                                htmlFor={`min_${child.id}`}
+                                className={cn(
+                                  "flex items-center gap-4 pl-8 pr-5 py-4 cursor-pointer transition-all",
+                                  isChildChecked ? "bg-primary/5" : "hover:bg-muted/30"
+                                )}
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`min_${child.id}`}
+                                  checked={isChildChecked}
+                                  onChange={() => toggle(child.id)}
+                                  className="w-4 h-4 accent-primary"
+                                />
+                                <span className="text-sm font-medium">{child.name}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
                       </div>
                     )
                   })}
