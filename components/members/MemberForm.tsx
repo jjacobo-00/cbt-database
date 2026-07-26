@@ -494,8 +494,32 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 <Input {...form.register("witness_by")} className="h-12 bg-transparent" placeholder="Witnesses" />
               </div>
               <div className="grid gap-2">
-                <Label className="text-[13px] text-muted-foreground">Place of Baptism</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[13px] text-muted-foreground">Place of Baptism</Label>
+                </div>
                 <Input {...form.register("place_of_baptism")} className="h-12 bg-transparent" placeholder="Church Name / Location" />
+                <div className="flex items-center gap-2 pt-0.5">
+                  <input
+                    type="checkbox"
+                    id="sameAsMotherChurch"
+                    checked={
+                      form.watch("place_of_baptism") === "CBT (Mother Church)" || 
+                      form.watch("place_of_baptism") === "CBT"
+                    }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        form.setValue("place_of_baptism", "CBT (Mother Church)", { shouldValidate: true, shouldDirty: true })
+                      } else {
+                        form.setValue("place_of_baptism", "", { shouldValidate: true, shouldDirty: true })
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-input bg-transparent text-primary focus:ring-primary cursor-pointer accent-primary"
+                  />
+                  <label htmlFor="sameAsMotherChurch" className="text-xs text-muted-foreground cursor-pointer select-none font-medium flex items-center gap-1.5 hover:text-foreground transition-colors">
+                    <Church className="h-3.5 w-3.5 text-primary" />
+                    Baptized at Mother Church (CBT)
+                  </label>
+                </div>
               </div>
             </div>
           </div>
