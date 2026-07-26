@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, PieChart, Shield, Church, X, Menu } from "lucide-react"
+import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Image from "next/image"
 
@@ -9,6 +9,7 @@ const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Members", href: "/members", icon: Users },
   { name: "Ministries", href: "/ministries", icon: Church },
+  { name: "Commitments", href: "/commitments", icon: HandHeart },
   { name: "Reports", href: "/reports", icon: PieChart },
   { name: "Staff", href: "/staff", icon: Shield },
 ]

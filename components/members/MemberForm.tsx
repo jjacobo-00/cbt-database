@@ -68,6 +68,7 @@ const memberSchema = z.object({
   })).default([]),
   awards_honors: z.string().default(""),
   ministries: z.array(z.string()).default([]),
+  offerings: z.array(z.string()).default([]),
 }).superRefine((data, ctx) => {
   // Step 2 Validations
   if (data.employment_status === "Employed") {
@@ -103,13 +104,14 @@ const STEPS = [
   { id: 2, title: "Status" },
   { id: 3, title: "Family" },
   { id: 4, title: "Education" },
-  { id: 5, title: "Ministries" },
+  { id: 5, title: "Commitment" },
   { id: 6, title: "Review" },
 ]
 
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
+type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
 
-export function MemberForm({ initialData, ministries = [] }: { initialData?: any; ministries?: Ministry[] }) {
+export function MemberForm({ initialData, ministries = [], offeringCategories = [] }: { initialData?: any; ministries?: Ministry[]; offeringCategories?: OfferingCategory[] }) {
   const [step, setStep] = useState(1)
   
   const form = useForm({
@@ -636,6 +638,46 @@ export function MemberForm({ initialData, ministries = [] }: { initialData?: any
                 </div>
               )
             })()}
+
+            {/* Offerings Section */}
+            {offeringCategories.length > 0 && (
+              <div className="space-y-4 pt-4">
+                <h3 className="text-xl font-semibold border-b pb-2">Offerings</h3>
+                <p className="text-muted-foreground">Select the offerings you wish to commit to for {new Date().getFullYear()}.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {offeringCategories.map(off => {
+                    const selected: string[] = form.watch("offerings") || []
+                    const isChecked = selected.includes(off.id)
+                    return (
+                      <label
+                        key={off.id}
+                        htmlFor={`off_${off.id}`}
+                        className={cn(
+                          "flex items-center gap-4 rounded-xl border p-4 cursor-pointer transition-all",
+                          isChecked ? "border-amber-500/50 bg-amber-500/10" : "hover:border-muted-foreground/50"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          id={`off_${off.id}`}
+                          checked={isChecked}
+                          onChange={() => {
+                            const current: string[] = form.getValues("offerings") || []
+                            if (current.includes(off.id)) {
+                              form.setValue("offerings", current.filter(x => x !== off.id))
+                            } else {
+                              form.setValue("offerings", [...current, off.id])
+                            }
+                          }}
+                          className="w-4 h-4 accent-amber-500"
+                        />
+                        <span className="text-sm font-medium">{off.name}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

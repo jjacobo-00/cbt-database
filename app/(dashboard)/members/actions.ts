@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
-import { members, ministries, member_ministries } from "@/db/schema"
+import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 export async function createMember(payloadStr: string) {
@@ -71,7 +71,33 @@ export async function createMember(payloadStr: string) {
     ).onConflictDoNothing()
   }
 
+  // Create commitment for current year
+  const currentYear = new Date().getFullYear()
+  const selectedMinistries: string[] = data.ministries || []
+  const selectedOfferings: string[] = data.offerings || []
+
+  // Merge selected ministries with for_everyone ministries
+  const allMinistryIds = [...new Set([...selectedMinistries, ...forEveryoneMinistries.map(m => m.id)])]
+
+  const [commitment] = await db.insert(commitments).values({
+    member_id: member.id,
+    year: currentYear,
+  }).returning()
+
+  if (commitment && allMinistryIds.length > 0) {
+    await db.insert(commitment_ministries).values(
+      allMinistryIds.map(mid => ({ commitment_id: commitment.id, ministry_id: mid }))
+    )
+  }
+
+  if (commitment && selectedOfferings.length > 0) {
+    await db.insert(commitment_offerings).values(
+      selectedOfferings.map(oid => ({ commitment_id: commitment.id, offering_category_id: oid }))
+    )
+  }
+
   revalidatePath("/members")
+  revalidatePath("/commitments")
   redirect(`/members/${member.id}`)
 }
 

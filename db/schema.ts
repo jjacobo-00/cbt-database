@@ -1,4 +1,4 @@
-import { pgTable, text, integer, date, timestamp, uuid, jsonb, primaryKey, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, date, timestamp, uuid, jsonb, primaryKey, boolean, unique } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -24,7 +24,7 @@ export const members = pgTable('members', {
   last_name: text('last_name').notNull(),
   sex: text('sex'),
   age: integer('age'),
-  birth_date: text('birth_date'), // Some records might use text or date, we'll use text for consistency with the form
+  birth_date: text('birth_date'),
   birth_place: text('birth_place'),
   contact_number: text('contact_number'),
   
@@ -74,14 +74,14 @@ export const members = pgTable('members', {
   witnessed_by: text('witnessed_by'),
   baptized_by: text('baptized_by'),
   date_baptized: text('date_baptized'),
-  baptism_date: text('baptism_date'), // Using the new one
-  witness_by: text('witness_by'),     // Using the new one
+  baptism_date: text('baptism_date'),
+  witness_by: text('witness_by'),
   place_of_baptism: text('place_of_baptism'),
   years_in_church: integer('years_in_church'),
   prev_church_name: text('prev_church_name'),
   prev_church_years: integer('prev_church_years'),
   
-  // Education (Older ones + new ones)
+  // Education
   highest_educational_attainment: text('highest_educational_attainment'),
   education_details: jsonb('education_details').default([]),
   awards_honors: text('awards_honors'),
@@ -106,3 +106,39 @@ export const member_ministries = pgTable('member_ministries', {
 }, (t) => ({
   pk: primaryKey({ columns: [t.member_id, t.ministry_id] }),
 }))
+
+// ──────────────────────────────────────────────
+// COMMITMENTS SYSTEM
+// ──────────────────────────────────────────────
+
+export const offering_categories = pgTable('offering_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  description: text('description'),
+  is_monthly: boolean('is_monthly').default(false).notNull(),
+  month: integer('month'), // 1-12, for one-time offerings tied to a specific month
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+export const commitments = pgTable('commitments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  member_id: uuid('member_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
+  year: integer('year').notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  uniq: unique().on(t.member_id, t.year),
+}))
+
+export const commitment_ministries = pgTable('commitment_ministries', {
+  commitment_id: uuid('commitment_id').notNull().references(() => commitments.id, { onDelete: 'cascade' }),
+  ministry_id: uuid('ministry_id').notNull().references(() => ministries.id, { onDelete: 'cascade' }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.commitment_id, t.ministry_id] }),
+}))
+
+export const commitment_offerings = pgTable('commitment_offerings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  commitment_id: uuid('commitment_id').notNull().references(() => commitments.id, { onDelete: 'cascade' }),
+  offering_category_id: uuid('offering_category_id').notNull().references(() => offering_categories.id, { onDelete: 'cascade' }),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
