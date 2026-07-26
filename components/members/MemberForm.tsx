@@ -351,7 +351,23 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
         })}
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form 
+        onSubmit={form.handleSubmit(onSubmit)} 
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            const target = e.target as HTMLElement
+            if (target.tagName === "TEXTAREA" || target.tagName === "BUTTON") return
+
+            e.preventDefault()
+            if (step < STEPS.length) {
+              validateStep()
+            } else {
+              form.handleSubmit(onSubmit)()
+            }
+          }
+        }}
+        className="space-y-6"
+      >
         {/* STEP 1: PERSONAL INFORMATION */}
         {step === 1 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
