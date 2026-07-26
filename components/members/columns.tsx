@@ -17,6 +17,29 @@ export type MemberType = {
 
 export const columns: ColumnDef<MemberType>[] = [
   {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const member = row.original
+      return (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/members/${member.id}`}>
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              View
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="border-primary/40 text-primary hover:bg-primary/10">
+            <Link href={`/members/${member.id}/edit`}>
+              <Pencil className="h-3.5 w-3.5 mr-1" />
+              Edit
+            </Link>
+          </Button>
+        </div>
+      )
+    },
+  },
+  {
     accessorKey: "name",
     header: ({ column }) => {
       return (
@@ -60,28 +83,6 @@ export const columns: ColumnDef<MemberType>[] = [
     cell: ({ row }) => {
       const date = new Date(row.getValue("created_at"))
       return <div>{date.toLocaleDateString()}</div>
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const member = row.original
-      return (
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/members/${member.id}`}>
-              <Eye className="h-3.5 w-3.5 mr-1" />
-              View Profile
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild className="border-primary/40 text-primary hover:bg-primary/10">
-            <Link href={`/members/${member.id}/edit`}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />
-              Edit
-            </Link>
-          </Button>
-        </div>
-      )
     },
   },
 ]

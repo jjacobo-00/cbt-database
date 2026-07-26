@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import NextTopLoader from "nextjs-toploader";
 
 import { Toaster } from "@/components/ui/toaster";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
           <NextTopLoader color="#2563eb" showSpinner={false} />
           {children}
           <Toaster />
+          <ScrollToTop />
         </ThemeProvider>
       </body>
     </html>
