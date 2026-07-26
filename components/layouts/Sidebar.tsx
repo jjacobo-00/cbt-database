@@ -22,8 +22,8 @@ const navItems: NavItem[] = [
     href: "/commitments",
     icon: HandHeart,
     subItems: [
-      { name: "Ministry Pledges", href: "/commitments", icon: Church },
-      { name: "Offering Pledges", href: "/commitments/offerings", icon: Gift },
+      { name: "Ministry Commitments", href: "/commitments", icon: Church },
+      { name: "Offering Commitments", href: "/commitments/offerings", icon: Gift },
       { name: "Recommitment Tracker", href: "/commitments/recommitment", icon: RefreshCw },
     ]
   },

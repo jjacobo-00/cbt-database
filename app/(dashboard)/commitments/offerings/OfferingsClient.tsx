@@ -117,7 +117,7 @@ export function OfferingsClient({
               : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >
-          Member Offering Pledges ({year})
+          Member Offering Commitments ({year})
         </button>
         <button
           onClick={() => setActiveTab("categories")}
@@ -146,8 +146,8 @@ export function OfferingsClient({
                 <thead className="bg-muted/50 text-muted-foreground border-b">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium">Member</th>
-                    <th className="px-4 py-3 text-left font-medium">Offering Pledges</th>
-                    <th className="px-4 py-3 text-right font-medium">Pledge Count</th>
+                    <th className="px-4 py-3 text-left font-medium">Offerings</th>
+                    <th className="px-4 py-3 text-right font-medium">Commitment Count</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -158,7 +158,7 @@ export function OfferingsClient({
                       </td>
                       <td className="px-4 py-3">
                         {m.offerings.length === 0 ? (
-                          <span className="text-muted-foreground text-xs italic">No offering pledges</span>
+                          <span className="text-muted-foreground text-xs italic">No offering commitments</span>
                         ) : (
                           <div className="flex flex-wrap gap-1">
                             {m.offerings.map(o => (
@@ -177,7 +177,7 @@ export function OfferingsClient({
                   {filteredPledges.length === 0 && (
                     <tr>
                       <td colSpan={3} className="px-4 py-12 text-center text-muted-foreground">
-                        No member offering pledges found.
+                        No member offering commitments found.
                       </td>
                     </tr>
                   )}

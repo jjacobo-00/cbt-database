@@ -196,7 +196,7 @@ export function RecommitmentClient({
             <thead className="bg-muted/50 text-muted-foreground border-b">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">Member</th>
-                <th className="px-4 py-3 text-left font-medium">Prior Pledges (Reference)</th>
+                <th className="px-4 py-3 text-left font-medium">Prior Commitments (Reference)</th>
                 <th className="px-4 py-3 text-left font-medium">{targetYear} Status</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
@@ -214,7 +214,7 @@ export function RecommitmentClient({
                     {m.referenceYear ? (
                       <div className="space-y-1">
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                          <History className="h-3 w-3" /> {m.referenceYear} Pledges
+                          <History className="h-3 w-3" /> {m.referenceYear} Commitments
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {m.referenceMinistries.map(rm => (
@@ -242,7 +242,7 @@ export function RecommitmentClient({
                     {m.status === "recommitted" && (
                       <div>
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-500/15 text-emerald-400 px-2.5 py-1 rounded-full">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Recommitted ({m.targetMinistries.length + m.targetOfferings.length} pledges)
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Recommitted ({m.targetMinistries.length + m.targetOfferings.length} selected)
                         </span>
                       </div>
                     )}
@@ -256,7 +256,7 @@ export function RecommitmentClient({
                     {m.status === "unassigned" && (
                       <div>
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-muted text-muted-foreground px-2.5 py-1 rounded-full">
-                          Not Pledged
+                          Not Committed
                         </span>
                       </div>
                     )}
@@ -309,7 +309,7 @@ export function RecommitmentClient({
                 <div className="rounded-xl border bg-muted/20 p-4 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     <History className="h-4 w-4 text-primary" />
-                    <span>Prior Pledges ({selectedMember.referenceYear}) — For Reference</span>
+                    <span>Prior Commitments ({selectedMember.referenceYear}) — For Reference</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {selectedMember.referenceMinistries.map(rm => (
@@ -323,7 +323,7 @@ export function RecommitmentClient({
                       </span>
                     ))}
                     {selectedMember.referenceMinistries.length === 0 && selectedMember.referenceOfferings.length === 0 && (
-                      <span className="text-xs text-muted-foreground">No recorded pledges in prior year</span>
+                      <span className="text-xs text-muted-foreground">No recorded commitments in prior year</span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground italic pt-1">

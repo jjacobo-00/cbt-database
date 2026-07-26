@@ -121,7 +121,7 @@ export function CommitmentsClient({
       {/* Summary cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Directory Members Pledged</p>
+          <p className="text-sm text-muted-foreground">Directory Members Committed</p>
           <p className="text-3xl font-bold mt-1">{pledgedMembers} <span className="text-sm font-normal text-muted-foreground">/ {totalMembers}</span></p>
         </div>
         <div className="rounded-xl border bg-card p-5">
@@ -129,7 +129,7 @@ export function CommitmentsClient({
           <p className="text-3xl font-bold mt-1">{uniqueMinistries.size}</p>
         </div>
         <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Pledge Rate</p>
+          <p className="text-sm text-muted-foreground">Commitment Rate</p>
           <p className="text-3xl font-bold mt-1">{totalMembers ? Math.round((pledgedMembers / totalMembers) * 100) : 0}%</p>
         </div>
       </div>
@@ -147,8 +147,8 @@ export function CommitmentsClient({
             <thead className="bg-muted/50 text-muted-foreground border-b">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">Member</th>
-                <th className="px-4 py-3 text-left font-medium">Ministries Pledged</th>
-                <th className="px-4 py-3 text-left font-medium">Offerings Pledged</th>
+                <th className="px-4 py-3 text-left font-medium">Ministries</th>
+                <th className="px-4 py-3 text-left font-medium">Offerings</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
@@ -190,11 +190,11 @@ export function CommitmentsClient({
                   <td className="px-4 py-3 text-right">
                     {c.has_pledged ? (
                       <Button variant="ghost" size="sm" onClick={() => openEdit(c)} className="gap-1">
-                        <Pencil className="h-3.5 w-3.5" /> Edit Pledges
+                        <Pencil className="h-3.5 w-3.5" /> Edit Commitments
                       </Button>
                     ) : (
                       <Button variant="outline" size="sm" onClick={() => openEdit(c)} className="gap-1 text-xs">
-                        <Plus className="h-3.5 w-3.5" /> Set Pledges
+                        <Plus className="h-3.5 w-3.5" /> Set Commitments
                       </Button>
                     )}
                   </td>
@@ -218,7 +218,7 @@ export function CommitmentsClient({
           <div className="bg-card rounded-2xl border shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-card border-b px-6 py-4 flex items-center justify-between z-10">
               <div>
-                <h2 className="text-lg font-semibold">Ministry & Offering Pledges</h2>
+                <h2 className="text-lg font-semibold">Ministry & Offering Commitments</h2>
                 <p className="text-sm text-muted-foreground">{editingMember.first_name} {editingMember.last_name} — {year}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setEditingMember(null)}><X className="h-5 w-5" /></Button>
@@ -227,7 +227,7 @@ export function CommitmentsClient({
             <div className="p-6 space-y-6">
               {/* Ministries */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Ministry Pledges</h3>
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Ministries</h3>
                 <div className="space-y-2">
                   {parentMinistries.map(parent => {
                     const children = getChildren(parent.id)
@@ -262,7 +262,7 @@ export function CommitmentsClient({
 
               {/* Offerings */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Offering Pledges</h3>
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Offerings</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {allOfferings.map(off => {
                     const checked = editOfferings.includes(off.id)
@@ -281,7 +281,7 @@ export function CommitmentsClient({
             <div className="sticky bottom-0 bg-card border-t px-6 py-4 flex justify-end gap-3">
               <Button variant="outline" onClick={() => setEditingMember(null)}>Cancel</Button>
               <Button onClick={handleSaveEdit} disabled={isPending} className="gap-2">
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save Pledges
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save Commitments
               </Button>
             </div>
           </div>

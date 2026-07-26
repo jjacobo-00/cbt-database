@@ -32,7 +32,7 @@ export default async function OfferingsPage({ searchParams }: { searchParams: { 
         </div>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Offering Commitments</h1>
-          <p className="text-muted-foreground">View member offering pledges and configure offering categories.</p>
+          <p className="text-muted-foreground">View member offering commitments and configure offering categories.</p>
         </div>
       </div>
       <OfferingsClient categories={categories} memberPledges={memberPledges} year={year} />
