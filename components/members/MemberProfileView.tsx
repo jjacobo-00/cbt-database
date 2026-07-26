@@ -119,17 +119,17 @@ export function MemberProfileView({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button 
             variant="outline" 
             size="sm"
-            className="gap-2"
+            className="gap-1.5"
             onClick={() => window.print()}
           >
             <Printer className="h-4 w-4" />
-            <span className="hidden sm:inline">Print Profile</span>
+            <span>Print Profile</span>
           </Button>
-          <Button size="sm" asChild className="gap-2">
+          <Button size="sm" asChild className="gap-1.5">
             <Link href={`/members/${member.id}/edit`}>
               <Edit className="h-4 w-4" />
               <span>Edit Profile</span>
@@ -138,11 +138,11 @@ export function MemberProfileView({
           <Button 
             variant="destructive" 
             size="sm"
-            className="gap-2"
+            className="gap-1.5"
             onClick={() => setShowDeleteConfirm(true)}
           >
             <Trash2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Delete</span>
+            <span>Delete Profile</span>
           </Button>
         </div>
       </div>
