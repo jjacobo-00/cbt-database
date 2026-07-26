@@ -17,11 +17,15 @@ export default async function MembersPage() {
     contact_number: members.contact_number,
     city: members.city,
     occupation: members.occupation,
+    position: members.position,
+    company: members.company,
+    employment_status: members.employment_status,
     created_at: members.created_at
   }).from(members).orderBy(asc(members.last_name))
 
   const formattedMembers = membersList.map(member => ({
     ...member,
+    occupation: member.occupation || member.position || (member.employment_status === "Student" ? "Student" : member.company ? `${member.position || "Employee"} at ${member.company}` : (member.employment_status && member.employment_status !== "None") ? member.employment_status : "-"),
     created_at: member.created_at?.toISOString() || ""
   }))
 

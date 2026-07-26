@@ -42,8 +42,9 @@ export async function createMember(payloadStr: string) {
     witness_by: data.witness_by,
     place_of_baptism: data.place_of_baptism,
     
-    // Step 2: Status
+    // Step 2: Status & Occupation
     employment_status: data.employment_status,
+    occupation: data.occupation || data.position || (data.employment_status === "Student" ? "Student" : data.company ? `${data.position || "Employee"} at ${data.company}` : data.employment_status !== "None" ? data.employment_status : ""),
     student_school: data.student_school,
     student_year_level: data.student_year_level,
     student_course: data.student_course,
@@ -155,8 +156,9 @@ export async function updateMember(payloadStr: string) {
     witness_by: data.witness_by,
     place_of_baptism: data.place_of_baptism,
     
-    // Step 2: Status
+    // Step 2: Status & Occupation
     employment_status: data.employment_status,
+    occupation: data.occupation || data.position || (data.employment_status === "Student" ? "Student" : data.company ? `${data.position || "Employee"} at ${data.company}` : data.employment_status !== "None" ? data.employment_status : ""),
     student_school: data.student_school,
     student_year_level: data.student_year_level,
     student_course: data.student_course,
