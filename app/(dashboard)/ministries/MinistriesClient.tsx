@@ -247,8 +247,8 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
               </div>
               <input type="checkbox" className="sr-only" checked={forEveryone} onChange={e => setForEveryone(e.target.checked)} />
               <div>
-                <span className="font-medium text-sm">For Everyone</span>
-                <p className="text-xs text-muted-foreground">New members are automatically enrolled in this ministry</p>
+                <span className="font-medium text-sm">For Everyone (e.g. Evangelism)</span>
+                <p className="text-xs text-muted-foreground">All current and new members will automatically be enrolled in this ministry</p>
               </div>
             </label>
             {error && <p className="text-sm text-destructive">{error}</p>}
