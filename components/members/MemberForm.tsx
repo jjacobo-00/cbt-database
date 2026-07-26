@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
-import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles } from "lucide-react"
+import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles, Save, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
 import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
@@ -191,12 +191,20 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
   const { fields: siblingFields, append: appendSibling, remove: removeSibling } = useFieldArray({ control: form.control, name: "siblings" })
   const { fields: eduFields } = useFieldArray({ control: form.control, name: "education_details" })
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const onSubmit = async (values: z.infer<typeof memberSchema>) => {
-    const payload = JSON.stringify({ id: initialData?.id, ...values })
-    if (initialData) {
-      await updateMember(payload)
-    } else {
-      await createMember(payload)
+    setIsSubmitting(true)
+    try {
+      const payload = JSON.stringify({ id: initialData?.id, ...values })
+      if (initialData) {
+        await updateMember(payload)
+      } else {
+        await createMember(payload)
+      }
+    } catch (e) {
+      console.error(e)
+      setIsSubmitting(false)
     }
   }
 
@@ -277,11 +285,34 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
   return (
     <div className="bg-card rounded-xl border shadow-sm p-4 md:p-10 w-full mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/80">
-          <Link href="/members"><ChevronLeft className="h-6 w-6" /></Link>
-        </Button>
-        <h2 className="text-2xl font-bold tracking-tight">{initialData ? "Edit Member" : "New Member Form"}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/80">
+            <Link href={initialData ? `/members/${initialData.id}` : "/members"}>
+              <ChevronLeft className="h-6 w-6" />
+            </Link>
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">{initialData ? "Edit Member Profile" : "New Member Form"}</h2>
+            {initialData && (
+              <p className="text-xs text-muted-foreground">
+                Editing record for {initialData.first_name} {initialData.last_name}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {initialData && (
+          <Button 
+            type="button"
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+            className="h-11 px-6 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
+          >
+            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <span>Save Changes</span>
+          </Button>
+        )}
       </div>
 
       {/* Sticky Top Stepper */}
@@ -786,7 +817,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
         )}
 
         {/* BOTTOM NAVIGATION BUTTONS */}
-        <div className="flex items-center justify-between pt-6 border-t mt-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t mt-8">
           <Button 
             type="button" 
             variant="outline" 
@@ -797,22 +828,39 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
             Back
           </Button>
 
-          {step < STEPS.length ? (
-            <Button 
-              type="button" 
-              onClick={validateStep}
-              className="h-11 px-6 gap-2"
-            >
-              Next Step
-            </Button>
-          ) : (
-            <Button 
-              type="submit" 
-              className="h-11 px-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-            >
-              <Check className="h-4 w-4" /> Save Member Record
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {initialData && step < STEPS.length && (
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+                className="h-11 px-5 gap-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-semibold"
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                <span>Save Changes</span>
+              </Button>
+            )}
+
+            {step < STEPS.length ? (
+              <Button 
+                type="button" 
+                onClick={validateStep}
+                className="h-11 px-6 gap-2"
+              >
+                Next Step
+              </Button>
+            ) : (
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="h-11 px-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                Save Member Record
+              </Button>
+            )}
+          </div>
         </div>
       </form>
     </div>
