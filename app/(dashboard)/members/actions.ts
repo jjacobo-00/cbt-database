@@ -13,7 +13,7 @@ export async function createMember(payloadStr: string) {
     // Step 1: Personal
     first_name: data.first_name,
     last_name: data.last_name,
-    birth_date: data.birth_date,
+    birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
     house_number: data.house_number || "",
@@ -37,12 +37,13 @@ export async function createMember(payloadStr: string) {
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
     
     // Spiritual & Church Info
-    date_saved: data.date_saved,
-    membership_date: data.membership_date,
-    baptism_date: data.baptism_date,
-    baptized_by: data.baptized_by,
-    witness_by: data.witness_by,
-    place_of_baptism: data.place_of_baptism,
+    date_saved: data.date_saved || null,
+    membership_date: data.membership_date || null,
+    baptism_date: data.baptism_date || null,
+    date_baptized: data.date_baptized || data.baptism_date || null,
+    baptized_by: data.baptized_by || "",
+    witness_by: data.witness_by || "",
+    place_of_baptism: data.place_of_baptism || "",
     years_in_church: (() => {
       const targetDate = data.membership_date || data.date_saved || data.baptism_date
       if (!targetDate) return null
@@ -140,7 +141,7 @@ export async function updateMember(payloadStr: string) {
     // Step 1: Personal
     first_name: data.first_name,
     last_name: data.last_name,
-    birth_date: data.birth_date,
+    birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
     house_number: data.house_number || "",
@@ -164,12 +165,13 @@ export async function updateMember(payloadStr: string) {
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
     
     // Spiritual & Church Info
-    date_saved: data.date_saved,
-    membership_date: data.membership_date,
-    baptism_date: data.baptism_date,
-    baptized_by: data.baptized_by,
-    witness_by: data.witness_by,
-    place_of_baptism: data.place_of_baptism,
+    date_saved: data.date_saved || null,
+    membership_date: data.membership_date || null,
+    baptism_date: data.baptism_date || null,
+    date_baptized: data.date_baptized || data.baptism_date || null,
+    baptized_by: data.baptized_by || "",
+    witness_by: data.witness_by || "",
+    place_of_baptism: data.place_of_baptism || "",
     years_in_church: (() => {
       const targetDate = data.membership_date || data.date_saved || data.baptism_date
       if (!targetDate) return null

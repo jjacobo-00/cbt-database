@@ -81,12 +81,12 @@ export const members = pgTable('members', {
   
   // Church / Spiritual Info
   current_church: text('current_church').default('Current Church'),
-  date_saved: text('date_saved'),
-  membership_date: text('membership_date'),
+  date_saved: date('date_saved'),
+  membership_date: date('membership_date'),
   witnessed_by: text('witnessed_by'),
   baptized_by: text('baptized_by'),
-  date_baptized: text('date_baptized'),
-  baptism_date: text('baptism_date'),
+  date_baptized: date('date_baptized'),
+  baptism_date: date('baptism_date'),
   witness_by: text('witness_by'),
   place_of_baptism: text('place_of_baptism'),
   years_in_church: integer('years_in_church'),
