@@ -863,56 +863,181 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
         )}
 
         {/* STEP 6: COMMITMENT & MINISTRIES */}
-        {step === 6 && (
-          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
-            <h3 className="text-xl font-semibold border-b pb-2">Ministries & Pledges</h3>
-            
-            <div className="space-y-4">
-              <h4 className="font-semibold text-base">Select Ministries</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {ministries.map((m) => {
-                  const isMandatory = m.for_everyone || m.name.toLowerCase().includes("evangelistic")
-                  const currentMins: string[] = form.watch("ministries") || []
-                  const isSelected = isMandatory || currentMins.includes(m.id)
+        {step === 6 && (() => {
+          const topLevelMinistries = ministries.filter(m => !m.parent_id)
+          const getChildren = (parentId: string) => ministries.filter(m => m.parent_id === parentId)
+          const orphanChildren = ministries.filter(m => m.parent_id && !topLevelMinistries.some(p => p.id === m.parent_id))
+          const currentMins: string[] = form.watch("ministries") || []
 
-                  return (
-                    <div 
-                      key={m.id} 
-                      onClick={() => {
-                        if (isMandatory) return
-                        if (isSelected) {
-                          form.setValue("ministries", currentMins.filter(id => id !== m.id))
-                        } else {
-                          form.setValue("ministries", [...currentMins, m.id])
-                        }
-                      }}
-                      className={cn(
-                        "p-4 rounded-xl border transition-all flex items-center justify-between select-none",
-                        isMandatory 
-                          ? "border-primary/50 bg-primary/10 cursor-not-allowed font-medium" 
-                          : isSelected 
-                            ? "border-primary bg-primary/5 font-medium cursor-pointer" 
-                            : "hover:border-primary/50 cursor-pointer"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{m.name}</span>
-                        {isMandatory && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                            Required
-                          </span>
+          return (
+            <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <h3 className="text-xl font-semibold">Ministries & Pledges</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Select the ministries and sub-ministries this member belongs to.</p>
+                </div>
+                <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
+                  {currentMins.length} {currentMins.length === 1 ? "Ministry" : "Ministries"} Selected
+                </span>
+              </div>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {topLevelMinistries.map((parent) => {
+                    const children = getChildren(parent.id)
+                    const hasChildren = children.length > 0
+                    const isParentMandatory = parent.for_everyone || parent.name.toLowerCase().includes("evangelistic")
+                    const isParentSelected = isParentMandatory || currentMins.includes(parent.id)
+                    const selectedChildrenCount = children.filter(c => currentMins.includes(c.id)).length
+
+                    return (
+                      <div 
+                        key={parent.id} 
+                        className={cn(
+                          "rounded-2xl border p-5 transition-all shadow-2xs flex flex-col justify-between space-y-4",
+                          isParentSelected 
+                            ? "border-primary/60 bg-primary/5 dark:bg-primary/10 shadow-sm" 
+                            : "border-border/60 bg-card hover:border-primary/40"
+                        )}
+                      >
+                        {/* Parent Header */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-base tracking-tight">{parent.name}</span>
+                              {isParentMandatory && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded-full border border-primary/30">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            {hasChildren && (
+                              <p className="text-xs text-muted-foreground">
+                                {selectedChildrenCount > 0 
+                                  ? `${selectedChildrenCount} of ${children.length} sub-ministries active`
+                                  : `${children.length} sub-ministries available`}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Parent Checkbox Button */}
+                          <button
+                            type="button"
+                            disabled={isParentMandatory}
+                            onClick={() => {
+                              if (isParentMandatory) return
+                              let newMins = [...currentMins]
+                              if (isParentSelected) {
+                                // Uncheck parent and children
+                                const childIds = children.map(c => c.id)
+                                newMins = newMins.filter(id => id !== parent.id && !childIds.includes(id))
+                              } else {
+                                if (!newMins.includes(parent.id)) newMins.push(parent.id)
+                              }
+                              form.setValue("ministries", newMins)
+                            }}
+                            className={cn(
+                              "w-6 h-6 rounded-lg border flex items-center justify-center transition-all shrink-0 mt-0.5 select-none",
+                              isParentMandatory 
+                                ? "bg-primary/30 border-primary text-primary-foreground cursor-not-allowed"
+                                : isParentSelected 
+                                  ? "bg-primary border-primary text-primary-foreground shadow-2xs cursor-pointer" 
+                                  : "border-muted-foreground/40 hover:border-primary cursor-pointer"
+                            )}
+                          >
+                            {isParentSelected && <Check className="h-4 w-4 stroke-[3]" />}
+                          </button>
+                        </div>
+
+                        {/* Nested Sub-ministries */}
+                        {hasChildren && (
+                          <div className="pt-3 border-t border-border/40 space-y-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
+                              Sub-Ministries:
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {children.map((child) => {
+                                const isChildSelected = currentMins.includes(child.id)
+                                const isChildMandatory = child.for_everyone || child.name.toLowerCase().includes("evangelistic")
+
+                                return (
+                                  <button
+                                    key={child.id}
+                                    type="button"
+                                    disabled={isChildMandatory}
+                                    onClick={() => {
+                                      if (isChildMandatory) return
+                                      let newMins = [...currentMins]
+                                      if (isChildSelected) {
+                                        newMins = newMins.filter(id => id !== child.id)
+                                      } else {
+                                        newMins.push(child.id)
+                                        // Auto-select parent when a child is selected
+                                        if (!newMins.includes(parent.id)) {
+                                          newMins.push(parent.id)
+                                        }
+                                      }
+                                      form.setValue("ministries", newMins)
+                                    }}
+                                    className={cn(
+                                      "text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 font-medium transition-all select-none",
+                                      isChildSelected
+                                        ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                                        : "bg-muted/40 hover:bg-muted text-foreground border-border/60 hover:border-primary/40"
+                                    )}
+                                  >
+                                    {isChildSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                                    <span>{child.name}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", isSelected && "bg-primary text-primary-foreground border-primary")}>
-                        {isSelected && <Check className="h-3 w-3" />}
-                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Orphan Sub-ministries (if any) */}
+                {orphanChildren.length > 0 && (
+                  <div className="pt-4 border-t space-y-3">
+                    <h4 className="font-semibold text-sm text-muted-foreground">Other Sub-Ministries</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {orphanChildren.map((child) => {
+                        const isChildSelected = currentMins.includes(child.id)
+                        return (
+                          <button
+                            key={child.id}
+                            type="button"
+                            onClick={() => {
+                              let newMins = [...currentMins]
+                              if (isChildSelected) {
+                                newMins = newMins.filter(id => id !== child.id)
+                              } else {
+                                newMins.push(child.id)
+                              }
+                              form.setValue("ministries", newMins)
+                            }}
+                            className={cn(
+                              "text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 font-medium transition-all select-none",
+                              isChildSelected
+                                ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                                : "bg-card hover:bg-muted text-foreground border-border/60 hover:border-primary/40"
+                            )}
+                          >
+                            {isChildSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                            <span>{child.name}</span>
+                          </button>
+                        )
+                      })}
                     </div>
-                  )
-                })}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* STEP 7: REVIEW */}
         {step === 7 && (
