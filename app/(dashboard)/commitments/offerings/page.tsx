@@ -1,13 +1,28 @@
 import { getOfferingCategories } from "./actions"
+import { getCommitmentsByYear } from "../actions"
 import { OfferingsClient } from "./OfferingsClient"
 import { Gift } from "lucide-react"
 
 export const revalidate = 0
 
-export const metadata = { title: "Offering Categories | CBT Directory" }
+export const metadata = { title: "Offering Commitments | CBT Directory" }
 
-export default async function OfferingsPage() {
-  const categories = await getOfferingCategories()
+export default async function OfferingsPage({ searchParams }: { searchParams: { year?: string } }) {
+  const currentYear = new Date().getFullYear()
+  const year = searchParams.year ? parseInt(searchParams.year) : currentYear
+
+  const [categories, allCommitments] = await Promise.all([
+    getOfferingCategories(),
+    getCommitmentsByYear(year),
+  ])
+
+  const memberPledges = allCommitments.map(c => ({
+    member_id: c.member_id,
+    first_name: c.first_name,
+    last_name: c.last_name,
+    contact_number: c.contact_number,
+    offerings: c.offerings,
+  }))
 
   return (
     <div className="space-y-6">
@@ -16,11 +31,11 @@ export default async function OfferingsPage() {
           <Gift className="h-8 w-8 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Offering Categories</h1>
-          <p className="text-muted-foreground">Manage the types of offerings members can commit to.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Offering Commitments</h1>
+          <p className="text-muted-foreground">View member offering pledges and configure offering categories.</p>
         </div>
       </div>
-      <OfferingsClient categories={categories} />
+      <OfferingsClient categories={categories} memberPledges={memberPledges} year={year} />
     </div>
   )
 }

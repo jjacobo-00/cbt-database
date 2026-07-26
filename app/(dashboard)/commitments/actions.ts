@@ -3,81 +3,163 @@
 import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { commitments, commitment_ministries, commitment_offerings, members, ministries, offering_categories } from "@/db/schema"
-import { eq, and, asc, desc, sql, inArray } from "drizzle-orm"
+import { eq, and, asc, desc, inArray } from "drizzle-orm"
 
 export async function getCommitmentsByYear(year: number) {
   try {
-    // Get all commitments for the year
-    const comms = await db.select({
-      id: commitments.id,
-      member_id: commitments.member_id,
-      year: commitments.year,
+    // Fetch ALL members in the directory
+    const allMembers = await db.select({
+      member_id: members.id,
       first_name: members.first_name,
       last_name: members.last_name,
       contact_number: members.contact_number,
+    }).from(members).orderBy(asc(members.last_name), asc(members.first_name))
+
+    if (allMembers.length === 0) return []
+
+    // Fetch existing commitments for this specific year
+    const yearComms = await db.select({
+      id: commitments.id,
+      member_id: commitments.member_id,
+      year: commitments.year,
+    }).from(commitments).where(eq(commitments.year, year))
+
+    const commIds = yearComms.map(c => c.id)
+
+    // Fetch ministry assignments if any commitments exist
+    const ministryAssignments = commIds.length > 0
+      ? await db.select({
+          commitment_id: commitment_ministries.commitment_id,
+          ministry_id: commitment_ministries.ministry_id,
+          ministry_name: ministries.name,
+          parent_id: ministries.parent_id,
+        })
+        .from(commitment_ministries)
+        .innerJoin(ministries, eq(commitment_ministries.ministry_id, ministries.id))
+        .where(inArray(commitment_ministries.commitment_id, commIds))
+      : []
+
+    // Fetch offering assignments if any commitments exist
+    const offeringAssignments = commIds.length > 0
+      ? await db.select({
+          commitment_id: commitment_offerings.commitment_id,
+          offering_category_id: commitment_offerings.offering_category_id,
+          offering_name: offering_categories.name,
+        })
+        .from(commitment_offerings)
+        .innerJoin(offering_categories, eq(commitment_offerings.offering_category_id, offering_categories.id))
+        .where(inArray(commitment_offerings.commitment_id, commIds))
+      : []
+
+    // Combine all members with their commitment data (if present)
+    return allMembers.map(m => {
+      const comm = yearComms.find(c => c.member_id === m.member_id)
+      const memberMins = comm ? ministryAssignments.filter(ma => ma.commitment_id === comm.id) : []
+      const memberOffs = comm ? offeringAssignments.filter(oa => oa.commitment_id === comm.id) : []
+      
+      return {
+        id: comm?.id || `temp-${m.member_id}`,
+        member_id: m.member_id,
+        year,
+        first_name: m.first_name,
+        last_name: m.last_name,
+        contact_number: m.contact_number,
+        has_pledged: !!comm && (memberMins.length > 0 || memberOffs.length > 0),
+        ministries: memberMins,
+        offerings: memberOffs,
+      }
     })
-      .from(commitments)
-      .innerJoin(members, eq(commitments.member_id, members.id))
-      .where(eq(commitments.year, year))
-      .orderBy(asc(members.last_name), asc(members.first_name))
-
-    if (comms.length === 0) return []
-
-    // Get all ministry assignments for these commitments
-    const commIds = comms.map(c => c.id)
-    const ministryAssignments = await db.select({
-      commitment_id: commitment_ministries.commitment_id,
-      ministry_id: commitment_ministries.ministry_id,
-      ministry_name: ministries.name,
-      parent_id: ministries.parent_id,
-    })
-      .from(commitment_ministries)
-      .innerJoin(ministries, eq(commitment_ministries.ministry_id, ministries.id))
-      .where(inArray(commitment_ministries.commitment_id, commIds))
-
-    // Get all offering assignments
-    const offeringAssignments = await db.select({
-      commitment_id: commitment_offerings.commitment_id,
-      offering_category_id: commitment_offerings.offering_category_id,
-      offering_name: offering_categories.name,
-    })
-      .from(commitment_offerings)
-      .innerJoin(offering_categories, eq(commitment_offerings.offering_category_id, offering_categories.id))
-      .where(inArray(commitment_offerings.commitment_id, commIds))
-
-    // Merge
-    return comms.map(c => ({
-      ...c,
-      ministries: ministryAssignments.filter(m => m.commitment_id === c.id),
-      offerings: offeringAssignments.filter(o => o.commitment_id === c.id),
-    }))
   } catch (error) {
-    console.error("Error fetching commitments:", error)
+    console.error("Error fetching commitments by year:", error)
     return []
   }
 }
 
-export async function getCommitmentForMember(memberId: string, year: number) {
+export async function getRecommitmentTrackerData(targetYear: number) {
   try {
-    const [commitment] = await db.select().from(commitments)
-      .where(and(eq(commitments.member_id, memberId), eq(commitments.year, year)))
+    const prevYear = targetYear - 1
 
-    if (!commitment) return null
+    // Fetch ALL members
+    const allMembers = await db.select({
+      member_id: members.id,
+      first_name: members.first_name,
+      last_name: members.last_name,
+      contact_number: members.contact_number,
+    }).from(members).orderBy(asc(members.last_name), asc(members.first_name))
 
-    const mins = await db.select({ ministry_id: commitment_ministries.ministry_id })
-      .from(commitment_ministries).where(eq(commitment_ministries.commitment_id, commitment.id))
+    if (allMembers.length === 0) return []
 
-    const offs = await db.select({ offering_category_id: commitment_offerings.offering_category_id })
-      .from(commitment_offerings).where(eq(commitment_offerings.commitment_id, commitment.id))
+    // Fetch commitments for target year and prev year
+    const allComms = await db.select({
+      id: commitments.id,
+      member_id: commitments.member_id,
+      year: commitments.year,
+    }).from(commitments)
 
-    return {
-      ...commitment,
-      ministry_ids: mins.map(m => m.ministry_id),
-      offering_ids: offs.map(o => o.offering_category_id),
-    }
+    const commIds = allComms.map(c => c.id)
+
+    const ministryAssignments = commIds.length > 0
+      ? await db.select({
+          commitment_id: commitment_ministries.commitment_id,
+          ministry_id: commitment_ministries.ministry_id,
+          ministry_name: ministries.name,
+        })
+        .from(commitment_ministries)
+        .innerJoin(ministries, eq(commitment_ministries.ministry_id, ministries.id))
+        .where(inArray(commitment_ministries.commitment_id, commIds))
+      : []
+
+    const offeringAssignments = commIds.length > 0
+      ? await db.select({
+          commitment_id: commitment_offerings.commitment_id,
+          offering_category_id: commitment_offerings.offering_category_id,
+          offering_name: offering_categories.name,
+        })
+        .from(commitment_offerings)
+        .innerJoin(offering_categories, eq(commitment_offerings.offering_category_id, offering_categories.id))
+        .where(inArray(commitment_offerings.commitment_id, commIds))
+      : []
+
+    return allMembers.map(m => {
+      const targetComm = allComms.find(c => c.member_id === m.member_id && c.year === targetYear)
+      const prevComm = allComms.find(c => c.member_id === m.member_id && c.year === prevYear)
+
+      // Find latest active year if prevYear doesn't exist
+      const memberComms = allComms.filter(c => c.member_id === m.member_id && c.year < targetYear)
+      const latestPriorComm = memberComms.sort((a, b) => b.year - a.year)[0] || null
+
+      const referenceComm = prevComm || latestPriorComm
+
+      const targetMins = targetComm ? ministryAssignments.filter(ma => ma.commitment_id === targetComm.id) : []
+      const targetOffs = targetComm ? offeringAssignments.filter(oa => oa.commitment_id === targetComm.id) : []
+
+      const refMins = referenceComm ? ministryAssignments.filter(ma => ma.commitment_id === referenceComm.id) : []
+      const refOffs = referenceComm ? offeringAssignments.filter(oa => oa.commitment_id === referenceComm.id) : []
+
+      let status: "recommitted" | "pending" | "unassigned" = "unassigned"
+      if (targetComm && (targetMins.length > 0 || targetOffs.length > 0)) {
+        status = "recommitted"
+      } else if (referenceComm && (refMins.length > 0 || refOffs.length > 0)) {
+        status = "pending"
+      }
+
+      return {
+        member_id: m.member_id,
+        first_name: m.first_name,
+        last_name: m.last_name,
+        contact_number: m.contact_number,
+        status,
+        targetYear,
+        referenceYear: referenceComm?.year || null,
+        targetMinistries: targetMins,
+        targetOfferings: targetOffs,
+        referenceMinistries: refMins,
+        referenceOfferings: refOffs,
+      }
+    })
   } catch (error) {
-    console.error("Error fetching member commitment:", error)
-    return null
+    console.error("Error fetching recommitment tracker data:", error)
+    return []
   }
 }
 
@@ -108,6 +190,8 @@ export async function upsertCommitment(memberId: string, year: number, ministryI
     }
 
     revalidatePath("/commitments")
+    revalidatePath("/commitments/recommitment")
+    revalidatePath("/commitments/offerings")
     return commitment
   } catch (error) {
     console.error("Error upserting commitment:", error)
@@ -115,54 +199,13 @@ export async function upsertCommitment(memberId: string, year: number, ministryI
   }
 }
 
-export async function startRecommitment(fromYear: number, toYear: number) {
-  try {
-    // Get all commitments from the source year
-    const sourceComms = await db.select().from(commitments).where(eq(commitments.year, fromYear))
-
-    for (const src of sourceComms) {
-      // Check if commitment already exists for this member in the target year
-      const [existing] = await db.select().from(commitments)
-        .where(and(eq(commitments.member_id, src.member_id), eq(commitments.year, toYear)))
-
-      if (existing) continue // Skip if already committed for target year
-
-      // Create new commitment
-      const [newComm] = await db.insert(commitments).values({
-        member_id: src.member_id,
-        year: toYear,
-      }).returning()
-
-      // Copy ministries
-      const mins = await db.select().from(commitment_ministries).where(eq(commitment_ministries.commitment_id, src.id))
-      if (mins.length > 0) {
-        await db.insert(commitment_ministries).values(
-          mins.map(m => ({ commitment_id: newComm.id, ministry_id: m.ministry_id }))
-        )
-      }
-
-      // Copy offerings
-      const offs = await db.select().from(commitment_offerings).where(eq(commitment_offerings.commitment_id, src.id))
-      if (offs.length > 0) {
-        await db.insert(commitment_offerings).values(
-          offs.map(o => ({ commitment_id: newComm.id, offering_category_id: o.offering_category_id }))
-        )
-      }
-    }
-
-    revalidatePath("/commitments")
-    return { copied: sourceComms.length }
-  } catch (error) {
-    console.error("Error starting recommitment:", error)
-    throw new Error("Failed to start recommitment.")
-  }
-}
-
 export async function getAvailableYears() {
   try {
     const years = await db.selectDistinct({ year: commitments.year }).from(commitments).orderBy(desc(commitments.year))
-    return years.map(y => y.year)
+    const currentYear = new Date().getFullYear()
+    const result = [...new Set([currentYear, ...years.map(y => y.year)])].sort((a, b) => b - a)
+    return result
   } catch {
-    return []
+    return [new Date().getFullYear()]
   }
 }

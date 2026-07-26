@@ -1,15 +1,32 @@
 "use client"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart } from "lucide-react"
+import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart, ChevronDown, Gift, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Image from "next/image"
 
-const navItems = [
+type NavItem = {
+  name: string
+  href?: string
+  icon: any
+  subItems?: { name: string; href: string; icon?: any }[]
+}
+
+const navItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Members", href: "/members", icon: Users },
   { name: "Ministries", href: "/ministries", icon: Church },
-  { name: "Commitments", href: "/commitments", icon: HandHeart },
+  { 
+    name: "Commitments", 
+    href: "/commitments",
+    icon: HandHeart,
+    subItems: [
+      { name: "Ministry Pledges", href: "/commitments", icon: Church },
+      { name: "Offering Pledges", href: "/commitments/offerings", icon: Gift },
+      { name: "Recommitment Tracker", href: "/commitments/recommitment", icon: RefreshCw },
+    ]
+  },
   { name: "Reports", href: "/reports", icon: PieChart },
   { name: "Staff", href: "/staff", icon: Shield },
 ]
@@ -22,24 +39,74 @@ export function Sidebar({
   setIsMobileMenuOpen: (v: boolean) => void 
 }) {
   const pathname = usePathname()
+  const [openSubMenu, setOpenSubMenu] = useState<string | null>("Commitments")
 
   const NavLinks = () => (
     <>
       {navItems.map((item) => {
         const Icon = item.icon
-        const isActive = pathname.startsWith(item.href)
+        const hasSub = !!item.subItems
+        const isParentActive = item.href ? (item.href === "/commitments" ? pathname === "/commitments" || pathname.startsWith("/commitments/") : pathname.startsWith(item.href)) : false
+        const isOpen = openSubMenu === item.name || isParentActive
+
+        if (hasSub) {
+          return (
+            <div key={item.name} className="space-y-1">
+              <button
+                type="button"
+                onClick={() => setOpenSubMenu(openSubMenu === item.name ? null : item.name)}
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary",
+                  isParentActive ? "bg-muted/80 text-primary font-medium" : "text-muted-foreground"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} />
+              </button>
+              
+              {isOpen && (
+                <div className="ml-4 border-l pl-3 space-y-1 my-1">
+                  {item.subItems?.map((sub) => {
+                    const SubIcon = sub.icon
+                    const isSubActive = sub.href === "/commitments" 
+                      ? pathname === "/commitments"
+                      : pathname.startsWith(sub.href)
+                    return (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all hover:text-primary",
+                          isSubActive ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted/50"
+                        )}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {SubIcon && <SubIcon className="h-3.5 w-3.5 shrink-0" />}
+                        <span>{sub.name}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        }
+
         return (
           <Link
             key={item.href}
-            href={item.href}
+            href={item.href!}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary",
-              isActive ? "bg-muted text-primary" : "text-muted-foreground"
+              isParentActive ? "bg-muted text-primary font-medium" : "text-muted-foreground"
             )}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <Icon className="h-4 w-4" />
-            {item.name}
+            <span>{item.name}</span>
           </Link>
         )
       })}
@@ -53,7 +120,7 @@ export function Sidebar({
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
             <Image src="/logo.svg" alt="CBT Logo" width={32} height={32} className="object-contain" />
-            <span className="">CBT Directory</span>
+            <span>CBT Directory</span>
           </Link>
         </div>
         <nav className="grid gap-1 px-2 py-4 lg:px-4">
