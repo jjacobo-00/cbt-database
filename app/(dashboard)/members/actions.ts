@@ -36,11 +36,24 @@ export async function createMember(payloadStr: string) {
     perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
     
-    // Baptism Info
+    // Spiritual & Church Info
+    date_saved: data.date_saved,
+    membership_date: data.membership_date,
     baptism_date: data.baptism_date,
     baptized_by: data.baptized_by,
     witness_by: data.witness_by,
     place_of_baptism: data.place_of_baptism,
+    years_in_church: (() => {
+      const targetDate = data.membership_date || data.date_saved || data.baptism_date
+      if (!targetDate) return null
+      const d = new Date(targetDate)
+      if (isNaN(d.getTime())) return null
+      const today = new Date()
+      let y = today.getFullYear() - d.getFullYear()
+      const m = today.getMonth() - d.getMonth()
+      if (m < 0 || (m === 0 && today.getDate() < d.getDate())) y--
+      return Math.max(0, y)
+    })(),
     
     // Step 2: Status & Occupation
     employment_status: data.employment_status,
@@ -150,11 +163,24 @@ export async function updateMember(payloadStr: string) {
     perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
     
-    // Baptism Info
+    // Spiritual & Church Info
+    date_saved: data.date_saved,
+    membership_date: data.membership_date,
     baptism_date: data.baptism_date,
     baptized_by: data.baptized_by,
     witness_by: data.witness_by,
     place_of_baptism: data.place_of_baptism,
+    years_in_church: (() => {
+      const targetDate = data.membership_date || data.date_saved || data.baptism_date
+      if (!targetDate) return null
+      const d = new Date(targetDate)
+      if (isNaN(d.getTime())) return null
+      const today = new Date()
+      let y = today.getFullYear() - d.getFullYear()
+      const m = today.getMonth() - d.getMonth()
+      if (m < 0 || (m === 0 && today.getDate() < d.getDate())) y--
+      return Math.max(0, y)
+    })(),
     
     // Step 2: Status & Occupation
     employment_status: data.employment_status,

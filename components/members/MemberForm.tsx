@@ -23,7 +23,9 @@ const memberSchema = z.object({
   gender: z.string().min(1, "Gender is required"),
   contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
   
-  // Baptism info
+  // Spiritual info
+  date_saved: z.string().default(""),
+  membership_date: z.string().default(""),
   baptism_date: z.string().default(""),
   baptized_by: z.string().default(""),
   witness_by: z.string().default(""),
@@ -184,6 +186,8 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       education_details: initialData?.education_details || [{ level: "Elementary", school_name: "", year_started: "", year_graduated: "", is_currently_enrolled: false }],
       awards_honors: initialData?.awards_honors || "",
       ministries: initialData?.ministries || [],
+      date_saved: initialData?.date_saved || "",
+      membership_date: initialData?.membership_date || new Date().toISOString().split("T")[0],
       baptism_date: initialData?.baptism_date || "",
       baptized_by: initialData?.baptized_by || "",
       witness_by: initialData?.witness_by || "",
@@ -464,11 +468,19 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 {form.formState.errors.contact_number && <p className="text-sm text-destructive">{form.formState.errors.contact_number.message}</p>}
               </div>
 
-              {/* Baptism details */}
+              {/* Spiritual details */}
               <div className="col-span-1 md:col-span-2 mt-4 mb-2">
-                <h4 className="font-semibold text-lg border-b pb-2">Spiritual Background</h4>
+                <h4 className="font-semibold text-lg border-b pb-2">Spiritual & Church Background</h4>
               </div>
               
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Membership Date (Joined CBT)</Label>
+                <Input type="date" {...form.register("membership_date")} className="h-12 bg-transparent" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Date Saved (Salvation)</Label>
+                <Input type="date" {...form.register("date_saved")} className="h-12 bg-transparent" />
+              </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Baptism Date</Label>
                 <Input type="date" {...form.register("baptism_date")} className="h-12 bg-transparent" />
@@ -1074,6 +1086,8 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
           const emergencyName = v.emergency_contact_name || ""
           const emergencyRel = v.emergency_contact_relationship || ""
           const emergencyNum = v.emergency_contact_number || ""
+          const dateSaved = v.date_saved || ""
+          const membershipDate = v.membership_date || ""
           const baptismDate = v.baptism_date || ""
           const baptizedBy = v.baptized_by || ""
           const witnessBy = v.witness_by || ""
@@ -1218,12 +1232,20 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                   </div>
                 </div>
 
-                {/* 5. Spiritual Background */}
+                {/* 5. Spiritual & Church Background */}
                 <div className="p-5 rounded-2xl border bg-card space-y-3 shadow-2xs">
                   <h4 className="font-bold text-base border-b pb-2 flex items-center gap-2 text-primary">
-                    <Church className="h-4 w-4" /> Spiritual Background
+                    <Church className="h-4 w-4" /> Spiritual & Church Background
                   </h4>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Membership Date</span>
+                      <span className="font-semibold text-primary">{membershipDate || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Date Saved</span>
+                      <span className="font-medium">{dateSaved || "—"}</span>
+                    </div>
                     <div>
                       <span className="text-muted-foreground block">Baptism Date</span>
                       <span className="font-medium">{baptismDate || "—"}</span>

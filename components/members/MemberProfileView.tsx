@@ -437,7 +437,11 @@ export function MemberProfileView({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Membership Date</p>
+                  <p className="font-semibold text-primary">{member.membership_date || (member.created_at ? new Date(member.created_at).toISOString().split("T")[0] : "—")}</p>
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Date Saved</p>
                   <p className="font-medium">{member.date_saved || "—"}</p>
@@ -450,9 +454,25 @@ export function MemberProfileView({
                   <p className="text-xs text-muted-foreground">Baptized By</p>
                   <p className="font-medium">{member.baptized_by || "—"}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Years in CBT</p>
-                  <p className="font-medium">{member.years_in_church ? `${member.years_in_church} years` : "—"}</p>
+                <div className="col-span-2 pt-2 border-t flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground font-medium">Years in CBT</p>
+                  <span className="font-bold text-sm text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
+                    {(() => {
+                      const targetDate = member.membership_date || member.date_saved || member.baptism_date || (member.created_at ? new Date(member.created_at).toISOString().split("T")[0] : null)
+                      if (targetDate) {
+                        const date = new Date(targetDate)
+                        if (!isNaN(date.getTime())) {
+                          const today = new Date()
+                          let years = today.getFullYear() - date.getFullYear()
+                          const m = today.getMonth() - date.getMonth()
+                          if (m < 0 || (m === 0 && today.getDate() < date.getDate())) years--
+                          const y = Math.max(0, years)
+                          return `${y} ${y === 1 ? "year" : "years"}`
+                        }
+                      }
+                      return member.years_in_church !== null && member.years_in_church !== undefined ? `${member.years_in_church} years` : "0 years"
+                    })()}
+                  </span>
                 </div>
               </div>
             </CardContent>
