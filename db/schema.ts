@@ -10,9 +10,10 @@ export const users = pgTable('users', {
 
 export const ministries = pgTable('ministries', {
   id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull().unique(),
+  name: text('name').notNull(),
   description: text('description'),
   for_everyone: boolean('for_everyone').default(false).notNull(),
+  parent_id: uuid('parent_id'),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 

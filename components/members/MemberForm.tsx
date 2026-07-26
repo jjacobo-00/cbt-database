@@ -107,7 +107,7 @@ const STEPS = [
   { id: 6, title: "Review" },
 ]
 
-type Ministry = { id: string; name: string; for_everyone?: boolean }
+type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
 
 export function MemberForm({ initialData, ministries = [] }: { initialData?: any; ministries?: Ministry[] }) {
   const [step, setStep] = useState(1)
@@ -550,40 +550,79 @@ export function MemberForm({ initialData, ministries = [] }: { initialData?: any
               <div className="flex flex-col items-center justify-center py-16 border rounded-xl text-muted-foreground gap-3">
                 <p className="text-sm">No ministries available. Ask an admin to add them via the Ministries page.</p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {ministries.map((ministry) => {
-                  const selected: string[] = form.watch("ministries") || []
-                  const isChecked = selected.includes(ministry.id)
-                  return (
-                    <label
-                      key={ministry.id}
-                      htmlFor={`min_${ministry.id}`}
-                      className={cn(
-                        "flex items-center gap-4 rounded-xl border p-5 cursor-pointer transition-all",
-                        isChecked ? "border-primary bg-primary/10" : "hover:border-muted-foreground/50"
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        id={`min_${ministry.id}`}
-                        checked={isChecked}
-                        onChange={(e) => {
-                          const current: string[] = form.getValues("ministries") || []
-                          if (e.target.checked) {
-                            form.setValue("ministries", [...current, ministry.id])
-                          } else {
-                            form.setValue("ministries", current.filter((id) => id !== ministry.id))
-                          }
-                        }}
-                        className="w-5 h-5 accent-primary"
-                      />
-                      <span className="text-base font-medium">{ministry.name}</span>
-                    </label>
-                  )
-                })}
-              </div>
-            )}
+            ) : (() => {
+              const parents = ministries.filter(m => !m.parent_id)
+              const getChildren = (pid: string) => ministries.filter(m => m.parent_id === pid)
+              const selected: string[] = form.watch("ministries") || []
+
+              const toggle = (id: string) => {
+                const current: string[] = form.getValues("ministries") || []
+                if (current.includes(id)) {
+                  form.setValue("ministries", current.filter(x => x !== id))
+                } else {
+                  form.setValue("ministries", [...current, id])
+                }
+              }
+
+              return (
+                <div className="space-y-6">
+                  {parents.map(parent => {
+                    const children = getChildren(parent.id)
+                    const isParentChecked = selected.includes(parent.id)
+
+                    return (
+                      <div key={parent.id} className="rounded-xl border overflow-hidden">
+                        {/* Parent ministry header */}
+                        <label
+                          htmlFor={`min_${parent.id}`}
+                          className={cn(
+                            "flex items-center gap-4 p-5 cursor-pointer transition-all",
+                            isParentChecked ? "bg-primary/10" : "hover:bg-muted/30"
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            id={`min_${parent.id}`}
+                            checked={isParentChecked}
+                            onChange={() => toggle(parent.id)}
+                            className="w-5 h-5 accent-primary"
+                          />
+                          <span className="text-base font-semibold">{parent.name}</span>
+                        </label>
+
+                        {/* Children sub-ministries */}
+                        {children.length > 0 && (
+                          <div className="border-t divide-y bg-muted/5">
+                            {children.map(child => {
+                              const isChildChecked = selected.includes(child.id)
+                              return (
+                                <label
+                                  key={child.id}
+                                  htmlFor={`min_${child.id}`}
+                                  className={cn(
+                                    "flex items-center gap-4 pl-12 pr-5 py-3.5 cursor-pointer transition-all",
+                                    isChildChecked ? "bg-primary/5" : "hover:bg-muted/30"
+                                  )}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    id={`min_${child.id}`}
+                                    checked={isChildChecked}
+                                    onChange={() => toggle(child.id)}
+                                    className="w-4 h-4 accent-primary"
+                                  />
+                                  <span className="text-sm">{child.name}</span>
+                                </label>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
         )}
 

@@ -1,6 +1,8 @@
 import { MemberForm } from "@/components/members/MemberForm"
 import { getMinistries } from "@/app/(dashboard)/ministries/actions"
 
+export const revalidate = 0
+
 export default async function NewMemberPage() {
   const ministries = await getMinistries()
 
