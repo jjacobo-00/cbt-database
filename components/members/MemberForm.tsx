@@ -259,6 +259,22 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     }
   }, [ministries, form])
 
+  const formRef = React.useRef<HTMLFormElement>(null)
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!formRef.current) return
+      const firstInput = formRef.current.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])"
+      )
+      if (firstInput) {
+        firstInput.focus()
+      }
+    }, 120)
+
+    return () => clearTimeout(timer)
+  }, [step])
+
   const validateStep = async () => {
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number"]
@@ -367,6 +383,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       </div>
 
       <form 
+        ref={formRef}
         onSubmit={form.handleSubmit(onSubmit)} 
         onKeyDown={(e) => {
           if (e.key === "Enter") {
