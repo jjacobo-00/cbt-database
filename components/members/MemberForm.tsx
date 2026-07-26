@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
-import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home } from "lucide-react"
+import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
+import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
 
 const memberSchema = z.object({
   // Step 1: Personal
@@ -253,6 +254,26 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
 
   const R = () => <span className="text-destructive ml-1">*</span>
 
+  const applyAddressPreset = (preset: AddressPreset, target: "current" | "permanent") => {
+    if (target === "current") {
+      form.setValue("barangay", preset.barangay, { shouldValidate: true })
+      form.setValue("city", preset.city, { shouldValidate: true })
+      form.setValue("province", preset.province, { shouldValidate: true })
+      form.setValue("zip_code", preset.zip_code, { shouldValidate: true })
+      if (form.getValues("is_perm_same_as_current")) {
+        form.setValue("perm_barangay", preset.barangay, { shouldValidate: true })
+        form.setValue("perm_city", preset.city, { shouldValidate: true })
+        form.setValue("perm_province", preset.province, { shouldValidate: true })
+        form.setValue("perm_zip_code", preset.zip_code, { shouldValidate: true })
+      }
+    } else {
+      form.setValue("perm_barangay", preset.barangay, { shouldValidate: true })
+      form.setValue("perm_city", preset.city, { shouldValidate: true })
+      form.setValue("perm_province", preset.province, { shouldValidate: true })
+      form.setValue("perm_zip_code", preset.zip_code, { shouldValidate: true })
+    }
+  }
+
   return (
     <div className="bg-card rounded-xl border shadow-sm p-4 md:p-10 w-full mx-auto">
       {/* Header */}
@@ -374,7 +395,26 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
               <h3 className="text-xl font-semibold mb-2 border-b pb-2 flex items-center gap-2">
                 <Home className="h-5 w-5 text-primary" /> Current Residence Address
               </h3>
-              <p className="text-xs text-muted-foreground mb-6">Please enter your present living address.</p>
+              <p className="text-xs text-muted-foreground mb-4">Please enter your present living address.</p>
+
+              {/* Quick Select Chips */}
+              <div className="p-4 rounded-xl border bg-muted/20 space-y-2 mb-6">
+                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Quick Select Olongapo Barangays & Nearby:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {OLONGAPO_BARANGAYS.slice(0, 8).map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => applyAddressPreset(preset, "current")}
+                      className="text-xs px-3 py-1 rounded-full border bg-card hover:bg-primary hover:text-primary-foreground transition-colors font-medium shadow-2xs"
+                    >
+                      📍 {preset.barangay}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="grid gap-2">
@@ -391,19 +431,37 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 </div>
                 <div className="grid gap-2">
                   <Label className="text-[13px] text-muted-foreground">Barangay</Label>
-                  <Input {...form.register("barangay")} className="h-12 bg-transparent" placeholder="e.g. Brgy. San Jose" />
+                  <Input 
+                    list="current-barangay-list" 
+                    {...form.register("barangay")} 
+                    onChange={(e) => {
+                      const val = e.target.value
+                      form.setValue("barangay", val)
+                      const match = ALL_ADDRESS_PRESETS.find(p => p.barangay.toLowerCase() === val.trim().toLowerCase())
+                      if (match) {
+                        applyAddressPreset(match, "current")
+                      }
+                    }}
+                    className="h-12 bg-transparent" 
+                    placeholder="e.g. Gordon Heights" 
+                  />
+                  <datalist id="current-barangay-list">
+                    {ALL_ADDRESS_PRESETS.map((p, idx) => (
+                      <option key={idx} value={p.barangay}>{`${p.barangay} (${p.city}, ${p.province} ${p.zip_code})`}</option>
+                    ))}
+                  </datalist>
                 </div>
                 <div className="grid gap-2">
                   <Label className="text-[13px] text-muted-foreground">City / Municipality</Label>
-                  <Input {...form.register("city")} className="h-12 bg-transparent" placeholder="e.g. Quezon City" />
+                  <Input {...form.register("city")} className="h-12 bg-transparent" placeholder="e.g. Olongapo City" />
                 </div>
                 <div className="grid gap-2">
                   <Label className="text-[13px] text-muted-foreground">Province</Label>
-                  <Input {...form.register("province")} className="h-12 bg-transparent" placeholder="e.g. Metro Manila" />
+                  <Input {...form.register("province")} className="h-12 bg-transparent" placeholder="e.g. Zambales" />
                 </div>
                 <div className="grid gap-2">
                   <Label className="text-[13px] text-muted-foreground">ZIP Code</Label>
-                  <Input {...form.register("zip_code")} className="h-12 bg-transparent" placeholder="e.g. 1100" />
+                  <Input {...form.register("zip_code")} className="h-12 bg-transparent" placeholder="e.g. 2200" />
                 </div>
                 <div className="grid gap-2 md:col-span-2">
                   <Label className="text-[13px] text-muted-foreground">Country</Label>
@@ -471,19 +529,37 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-[13px] text-muted-foreground">Barangay</Label>
-                    <Input {...form.register("perm_barangay")} className="h-12 bg-transparent" placeholder="e.g. Brgy. San Jose" />
+                    <Input 
+                      list="perm-barangay-list" 
+                      {...form.register("perm_barangay")} 
+                      onChange={(e) => {
+                        const val = e.target.value
+                        form.setValue("perm_barangay", val)
+                        const match = ALL_ADDRESS_PRESETS.find(p => p.barangay.toLowerCase() === val.trim().toLowerCase())
+                        if (match) {
+                          applyAddressPreset(match, "permanent")
+                        }
+                      }}
+                      className="h-12 bg-transparent" 
+                      placeholder="e.g. Gordon Heights" 
+                    />
+                    <datalist id="perm-barangay-list">
+                      {ALL_ADDRESS_PRESETS.map((p, idx) => (
+                        <option key={idx} value={p.barangay}>{`${p.barangay} (${p.city}, ${p.province} ${p.zip_code})`}</option>
+                      ))}
+                    </datalist>
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-[13px] text-muted-foreground">City / Municipality</Label>
-                    <Input {...form.register("perm_city")} className="h-12 bg-transparent" placeholder="e.g. Quezon City" />
+                    <Input {...form.register("perm_city")} className="h-12 bg-transparent" placeholder="e.g. Olongapo City" />
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-[13px] text-muted-foreground">Province</Label>
-                    <Input {...form.register("perm_province")} className="h-12 bg-transparent" placeholder="e.g. Metro Manila" />
+                    <Input {...form.register("perm_province")} className="h-12 bg-transparent" placeholder="e.g. Zambales" />
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-[13px] text-muted-foreground">ZIP Code</Label>
-                    <Input {...form.register("perm_zip_code")} className="h-12 bg-transparent" placeholder="e.g. 1100" />
+                    <Input {...form.register("perm_zip_code")} className="h-12 bg-transparent" placeholder="e.g. 2200" />
                   </div>
                   <div className="grid gap-2 md:col-span-2">
                     <Label className="text-[13px] text-muted-foreground">Country</Label>
