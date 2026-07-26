@@ -282,6 +282,19 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     }
   }
 
+  const handleBarangayAutoSelect = (currentVal: string, target: "current" | "permanent") => {
+    if (!currentVal || currentVal.trim() === "") return
+    const trimmed = currentVal.trim().toLowerCase()
+    
+    const match = 
+      ALL_ADDRESS_PRESETS.find(p => p.barangay.toLowerCase().startsWith(trimmed)) ||
+      ALL_ADDRESS_PRESETS.find(p => p.barangay.toLowerCase().includes(trimmed))
+      
+    if (match) {
+      applyAddressPreset(match, target)
+    }
+  }
+
   return (
     <div className="bg-card rounded-xl border shadow-sm p-4 md:p-10 w-full mx-auto">
       {/* Header */}
@@ -473,6 +486,16 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                         applyAddressPreset(match, "current")
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Tab" || e.key === "Enter") {
+                        const val = (e.target as HTMLInputElement).value
+                        handleBarangayAutoSelect(val, "current")
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const val = e.target.value
+                      handleBarangayAutoSelect(val, "current")
+                    }}
                     className="h-12 bg-transparent" 
                     placeholder="e.g. Gordon Heights" 
                   />
@@ -570,6 +593,16 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                         if (match) {
                           applyAddressPreset(match, "permanent")
                         }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Tab" || e.key === "Enter") {
+                          const val = (e.target as HTMLInputElement).value
+                          handleBarangayAutoSelect(val, "permanent")
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value
+                        handleBarangayAutoSelect(val, "permanent")
                       }}
                       className="h-12 bg-transparent" 
                       placeholder="e.g. Gordon Heights" 
