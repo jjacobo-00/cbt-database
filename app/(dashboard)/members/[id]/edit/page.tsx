@@ -5,8 +5,9 @@ import { notFound } from "next/navigation"
 import { MemberForm } from "@/components/members/MemberForm"
 import { getMinistries } from "@/app/(dashboard)/ministries/actions"
 
-export default async function EditMemberPage({ params }: { params: { id: string } }) {
-  const [member] = await db.select().from(members).where(eq(members.id, params.id))
+export default async function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  const [member] = await db.select().from(members).where(eq(members.id, resolvedParams.id))
 
   if (!member) {
     notFound()

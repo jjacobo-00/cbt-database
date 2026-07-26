@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Printer, Edit, ArrowLeft, User, MapPin, Briefcase } from "lucide-react"
 import Link from "next/link"
 
-export default async function MemberProfilePage({ params }: { params: { id: string } }) {
-  const [member] = await db.select().from(members).where(eq(members.id, params.id))
+export default async function MemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  const [member] = await db.select().from(members).where(eq(members.id, resolvedParams.id))
 
   if (!member) {
     notFound()

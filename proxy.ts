@@ -5,7 +5,7 @@ import { jwtVerify } from "jose"
 const secretKey = process.env.SESSION_SECRET || "default_secret_key_for_cbt_directory_change_me_in_prod"
 const key = new TextEncoder().encode(secretKey)
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const session = request.cookies.get("session")?.value
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
   

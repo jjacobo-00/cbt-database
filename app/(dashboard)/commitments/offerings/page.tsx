@@ -7,9 +7,10 @@ export const revalidate = 0
 
 export const metadata = { title: "Offering Commitments | CBT Directory" }
 
-export default async function OfferingsPage({ searchParams }: { searchParams: { year?: string } }) {
+export default async function OfferingsPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const currentYear = new Date().getFullYear()
-  const year = searchParams.year ? parseInt(searchParams.year) : currentYear
+  const resolvedSearchParams = await searchParams
+  const year = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year) : currentYear
 
   const [categories, allCommitments] = await Promise.all([
     getOfferingCategories(),
