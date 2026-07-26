@@ -269,6 +269,9 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       )
       if (firstInput) {
         firstInput.focus()
+      } else {
+        const nextBtn = formRef.current.querySelector<HTMLButtonElement>("button[data-next-btn]")
+        if (nextBtn) nextBtn.focus()
       }
     }, 120)
 
@@ -388,7 +391,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             const target = e.target as HTMLElement
-            if (target.tagName === "TEXTAREA" || target.tagName === "BUTTON") return
+            if (target.tagName === "TEXTAREA") return
 
             e.preventDefault()
             if (step < STEPS.length) {
@@ -1085,6 +1088,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
             {step < STEPS.length ? (
               <Button 
                 type="button" 
+                data-next-btn="true"
                 onClick={validateStep}
                 className="h-11 px-6 gap-2"
               >
@@ -1093,6 +1097,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
             ) : (
               <Button 
                 type="submit" 
+                data-next-btn="true"
                 disabled={isSubmitting}
                 className="h-11 px-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
               >
