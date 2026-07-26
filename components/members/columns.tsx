@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Pencil, Eye } from "lucide-react"
 import Link from "next/link"
 
 export type MemberType = {
@@ -67,9 +67,18 @@ export const columns: ColumnDef<MemberType>[] = [
     cell: ({ row }) => {
       const member = row.original
       return (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/members/${member.id}`}>View Profile</Link>
+            <Link href={`/members/${member.id}`}>
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              View Profile
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="border-primary/40 text-primary hover:bg-primary/10">
+            <Link href={`/members/${member.id}/edit`}>
+              <Pencil className="h-3.5 w-3.5 mr-1" />
+              Edit
+            </Link>
           </Button>
         </div>
       )

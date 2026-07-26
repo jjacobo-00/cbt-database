@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { toast } from "sonner"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
-import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles, Save, Loader2 } from "lucide-react"
+import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles, Save, Loader2, User, Heart, Church } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
 import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
@@ -16,6 +17,7 @@ import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/co
 const memberSchema = z.object({
   // Step 1: Personal
   first_name: z.string().min(1, "First name is required"),
+  middle_name: z.string().default(""),
   last_name: z.string().min(1, "Last name is required"),
   birth_date: z.string().min(1, "Date of birth is required"),
   gender: z.string().min(1, "Gender is required"),
@@ -134,6 +136,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     mode: "onChange",
     defaultValues: {
       first_name: initialData?.first_name || "",
+      middle_name: initialData?.middle_name || "",
       last_name: initialData?.last_name || "",
       birth_date: initialData?.birth_date || "",
       gender: initialData?.gender || "",
@@ -199,11 +202,14 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       const payload = JSON.stringify({ id: initialData?.id, ...values })
       if (initialData) {
         await updateMember(payload)
+        toast.success("Member profile updated successfully!")
       } else {
         await createMember(payload)
+        toast.success("New member record created successfully!")
       }
     } catch (e) {
       console.error(e)
+      toast.error("An error occurred while saving member profile.")
       setIsSubmitting(false)
     }
   }
@@ -1042,22 +1048,227 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
           )
         })()}
 
-        {/* STEP 7: REVIEW */}
-        {step === 7 && (
-          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-6">
-            <h3 className="text-xl font-semibold border-b pb-2">Review Summary</h3>
-            <div className="p-6 rounded-xl border bg-muted/20 space-y-4 text-sm">
-              <p><strong>Name:</strong> {form.watch("first_name")} {form.watch("last_name")}</p>
-              <p><strong>Gender:</strong> {form.watch("gender")}</p>
-              <p><strong>Birth Date:</strong> {form.watch("birth_date")}</p>
-              <p><strong>Contact Number:</strong> {form.watch("contact_number")}</p>
-              <p><strong>Current Address:</strong> {form.watch("house_number")} {form.watch("street")} {form.watch("barangay")} {form.watch("city")} {form.watch("province")}</p>
-              <p><strong>Permanent Address:</strong> {isPermSame ? "Same as Current Address" : `${form.watch("perm_house_number")} ${form.watch("perm_street")} ${form.watch("perm_barangay")} ${form.watch("perm_city")} ${form.watch("perm_province")}`}</p>
-              <p><strong>Employment Status:</strong> {form.watch("employment_status")}</p>
-              <p><strong>Highest Education:</strong> {form.watch("highest_educational_attainment")}</p>
+        {/* STEP 7: REVIEW SUMMARY */}
+        {step === 7 && (() => {
+          const v = form.getValues()
+          const currentMins: string[] = v.ministries || []
+          const selectedMinistryObjects = ministries.filter(m => currentMins.includes(m.id) || m.for_everyone || m.name.toLowerCase().includes("evangelistic"))
+          const siblingsList = v.siblings || []
+
+          const firstName = v.first_name || ""
+          const middleName = v.middle_name || ""
+          const lastName = v.last_name || ""
+          const gender = v.gender || ""
+          const birthDate = v.birth_date || ""
+          const contactNumber = v.contact_number || ""
+          const empStatus = v.employment_status || ""
+          const highestEdu = v.highest_educational_attainment || ""
+          const studentSchool = v.student_school || ""
+          const studentYear = v.student_year_level || ""
+          const studentCourse = v.student_course || ""
+          const company = v.company || ""
+          const position = v.position || ""
+          const fatherName = v.father_name || ""
+          const motherName = v.mother_name || ""
+          const parentsCivil = v.parents_civil_status || ""
+          const emergencyName = v.emergency_contact_name || ""
+          const emergencyRel = v.emergency_contact_relationship || ""
+          const emergencyNum = v.emergency_contact_number || ""
+          const baptismDate = v.baptism_date || ""
+          const baptizedBy = v.baptized_by || ""
+          const witnessBy = v.witness_by || ""
+          const placeOfBaptism = v.place_of_baptism || ""
+
+          return (
+            <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-6">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <h3 className="text-xl font-semibold">Review Member Record</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Please verify all information before saving the record.</p>
+                </div>
+                <span className="text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20">
+                  Ready for Submission
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                {/* 1. Personal & Demographics */}
+                <div className="p-5 rounded-2xl border bg-card space-y-3 shadow-2xs">
+                  <h4 className="font-bold text-base border-b pb-2 flex items-center gap-2 text-primary">
+                    <User className="h-4 w-4" /> Personal Profile
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Full Name</span>
+                      <span className="font-semibold text-sm">{firstName} {middleName} {lastName}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Gender</span>
+                      <span className="font-medium">{gender || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Date of Birth</span>
+                      <span className="font-medium">{birthDate || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Contact Number</span>
+                      <span className="font-medium">{contactNumber || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Address Details */}
+                <div className="p-5 rounded-2xl border bg-card space-y-3 shadow-2xs">
+                  <h4 className="font-bold text-base border-b pb-2 flex items-center gap-2 text-primary">
+                    <Home className="h-4 w-4" /> Residential Addresses
+                  </h4>
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground font-semibold block">Current Address:</span>
+                      <span className="font-medium">
+                        {[
+                          v.house_number,
+                          v.unit_number,
+                          v.street,
+                          v.barangay,
+                          v.city,
+                          v.province,
+                          v.zip_code,
+                          v.country
+                        ].filter(Boolean).join(" ") || "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground font-semibold block">Permanent Address:</span>
+                      <span className="font-medium">
+                        {isPermSame ? (
+                          <span className="text-muted-foreground italic">Same as Current Address</span>
+                        ) : (
+                          [
+                            v.perm_house_number,
+                            v.perm_unit_number,
+                            v.perm_street,
+                            v.perm_barangay,
+                            v.perm_city,
+                            v.perm_province,
+                            v.perm_zip_code,
+                            v.perm_country
+                          ].filter(Boolean).join(" ") || "—"
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Employment & Academic Status */}
+                <div className="p-5 rounded-2xl border bg-card space-y-3 shadow-2xs">
+                  <h4 className="font-bold text-base border-b pb-2 flex items-center gap-2 text-primary">
+                    <Briefcase className="h-4 w-4" /> Employment & Education
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Status</span>
+                      <span className="font-semibold">{empStatus || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Highest Attainment</span>
+                      <span className="font-semibold">{highestEdu || "—"}</span>
+                    </div>
+                    {empStatus === "Student" && (
+                      <div className="col-span-2 space-y-1 pt-1 border-t">
+                        <p><span className="text-muted-foreground">School:</span> {studentSchool || "—"}</p>
+                        <p><span className="text-muted-foreground">Year / Course:</span> {studentYear} {studentCourse}</p>
+                      </div>
+                    )}
+                    {empStatus === "Employed" && (
+                      <div className="col-span-2 space-y-1 pt-1 border-t">
+                        <p><span className="text-muted-foreground">Company:</span> {company || "—"}</p>
+                        <p><span className="text-muted-foreground">Position:</span> {position || "—"}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Family & Emergency Contact */}
+                <div className="p-5 rounded-2xl border bg-card space-y-3 shadow-2xs">
+                  <h4 className="font-bold text-base border-b pb-2 flex items-center gap-2 text-primary">
+                    <Heart className="h-4 w-4" /> Family & Emergency Contact
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Father's Name</span>
+                      <span className="font-medium">{fatherName || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Mother's Name</span>
+                      <span className="font-medium">{motherName || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Parents' Civil Status</span>
+                      <span className="font-medium">{parentsCivil || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Siblings</span>
+                      <span className="font-medium">{siblingsList.length > 0 ? `${siblingsList.length} recorded` : "None"}</span>
+                    </div>
+                    <div className="col-span-2 pt-2 border-t text-amber-600 dark:text-amber-400">
+                      <span className="font-semibold block">Emergency Contact:</span>
+                      <p>{emergencyName || "—"} ({emergencyRel || "Contact"}) - {emergencyNum || "No phone"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Spiritual Background */}
+                <div className="p-5 rounded-2xl border bg-card space-y-3 shadow-2xs">
+                  <h4 className="font-bold text-base border-b pb-2 flex items-center gap-2 text-primary">
+                    <Church className="h-4 w-4" /> Spiritual Background
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Baptism Date</span>
+                      <span className="font-medium">{baptismDate || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Baptized By</span>
+                      <span className="font-medium">{baptizedBy || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Witness By</span>
+                      <span className="font-medium">{witnessBy || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Place of Baptism</span>
+                      <span className="font-medium">{placeOfBaptism || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Selected Ministries */}
+                <div className="p-5 rounded-2xl border bg-card space-y-3 shadow-2xs">
+                  <h4 className="font-bold text-base border-b pb-2 flex items-center justify-between text-primary">
+                    <span>Ministries Enrolled</span>
+                    <span className="text-xs font-normal text-muted-foreground">{selectedMinistryObjects.length} active</span>
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {selectedMinistryObjects.length > 0 ? (
+                      selectedMinistryObjects.map((m) => (
+                        <span 
+                          key={m.id}
+                          className="text-xs px-3 py-1 rounded-full border bg-primary/10 text-primary border-primary/20 font-medium flex items-center gap-1.5"
+                        >
+                          <Check className="h-3 w-3 stroke-[3]" />
+                          {m.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">No ministries selected</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* BOTTOM NAVIGATION BUTTONS */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t mt-8">
