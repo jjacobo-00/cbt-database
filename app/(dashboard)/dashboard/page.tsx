@@ -1,20 +1,28 @@
 import { db } from "@/db"
 import { members, ministries } from "@/db/schema"
-import { eq, isNotNull, desc, sql } from "drizzle-orm"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { eq, isNotNull, desc, sql, gte } from "drizzle-orm"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, UserPlus, FileText, Activity } from "lucide-react"
+import { Users, UserPlus, FileText, Activity, Droplets, HeartHandshake } from "lucide-react"
 import Link from "next/link"
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts"
+import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable"
 
 export default async function DashboardPage() {
-  // Fetch counts in parallel
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+  sixMonthsAgo.setDate(1)
+  sixMonthsAgo.setHours(0, 0, 0, 0)
+
+  // Fetch counts and data in parallel
   const [
     totalMembersResult,
     totalMalesResult,
     totalFemalesResult,
     totalBaptizedResult,
     totalMinistriesResult,
-    recentMembers
+    recentMembers,
+    growthDataQuery
   ] = await Promise.all([
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(eq(members.sex, "Male")),
@@ -28,7 +36,10 @@ export default async function DashboardPage() {
       contact_number: members.contact_number,
       city: members.city,
       created_at: members.created_at
-    }).from(members).orderBy(desc(members.created_at)).limit(5)
+    }).from(members).orderBy(desc(members.created_at)).limit(5),
+    db.select({ created_at: members.created_at })
+      .from(members)
+      .where(gte(members.created_at, sixMonthsAgo))
   ])
 
   const totalMembers = totalMembersResult[0]?.count || 0
@@ -37,118 +48,144 @@ export default async function DashboardPage() {
   const totalBaptized = totalBaptizedResult[0]?.count || 0
   const totalMinistries = totalMinistriesResult[0]?.count || 0
 
+  // Calculate Percentages
   const malePercentage = totalMembers ? Math.round((totalMales / totalMembers) * 100) : 0
   const femalePercentage = totalMembers ? Math.round((totalFemales / totalMembers) * 100) : 0
-  const baptizedPercentage = totalMembers ? Math.round((totalBaptized / totalMembers) * 100) : 0
+  
+  // Format Gender Data for Pie Chart
+  const genderData = [
+    { name: 'Male', value: totalMales },
+    { name: 'Female', value: totalFemales },
+  ]
+
+  // Format Monthly Growth Data for Area Chart
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const monthlyData: { month: string, members: number, year: number, monthNum: number }[] = []
+  
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    monthlyData.push({ 
+      month: months[d.getMonth()], 
+      members: 0, 
+      year: d.getFullYear(), 
+      monthNum: d.getMonth() 
+    })
+  }
+
+  growthDataQuery.forEach(member => {
+    if (member.created_at) {
+      const mDate = new Date(member.created_at)
+      const m = mDate.getMonth()
+      const y = mDate.getFullYear()
+      const bucket = monthlyData.find(b => b.monthNum === m && b.year === y)
+      if (bucket) {
+        bucket.members++
+      }
+    }
+  })
+
+  // Format Current Date for Hero Section
+  const currentDate = new Date().toLocaleDateString(undefined, { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild>
-            <Link href="/members/new"><UserPlus className="mr-2 h-4 w-4" /> Add Member</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/reports"><FileText className="mr-2 h-4 w-4" /> Reports</Link>
-          </Button>
+    <div className="space-y-6 pb-8">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-10 border shadow-sm">
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome Back! 👋</h1>
+            <p className="text-muted-foreground font-medium">
+              Today is {currentDate}. Here's what's happening in your church.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg" className="shadow-md hover:shadow-lg transition-all">
+              <Link href="/members/new"><UserPlus className="mr-2 h-4 w-4" /> Add Member</Link>
+            </Button>
+            <Button variant="outline" size="lg" asChild className="bg-background/50 backdrop-blur-sm">
+              <Link href="/reports"><FileText className="mr-2 h-4 w-4" /> Reports</Link>
+            </Button>
+          </div>
         </div>
+        {/* Decorative background blob */}
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       </div>
 
+      {/* KPI Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 bg-blue-500/10 rounded-full flex items-center justify-center">
+              <Users className="h-4 w-4 text-blue-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalMembers}</div>
-            <p className="text-xs text-muted-foreground">Registered in the database</p>
+            <div className="text-3xl font-bold">{totalMembers}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Registered in the database</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Gender Ratio</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
+              <Activity className="h-4 w-4 text-purple-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{malePercentage}% M / {femalePercentage}% F</div>
-            <div className="mt-2 h-2 w-full bg-secondary rounded-full overflow-hidden flex">
-              <div className="bg-primary h-full" style={{ width: `${malePercentage}%` }} />
-              <div className="bg-destructive h-full" style={{ width: `${femalePercentage}%` }} />
+            <div className="text-3xl font-bold flex items-baseline gap-2">
+              <span className="text-blue-500">{malePercentage}%</span>
+              <span className="text-lg text-muted-foreground font-normal">/</span>
+              <span className="text-pink-500">{femalePercentage}%</span>
+            </div>
+            <div className="mt-3 h-2 w-full bg-secondary rounded-full overflow-hidden flex">
+              <div className="bg-blue-500 h-full transition-all" style={{ width: `${malePercentage}%` }} />
+              <div className="bg-pink-500 h-full transition-all" style={{ width: `${femalePercentage}%` }} />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Baptized</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Baptized Members</CardTitle>
+            <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
+              <Droplets className="h-4 w-4 text-green-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{baptizedPercentage}%</div>
-            <p className="text-xs text-muted-foreground">{totalBaptized} members baptized</p>
+            <div className="text-3xl font-bold">{totalBaptized}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              <span className="text-green-500 font-semibold">{totalMembers ? Math.round((totalBaptized / totalMembers) * 100) : 0}%</span> of total members
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-amber-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Ministries</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center">
+              <HeartHandshake className="h-4 w-4 text-amber-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalMinistries}</div>
-            <p className="text-xs text-muted-foreground">Available to join</p>
+            <div className="text-3xl font-bold">{totalMinistries}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Available to join</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Members</CardTitle>
-          <CardDescription>The 5 most recently added members.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-muted/50 text-muted-foreground border-b">
-                <tr>
-                  <th className="px-4 py-3 font-medium whitespace-nowrap">Name</th>
-                  <th className="px-4 py-3 font-medium whitespace-nowrap">Contact</th>
-                  <th className="px-4 py-3 font-medium whitespace-nowrap">City</th>
-                  <th className="px-4 py-3 font-medium whitespace-nowrap">Added</th>
-                  <th className="px-4 py-3 font-medium text-right whitespace-nowrap">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentMembers.map((member) => (
-                  <tr key={member.id} className="border-b last:border-0 hover:bg-muted/50">
-                    <td className="px-4 py-3 font-medium whitespace-nowrap">{member.first_name} {member.last_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.contact_number || "-"}</td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.city || "-"}</td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {member.created_at ? new Date(member.created_at).toLocaleDateString() : "-"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/members/${member.id}`}>View</Link>
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-                {!recentMembers.length && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                      No members found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Charts Section */}
+      <DashboardCharts monthlyData={monthlyData} genderData={genderData} />
+
+      {/* Recent Members Table */}
+      <RecentMembersTable recentMembers={recentMembers} />
     </div>
   )
 }
