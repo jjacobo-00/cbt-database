@@ -154,3 +154,18 @@ export const commitment_offerings = pgTable('commitment_offerings', {
   offering_category_id: uuid('offering_category_id').notNull().references(() => offering_categories.id, { onDelete: 'cascade' }),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
+
+// ──────────────────────────────────────────────
+// ORG CHART SYSTEM
+// ──────────────────────────────────────────────
+
+import { AnyPgColumn } from 'drizzle-orm/pg-core'
+
+export const org_chart_nodes = pgTable('org_chart_nodes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  role_title: text('role_title').notNull(),
+  member_id: uuid('member_id').references(() => members.id, { onDelete: 'set null' }),
+  parent_id: uuid('parent_id').references((): AnyPgColumn => org_chart_nodes.id, { onDelete: 'set null' }),
+  sort_order: integer('sort_order').default(0),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
