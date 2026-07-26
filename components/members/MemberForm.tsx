@@ -244,6 +244,21 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     }
   }, [highestAttainment, form, step])
 
+  React.useEffect(() => {
+    if (!ministries || ministries.length === 0) return
+    const mandatoryIds = ministries
+      .filter(m => m.for_everyone || m.name.toLowerCase().includes("evangelistic"))
+      .map(m => m.id)
+
+    if (mandatoryIds.length > 0) {
+      const current = form.getValues("ministries") || []
+      const missing = mandatoryIds.filter(id => !current.includes(id))
+      if (missing.length > 0) {
+        form.setValue("ministries", [...current, ...missing])
+      }
+    }
+  }, [ministries, form])
+
   const validateStep = async () => {
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number"]
@@ -839,12 +854,15 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
               <h4 className="font-semibold text-base">Select Ministries</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {ministries.map((m) => {
+                  const isMandatory = m.for_everyone || m.name.toLowerCase().includes("evangelistic")
                   const currentMins: string[] = form.watch("ministries") || []
-                  const isSelected = currentMins.includes(m.id)
+                  const isSelected = isMandatory || currentMins.includes(m.id)
+
                   return (
                     <div 
                       key={m.id} 
                       onClick={() => {
+                        if (isMandatory) return
                         if (isSelected) {
                           form.setValue("ministries", currentMins.filter(id => id !== m.id))
                         } else {
@@ -852,11 +870,22 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                         }
                       }}
                       className={cn(
-                        "p-4 rounded-xl border cursor-pointer select-none transition-all flex items-center justify-between",
-                        isSelected ? "border-primary bg-primary/5 font-medium" : "hover:border-primary/50"
+                        "p-4 rounded-xl border transition-all flex items-center justify-between select-none",
+                        isMandatory 
+                          ? "border-primary/50 bg-primary/10 cursor-not-allowed font-medium" 
+                          : isSelected 
+                            ? "border-primary bg-primary/5 font-medium cursor-pointer" 
+                            : "hover:border-primary/50 cursor-pointer"
                       )}
                     >
-                      <span>{m.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{m.name}</span>
+                        {isMandatory && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                            Required
+                          </span>
+                        )}
+                      </div>
                       <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", isSelected && "bg-primary text-primary-foreground border-primary")}>
                         {isSelected && <Check className="h-3 w-3" />}
                       </div>
