@@ -719,7 +719,27 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
 
             <div className="grid gap-2 max-w-sm">
               <Label className="text-[13px] text-muted-foreground">Parents' Civil Status</Label>
-              <Input {...form.register("parents_civil_status")} className="h-11 bg-transparent" placeholder="e.g. Married, Separated, Single" />
+              <div className="relative flex items-center">
+                <select 
+                  {...form.register("parents_civil_status")} 
+                  className={cn(
+                    "flex appearance-none h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0",
+                    !form.watch("parents_civil_status") ? "text-muted-foreground" : "text-foreground"
+                  )}
+                >
+                  <option value="" className="bg-card text-muted-foreground">Select Civil Status...</option>
+                  <option value="Married" className="bg-card text-foreground">Married</option>
+                  <option value="Single Parent" className="bg-card text-foreground">Single Parent</option>
+                  <option value="Widowed" className="bg-card text-foreground">Widowed</option>
+                  <option value="Separated" className="bg-card text-foreground">Separated</option>
+                  <option value="Divorced" className="bg-card text-foreground">Divorced</option>
+                  <option value="Annulled" className="bg-card text-foreground">Annulled</option>
+                  <option value="Living Together" className="bg-card text-foreground">Living Together / Co-habitating</option>
+                  <option value="Deceased" className="bg-card text-foreground">Deceased (Both)</option>
+                  <option value="Other" className="bg-card text-foreground">Other / Not Specified</option>
+                </select>
+                <ChevronDown className="absolute right-3 h-4 w-4 text-muted-foreground opacity-50 pointer-events-none" />
+              </div>
             </div>
 
             {/* Siblings */}
