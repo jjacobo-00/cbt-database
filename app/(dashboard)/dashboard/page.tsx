@@ -1,9 +1,9 @@
 import { db } from "@/db"
-import { members, ministries } from "@/db/schema"
+import { members, ministries, commitments } from "@/db/schema"
 import { eq, isNotNull, desc, sql, gte } from "drizzle-orm"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, UserPlus, FileText, Activity, Droplets, HeartHandshake } from "lucide-react"
+import { Users, UserPlus, FileText, Activity, Droplets, HeartHandshake, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts"
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable"
@@ -14,21 +14,22 @@ export default async function DashboardPage() {
   sixMonthsAgo.setDate(1)
   sixMonthsAgo.setHours(0, 0, 0, 0)
 
+  const currentYear = new Date().getFullYear()
+
   // Fetch counts and data in parallel
   const [
     totalMembersResult,
-    totalMalesResult,
-    totalFemalesResult,
     totalBaptizedResult,
     totalMinistriesResult,
+    currentYearCommitmentsResult,
     recentMembers,
-    growthDataQuery
+    growthDataQuery,
+    ageDataQuery
   ] = await Promise.all([
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
-    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(eq(members.sex, "Male")),
-    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(eq(members.sex, "Female")),
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(isNotNull(members.date_baptized)),
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(ministries),
+    db.select({ count: sql<number>`cast(count(*) as int)` }).from(commitments).where(eq(commitments.year, currentYear)),
     db.select({
       id: members.id,
       first_name: members.first_name,
@@ -39,23 +40,40 @@ export default async function DashboardPage() {
     }).from(members).orderBy(desc(members.created_at)).limit(5),
     db.select({ created_at: members.created_at })
       .from(members)
-      .where(gte(members.created_at, sixMonthsAgo))
+      .where(gte(members.created_at, sixMonthsAgo)),
+    db.select({ age: members.age }).from(members)
   ])
 
   const totalMembers = totalMembersResult[0]?.count || 0
-  const totalMales = totalMalesResult[0]?.count || 0
-  const totalFemales = totalFemalesResult[0]?.count || 0
   const totalBaptized = totalBaptizedResult[0]?.count || 0
   const totalMinistries = totalMinistriesResult[0]?.count || 0
+  const totalCommitments = currentYearCommitmentsResult[0]?.count || 0
 
-  // Calculate Percentages
-  const malePercentage = totalMembers ? Math.round((totalMales / totalMembers) * 100) : 0
-  const femalePercentage = totalMembers ? Math.round((totalFemales / totalMembers) * 100) : 0
-  
-  // Format Gender Data for Pie Chart
-  const genderData = [
-    { name: 'Male', value: totalMales },
-    { name: 'Female', value: totalFemales },
+  // Baptism Status Data
+  const baptismData = [
+    { name: 'Baptized', value: totalBaptized },
+    { name: 'Unbaptized', value: totalMembers - totalBaptized },
+  ]
+
+  // Calculate Age Demographics
+  let kids = 0, youth = 0, youngAdults = 0, adults = 0, seniors = 0;
+  ageDataQuery.forEach(member => {
+    const age = member.age
+    if (age !== null && age !== undefined) {
+      if (age <= 12) kids++
+      else if (age <= 17) youth++
+      else if (age <= 35) youngAdults++
+      else if (age <= 55) adults++
+      else seniors++
+    }
+  })
+
+  const ageDemographicsData = [
+    { name: 'Kids (0-12)', value: kids },
+    { name: 'Youth (13-17)', value: youth },
+    { name: 'Young Adults (18-35)', value: youngAdults },
+    { name: 'Adults (36-55)', value: adults },
+    { name: 'Seniors (55+)', value: seniors },
   ]
 
   // Format Monthly Growth Data for Area Chart
@@ -134,20 +152,21 @@ export default async function DashboardPage() {
 
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gender Ratio</CardTitle>
+            <CardTitle className="text-sm font-medium">{currentYear} Commitments</CardTitle>
             <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
-              <Activity className="h-4 w-4 text-purple-500" />
+              <CheckCircle className="h-4 w-4 text-purple-500" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold flex items-baseline gap-2">
-              <span className="text-blue-500">{malePercentage}%</span>
-              <span className="text-lg text-muted-foreground font-normal">/</span>
-              <span className="text-pink-500">{femalePercentage}%</span>
+              <span className="text-purple-600">{totalCommitments}</span>
+              <span className="text-lg text-muted-foreground font-normal">/ {totalMembers}</span>
             </div>
             <div className="mt-3 h-2 w-full bg-secondary rounded-full overflow-hidden flex">
-              <div className="bg-blue-500 h-full transition-all" style={{ width: `${malePercentage}%` }} />
-              <div className="bg-pink-500 h-full transition-all" style={{ width: `${femalePercentage}%` }} />
+              <div 
+                className="bg-purple-500 h-full transition-all" 
+                style={{ width: `${totalMembers ? Math.round((totalCommitments / totalMembers) * 100) : 0}%` }} 
+              />
             </div>
           </CardContent>
         </Card>
@@ -182,7 +201,11 @@ export default async function DashboardPage() {
       </div>
 
       {/* Charts Section */}
-      <DashboardCharts monthlyData={monthlyData} genderData={genderData} />
+      <DashboardCharts 
+        monthlyData={monthlyData} 
+        baptismData={baptismData} 
+        ageData={ageDemographicsData} 
+      />
 
       {/* Recent Members Table */}
       <RecentMembersTable recentMembers={recentMembers} />
