@@ -111,7 +111,7 @@ export function GenerateInviteLinkButton({
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md w-full p-0 overflow-hidden bg-card border-slate-800 shadow-2xl">
-          <div className="p-6 pb-4">
+          <div className="p-6 pb-4 w-full min-w-0">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
                 <Link2 className="h-5 w-5 text-primary" />
@@ -123,7 +123,7 @@ export function GenerateInviteLinkButton({
             </DialogHeader>
           </div>
 
-          <div className="px-6 pb-6 space-y-5">
+          <div className="px-6 pb-6 space-y-5 w-full min-w-0">
             <Button 
               onClick={handleGenerate}
               disabled={isGenerating}
@@ -164,6 +164,11 @@ export function GenerateInviteLinkButton({
                       const timeRemaining = getTimeRemaining(link.expires_at)
                       const isExpired = timeRemaining === "Expired"
                       
+                      // Shorten display token: first 8 and last 8 characters
+                      const displayToken = link.token.length > 16 
+                        ? `${link.token.substring(0, 8)}...${link.token.substring(link.token.length - 8)}`
+                        : link.token
+                      
                       return (
                         <div 
                           key={link.token} 
@@ -171,7 +176,7 @@ export function GenerateInviteLinkButton({
                         >
                           <div className="min-w-0 flex-1 pr-2">
                             <p className="text-xs font-mono truncate text-foreground/90 font-medium">
-                              {window.location.origin}/invite/{link.token}
+                              {window.location.origin}/invite/{displayToken}
                             </p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">
                               Created {link.created_at ? new Date(link.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "recently"}
