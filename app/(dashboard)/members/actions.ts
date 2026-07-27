@@ -568,7 +568,8 @@ export async function getMembersList() {
     middle_name: members.middle_name,
     last_name: members.last_name,
     suffix: members.suffix,
-    email: members.email
+    email: members.email,
+    contact_number: members.contact_number
   }).from(members)
   return result
 }
