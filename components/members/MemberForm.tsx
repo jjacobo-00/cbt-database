@@ -210,6 +210,33 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     }
   })
 
+  // Auto-Save Draft (Load on mount)
+  React.useEffect(() => {
+    if (!initialData) {
+      const savedDraft = localStorage.getItem("cbt_new_member_draft")
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft)
+          form.reset(parsed)
+          // Use setTimeout to ensure toast fires after mount
+          setTimeout(() => toast.info("Unsaved draft recovered successfully.", { icon: "📝" }), 500)
+        } catch (e) {
+          console.error("Failed to parse draft", e)
+        }
+      }
+    }
+  }, [initialData, form])
+
+  // Auto-Save Draft (Save on change)
+  React.useEffect(() => {
+    if (!initialData) {
+      const subscription = form.watch((value) => {
+        localStorage.setItem("cbt_new_member_draft", JSON.stringify(value))
+      })
+      return () => subscription.unsubscribe()
+    }
+  }, [initialData, form.watch])
+
   const { fields: siblingFields, append: appendSibling, remove: removeSibling } = useFieldArray({ control: form.control, name: "siblings" })
   const { fields: eduFields } = useFieldArray({ control: form.control, name: "education_details" })
 
@@ -225,6 +252,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       } else {
         await createMember(payload)
         toast.success("New member record created successfully!")
+        localStorage.removeItem("cbt_new_member_draft")
       }
     } catch (e: any) {
       if (isRedirectError(e)) {
