@@ -7,7 +7,7 @@ import { members, ministries, member_ministries, commitments, commitment_ministr
 import crypto from "crypto"
 import { eq, and, gt, desc, isNull } from "drizzle-orm"
 
-export async function createMember(payloadStr: string) {
+export async function coreCreateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
 
   const [member] = await db.insert(members).values({
@@ -147,12 +147,17 @@ export async function createMember(payloadStr: string) {
     }).where(eq(members.id, data.spouse_member_id))
   }
 
-  revalidatePath("/members")
-  revalidatePath("/commitments")
-  redirect(`/members/${member.id}`)
+  return member.id
 }
 
-export async function updateMember(payloadStr: string) {
+export async function createMember(payloadStr: string) {
+  const memberId = await coreCreateMember(payloadStr)
+  revalidatePath("/members")
+  revalidatePath("/commitments")
+  redirect(`/members/${memberId}`)
+}
+
+export async function coreUpdateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
   const id = data.id
 
@@ -310,9 +315,14 @@ export async function updateMember(payloadStr: string) {
     }).where(eq(members.id, newSpouseId))
   }
 
+  return id
+}
+
+export async function updateMember(payloadStr: string) {
+  const memberId = await coreUpdateMember(payloadStr)
   revalidatePath("/members")
-  revalidatePath(`/members/${id}`)
-  redirect(`/members/${id}`)
+  revalidatePath(`/members/${memberId}`)
+  redirect(`/members/${memberId}`)
 }
 
 export async function deleteMember(id: string) {
@@ -455,9 +465,9 @@ export async function submitInviteForm(token: string, payloadStr: string) {
     // Inject the correct ID to prevent ID spoofing
     const data = JSON.parse(payloadStr)
     data.id = invite.member_id
-    await updateMember(JSON.stringify(data))
+    await coreUpdateMember(JSON.stringify(data))
   } else {
-    await createMember(payloadStr)
+    await coreCreateMember(payloadStr)
   }
 
   // Mark token as used
