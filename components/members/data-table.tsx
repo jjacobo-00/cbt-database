@@ -56,7 +56,8 @@ export function DataTable<TData, TValue>({
           className="max-w-sm"
         />
       </div>
-      <div className="rounded-md border bg-card">
+      {/* Desktop Table View */}
+      <div className="hidden md:block rounded-md border bg-card">
         <div className="w-full overflow-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
@@ -101,6 +102,55 @@ export function DataTable<TData, TValue>({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => {
+            const cells = row.getVisibleCells();
+            const nameCell = cells.find(c => c.column.id === "name");
+            const contactCell = cells.find(c => c.column.id === "contact_number");
+            const cityCell = cells.find(c => c.column.id === "city");
+            const occupationCell = cells.find(c => c.column.id === "occupation");
+            const actionsCell = cells.find(c => c.column.id === "actions");
+
+            return (
+              <div key={row.id} className="rounded-xl border bg-card shadow-sm p-4 space-y-4 animate-in fade-in duration-300">
+                <div className="font-bold text-lg border-b pb-3 text-primary flex items-center justify-between">
+                  {nameCell ? flexRender(nameCell.column.columnDef.cell, nameCell.getContext()) : null}
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Contact Number</span>
+                    <span className="font-medium text-foreground">
+                      {contactCell ? flexRender(contactCell.column.columnDef.cell, contactCell.getContext()) : "—"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">City</span>
+                    <span className="font-medium text-foreground">
+                      {cityCell ? flexRender(cityCell.column.columnDef.cell, cityCell.getContext()) : "—"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1 col-span-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Occupation</span>
+                    <span className="font-medium text-foreground">
+                      {occupationCell ? flexRender(occupationCell.column.columnDef.cell, occupationCell.getContext()) : "—"}
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-4 border-t flex justify-end">
+                  {actionsCell ? flexRender(actionsCell.column.columnDef.cell, actionsCell.getContext()) : null}
+                </div>
+              </div>
+            )
+          })
+        ) : (
+          <div className="text-center p-8 border rounded-xl bg-card text-muted-foreground">
+            No results found.
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
