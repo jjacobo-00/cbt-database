@@ -490,8 +490,10 @@ export async function getMembersList() {
   const result = await db.select({
     id: members.id,
     first_name: members.first_name,
+    middle_name: members.middle_name,
     last_name: members.last_name,
-    suffix: members.suffix
+    suffix: members.suffix,
+    email: members.email
   }).from(members)
   return result
 }

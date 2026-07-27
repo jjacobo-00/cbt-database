@@ -1,4 +1,6 @@
 import { getWhitelistedUsers, addWhitelistedUser, removeWhitelistedUser } from "./actions"
+import { getMembersList } from "@/app/(dashboard)/members/actions"
+import { AddUserClient } from "@/components/users/AddUserClient"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +9,7 @@ import { Trash2, UserPlus } from "lucide-react"
 
 export default async function UsersPage() {
   const users = await getWhitelistedUsers()
+  const members = await getMembersList()
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -22,20 +25,7 @@ export default async function UsersPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={addWhitelistedUser} className="flex flex-col sm:flex-row gap-4 mb-8 sm:items-end max-w-2xl w-full">
-              <div className="grid flex-1 gap-2 w-full">
-                <label className="text-sm font-medium leading-none" htmlFor="email">Google Email Address</label>
-                <Input required type="email" id="email" name="email" placeholder="e.g. pastor@cbt.org" className="w-full" />
-              </div>
-              <div className="grid flex-1 gap-2 w-full">
-                <label className="text-sm font-medium leading-none" htmlFor="name">Name (Optional)</label>
-                <Input type="text" id="name" name="name" placeholder="e.g. John Doe" className="w-full" />
-              </div>
-              <Button type="submit" className="gap-2 w-full sm:w-auto">
-                <UserPlus className="h-4 w-4" />
-                Add User
-              </Button>
-            </form>
+            <AddUserClient members={members} />
 
             <div className="rounded-md border bg-card">
               <Table>
