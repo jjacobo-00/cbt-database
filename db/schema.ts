@@ -84,6 +84,7 @@ export const members = pgTable('members', {
   first_name: text('first_name').notNull(),
   middle_name: text('middle_name'),
   last_name: text('last_name').notNull(),
+  suffix: text('suffix'),
   sex: text('sex'),
   age: integer('age'),
   birth_date: text('birth_date'),
@@ -125,6 +126,7 @@ export const members = pgTable('members', {
   
   // Family
   marital_status: text('marital_status'),
+  widowed_date: text('widowed_date'),
   father_name: text('father_name'),
   father_occupation: text('father_occupation'),
   father_contact_number: text('father_contact_number'),

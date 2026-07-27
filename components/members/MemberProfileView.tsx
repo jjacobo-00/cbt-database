@@ -75,6 +75,18 @@ export function MemberProfileView({
   ].filter(Boolean)
   const fullAddress = addressParts.join(", ")
 
+  const permAddressParts = [
+    member.perm_unit_number ? `Unit ${member.perm_unit_number}` : null,
+    member.perm_house_number ? `#${member.perm_house_number}` : null,
+    member.perm_street,
+    member.perm_barangay ? `Brgy. ${member.perm_barangay}` : null,
+    member.perm_city,
+    member.perm_province,
+    member.perm_zip_code,
+    member.perm_country && member.perm_country !== "Philippines" ? member.perm_country : null
+  ].filter(Boolean)
+  const fullPermAddress = permAddressParts.join(", ")
+
   // Initials for avatar
   const initials = `${member.first_name?.[0] || ""}${member.last_name?.[0] || ""}`.toUpperCase()
 
@@ -204,7 +216,7 @@ export function MemberProfileView({
               <div className="space-y-1 pb-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                    {member.first_name} {member.middle_name ? `${member.middle_name} ` : ""}{member.last_name}
+                    {member.first_name} {member.middle_name ? `${member.middle_name} ` : ""}{member.last_name}{member.suffix ? ` ${member.suffix}` : ""}
                   </h2>
                 </div>
 
@@ -337,7 +349,8 @@ export function MemberProfileView({
 
       {/* 1. OVERVIEW TAB */}
       {(activeTab === "overview" || false) && (
-        <div className="grid gap-6 md:grid-cols-2 print:hidden">
+        <div className="space-y-6 print:hidden">
+          <div className="grid gap-6 md:grid-cols-2 items-start">
           {/* Active Ministries Badge Card */}
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
@@ -422,7 +435,20 @@ export function MemberProfileView({
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Civil / Marital Status</p>
-                  <p className="font-medium">{member.marital_status || "—"}</p>
+                  <p className="font-medium">
+                    {member.marital_status === "Married" ? (
+                      `Married to ${member.spouse_name || "Unknown"} (${
+                        member.anniversary_date ? (
+                          !isNaN(new Date(member.anniversary_date).getFullYear()) ? 
+                            `${new Date().getFullYear() - new Date(member.anniversary_date).getFullYear()} years` : "Unknown"
+                        ) : "Unknown"
+                      })`
+                    ) : member.marital_status === "Widowed" && member.widowed_date ? (
+                      `Widowed (Since ${member.widowed_date})`
+                    ) : (
+                      member.marital_status || "—"
+                    )}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Gender / Sex</p>
@@ -432,10 +458,6 @@ export function MemberProfileView({
                   <p className="text-xs text-muted-foreground">Email Address</p>
                   <p className="font-medium">{member.email || "—"}</p>
                 </div>
-              </div>
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">Full Address</p>
-                <p className="font-medium mt-0.5 break-words whitespace-normal leading-tight">{fullAddress || "—"}</p>
               </div>
             </CardContent>
           </Card>
@@ -484,6 +506,40 @@ export function MemberProfileView({
                       return member.years_in_church !== null && member.years_in_church !== undefined ? `${member.years_in_church} years` : "0 years"
                     })()}
                   </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          </div>
+
+          {/* New Full-Width Address Card */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" /> Location & Addresses
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                    Current Residence
+                  </h4>
+                  <p className="font-medium break-words whitespace-normal leading-tight">
+                    {fullAddress || "No current address specified."}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                    Permanent Address
+                  </h4>
+                  <p className="font-medium break-words whitespace-normal leading-tight">
+                    {member.is_perm_same_as_current ? (
+                      <span className="text-muted-foreground italic">Same as Current Residence</span>
+                    ) : (
+                      fullPermAddress || "No permanent address specified."
+                    )}
+                  </p>
                 </div>
               </div>
             </CardContent>

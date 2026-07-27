@@ -21,11 +21,13 @@ const memberSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   middle_name: z.string().default(""),
   last_name: z.string().min(1, "Last name is required"),
+  suffix: z.string().default(""),
   birth_date: z.string().min(1, "Date of birth is required"),
   gender: z.string().min(1, "Gender is required"),
   contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
   email: z.string().email("Invalid email format").or(z.literal("")),
   marital_status: z.string().default("Single"),
+  widowed_date: z.string().default(""),
   is_spouse_cbt_member: z.boolean().default(false),
   spouse_name: z.string().default(""),
   spouse_member_id: z.string().default(""),
@@ -138,7 +140,7 @@ const STEPS = [
 
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
 type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
-type BaseMember = { id: string; first_name: string; last_name: string; contact_number?: string | null }
+type BaseMember = { id: string; first_name: string; last_name: string; suffix?: string | null; contact_number?: string | null }
 
 export function MemberForm({ 
   initialData, 
@@ -164,6 +166,7 @@ export function MemberForm({
       first_name: initialData?.first_name || "",
       middle_name: initialData?.middle_name || "",
       last_name: initialData?.last_name || "",
+      suffix: initialData?.suffix || "",
       birth_date: initialData?.birth_date || "",
       gender: initialData?.gender || "",
       contact_number: initialData?.contact_number || "",
@@ -212,6 +215,7 @@ export function MemberForm({
       awards_honors: initialData?.awards_honors || "",
       ministries: initialData?.ministries || [],
       marital_status: initialData?.marital_status || "Single",
+      widowed_date: initialData?.widowed_date || "",
       is_spouse_cbt_member: !!initialData?.spouse_member_id,
       spouse_name: initialData?.spouse_name || "",
       spouse_member_id: initialData?.spouse_member_id || "",
@@ -565,6 +569,10 @@ export function MemberForm({
                 {form.formState.errors.last_name && <p className="text-sm text-destructive">{form.formState.errors.last_name.message}</p>}
               </div>
               <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Suffix</Label>
+                <Input {...form.register("suffix")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="e.g. Jr, Sr" />
+              </div>
+              <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Date of Birth<R/></Label>
                 <div className="relative flex items-center">
                   <Input 
@@ -633,6 +641,13 @@ export function MemberForm({
                   <ChevronDown className="absolute right-3 h-4 w-4 text-muted-foreground opacity-50 pointer-events-none" />
                 </div>
               </div>
+
+              {form.watch("marital_status") === "Widowed" && (
+                <div className="grid gap-2 md:col-span-1 p-4 border rounded-lg bg-muted/20">
+                  <Label className="text-[13px] text-muted-foreground">Date Widowed (Month/Year)</Label>
+                  <Input type="month" {...form.register("widowed_date")} className="h-12 bg-transparent" />
+                </div>
+              )}
 
               {form.watch("marital_status") === "Married" && (
                 <>

@@ -15,11 +15,13 @@ export async function coreCreateMember(payloadStr: string) {
     first_name: data.first_name,
     middle_name: data.middle_name || "",
     last_name: data.last_name,
+    suffix: data.suffix || "",
     birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
     email: data.email || "",
     marital_status: data.marital_status || "Single",
+    widowed_date: data.widowed_date || null,
     spouse_name: data.spouse_name || "",
     spouse_member_id: data.spouse_member_id || null,
     spouse_occupation: data.spouse_occupation || "",
@@ -168,11 +170,13 @@ export async function coreUpdateMember(payloadStr: string) {
     first_name: data.first_name,
     middle_name: data.middle_name || "",
     last_name: data.last_name,
+    suffix: data.suffix || "",
     birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
     email: data.email || "",
     marital_status: data.marital_status || "Single",
+    widowed_date: data.widowed_date || null,
     spouse_name: data.spouse_name || "",
     spouse_member_id: data.spouse_member_id || null,
     spouse_occupation: data.spouse_occupation || "",
@@ -486,7 +490,8 @@ export async function getMembersList() {
   const result = await db.select({
     id: members.id,
     first_name: members.first_name,
-    last_name: members.last_name
+    last_name: members.last_name,
+    suffix: members.suffix
   }).from(members)
   return result
 }
