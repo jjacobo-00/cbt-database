@@ -1,8 +1,9 @@
 "use client"
-import { Menu, Moon, Sun, UserCircle } from "lucide-react"
+import { Menu, Moon, Sun, UserCircle, LogOut } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
+import { signOut } from "next-auth/react"
 
 export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boolean) => void }) {
   const { theme, setTheme } = useTheme()
@@ -26,6 +27,15 @@ export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boole
         </Button>
         <div className="flex items-center gap-2">
           <UserCircle className="h-8 w-8 text-muted-foreground" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="hidden sm:flex text-muted-foreground"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
       </div>
     </header>

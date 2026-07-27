@@ -1,0 +1,51 @@
+import NextAuth from "next-auth"
+import Google from "next-auth/providers/google"
+import { DrizzleAdapter } from "@auth/drizzle-adapter"
+import { db } from "@/db"
+import { eq } from "drizzle-orm"
+import { whitelisted_users } from "@/db/schema"
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: DrizzleAdapter(db),
+  providers: [Google],
+  session: {
+    strategy: "jwt",
+  },
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        const email = user.email;
+        if (!email) return false;
+        
+        // Check if the user is whitelisted
+        const whitelistedUser = await db.query.whitelisted_users.findFirst({
+          where: eq(whitelisted_users.email, email),
+        });
+
+        if (!whitelistedUser) {
+          // Returning false will redirect to the error page or we can throw an error
+          return "/login?error=Your Google account is not authorized to access this system.";
+        }
+        
+        return true;
+      }
+      return true;
+    },
+    async session({ session, token }) {
+      if (token?.sub) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    }
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login", // Error code passed in query string as ?error=
+  },
+})

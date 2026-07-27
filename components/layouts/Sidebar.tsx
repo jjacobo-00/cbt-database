@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
   },
   { name: "Reports", href: "/reports", icon: PieChart },
   { name: "Org Chart", href: "/org-chart", icon: Network },
-  { name: "Staff", href: "/staff", icon: Shield },
+  { name: "Users", href: "/users", icon: Shield },
 ]
 
 export function Sidebar({ 
