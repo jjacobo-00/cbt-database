@@ -107,7 +107,7 @@ export function MemberProfileView({
       {/* ───────────────────────────────────────────────────────────── */}
       {/* SCREEN TOP ACTION BAR (Hidden on Print) */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-4 print:hidden w-full min-w-0">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted">
             <Link href="/members">
@@ -120,7 +120,7 @@ export function MemberProfileView({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap min-w-0 w-full sm:w-auto mt-2 sm:mt-0">
           <GenerateInviteLinkButton memberId={member.id} variant="outline" className="flex" />
           <Button 
             variant="outline" 
@@ -261,7 +261,7 @@ export function MemberProfileView({
               <Phone className="h-4 w-4 text-primary shrink-0" />
               <span className="truncate">
                 {member.contact_number ? (
-                  <a href={`tel:${member.contact_number}`} className="hover:underline text-foreground font-medium">
+                  <a href={`tel:${member.contact_number}`} className="hover:underline text-foreground font-medium break-all whitespace-normal">
                     {member.contact_number}
                   </a>
                 ) : (
@@ -273,7 +273,7 @@ export function MemberProfileView({
             <div className="flex items-center gap-2.5 text-muted-foreground">
               <span className="truncate">
                 {member.email ? (
-                  <a href={`mailto:${member.email}`} className="hover:underline text-foreground font-medium">
+                  <a href={`mailto:${member.email}`} className="hover:underline text-foreground font-medium break-all whitespace-normal">
                     {member.email}
                   </a>
                 ) : (
@@ -284,7 +284,7 @@ export function MemberProfileView({
 
             <div className="flex items-center gap-2.5 text-muted-foreground">
               <MapPin className="h-4 w-4 text-primary shrink-0" />
-              <span className="truncate text-foreground font-medium">
+              <span className="text-foreground font-medium break-words whitespace-normal leading-tight mt-0.5 max-w-full">
                 {fullAddress || "No address specified"}
               </span>
             </div>
@@ -309,7 +309,7 @@ export function MemberProfileView({
       {/* ───────────────────────────────────────────────────────────── */}
       {/* TABS NAVIGATION (Hidden on Print) */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="flex border-b overflow-x-auto scrollbar-none gap-2 sm:gap-6 print:hidden">
+      <div className="flex border-b overflow-x-auto scrollbar-none gap-2 sm:gap-6 print:hidden w-full max-w-full">
         {[
           { id: "overview", label: "Overview", icon: Layers },
           { id: "personal", label: "Personal & Address", icon: User },
@@ -389,18 +389,18 @@ export function MemberProfileView({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between border-b border-amber-500/20 pb-2">
-                <span className="text-muted-foreground">Full Name</span>
-                <span className="font-semibold">{member.emergency_contact_name || "—"}</span>
+              <div className="flex justify-between border-b border-amber-500/20 pb-2 gap-4">
+                <span className="text-muted-foreground shrink-0">Full Name</span>
+                <span className="font-semibold text-right break-words whitespace-normal min-w-0">{member.emergency_contact_name || "—"}</span>
               </div>
-              <div className="flex justify-between border-b border-amber-500/20 pb-2">
-                <span className="text-muted-foreground">Relationship</span>
-                <span className="font-semibold">{member.emergency_contact_relationship || "—"}</span>
+              <div className="flex justify-between border-b border-amber-500/20 pb-2 gap-4">
+                <span className="text-muted-foreground shrink-0">Relationship</span>
+                <span className="font-semibold text-right break-words whitespace-normal min-w-0">{member.emergency_contact_relationship || "—"}</span>
               </div>
-              <div className="flex justify-between pt-1">
-                <span className="text-muted-foreground">Contact Number</span>
+              <div className="flex justify-between pt-1 gap-4">
+                <span className="text-muted-foreground shrink-0">Contact Number</span>
                 {member.emergency_contact_number ? (
-                  <a href={`tel:${member.emergency_contact_number}`} className="font-bold text-primary hover:underline">
+                  <a href={`tel:${member.emergency_contact_number}`} className="font-bold text-primary hover:underline text-right break-all whitespace-normal min-w-0">
                     {member.emergency_contact_number}
                   </a>
                 ) : (
@@ -442,7 +442,7 @@ export function MemberProfileView({
               </div>
               <div className="pt-2 border-t">
                 <p className="text-xs text-muted-foreground">Full Address</p>
-                <p className="font-medium mt-0.5">{fullAddress || "—"}</p>
+                <p className="font-medium mt-0.5 break-words whitespace-normal leading-tight">{fullAddress || "—"}</p>
               </div>
             </CardContent>
           </Card>
@@ -552,7 +552,7 @@ export function MemberProfileView({
                 </div>
                 <div>
                   <span className="text-muted-foreground block text-xs">Email Address</span>
-                  <span className="font-medium">{member.email || "—"}</span>
+                  <span className="font-medium break-all whitespace-normal leading-tight">{member.email || "—"}</span>
                 </div>
               </div>
             </div>
