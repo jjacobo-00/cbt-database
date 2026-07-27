@@ -25,8 +25,8 @@ export default async function ReportsPage() {
 
   const formattedData: ReportMember[] = membersData.map(m => ({
     ...m,
-    date_baptized: m.date_baptized?.toISOString() || null,
-    created_at: m.created_at?.toISOString() || null,
+    date_baptized: m.date_baptized || null,
+    created_at: m.created_at instanceof Date ? m.created_at.toISOString() : (m.created_at as string || null),
   }))
 
   return <ReportsClient initialData={formattedData} />
