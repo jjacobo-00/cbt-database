@@ -288,6 +288,41 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     return () => clearTimeout(timer)
   }, [step])
 
+  const handleStepClick = async (targetStepId: number) => {
+    if (targetStepId === step) return
+    
+    // If target step is backward, allow immediately
+    if (targetStepId < step) {
+      setStep(targetStepId)
+      return
+    }
+
+    // If target step is forward
+    // If we are editing, allow clicking any step immediately
+    if (initialData) {
+      setStep(targetStepId)
+      return
+    }
+
+    // If we are creating, validate current step first before going forward
+    let fieldsToValidate: any[] = []
+    if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number"]
+    if (step === 2) fieldsToValidate = []
+    if (step === 3) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
+    if (step === 4) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
+    if (step === 5) fieldsToValidate = ["highest_educational_attainment", "education_details"]
+
+    if (fieldsToValidate.length > 0) {
+      const isValid = await form.trigger(fieldsToValidate as any)
+      if (isValid) {
+        // Only allow jumping up to step + 1 to prevent skipping steps in create mode
+        setStep(Math.min(step + 1, targetStepId))
+      }
+    } else {
+      setStep(Math.min(step + 1, targetStepId))
+    }
+  }
+
   const validateStep = async () => {
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number"]
@@ -378,19 +413,33 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
           const isActive = step === s.id
           const isCompleted = step > s.id
           return (
-            <div key={s.id} className="flex items-center gap-2">
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => handleStepClick(s.id)}
+              disabled={!initialData && s.id > step + 1}
+              className={cn(
+                "flex items-center gap-2 group transition-all duration-200 outline-none text-left rounded-lg p-1",
+                (initialData || s.id <= step + 1) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+              )}
+            >
               <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors",
-                isActive ? "bg-primary text-primary-foreground" : 
-                isCompleted ? "bg-primary/80 text-primary-foreground" : 
-                "bg-muted-foreground/20 text-muted-foreground"
+                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all group-hover:scale-105 duration-200",
+                isActive ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2" : 
+                isCompleted ? "bg-primary/80 text-primary-foreground group-hover:bg-primary" : 
+                "bg-muted-foreground/20 text-muted-foreground group-hover:bg-muted-foreground/30"
               )}>
                 {isCompleted ? <Check className="h-4 w-4" /> : s.id}
               </div>
-              <span className={cn("text-sm font-medium hidden sm:block", isActive ? "text-primary" : isCompleted ? "text-foreground" : "text-muted-foreground")}>
+              <span className={cn(
+                "text-sm font-medium hidden sm:block transition-colors duration-200",
+                isActive ? "text-primary font-bold" : 
+                isCompleted ? "text-foreground group-hover:text-primary" : 
+                "text-muted-foreground group-hover:text-foreground"
+              )}>
                 {s.title}
               </span>
-            </div>
+            </button>
           )
         })}
       </div>
