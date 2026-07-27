@@ -102,22 +102,22 @@ export async function coreCreateMember(payloadStr: string) {
     .from(ministries)
     .where(eq(ministries.for_everyone, true))
 
-  if (forEveryoneMinistries.length > 0) {
+  // Merge selected ministries with for_everyone ministries
+  const selectedMinistries: string[] = data.ministries || []
+  const selectedOfferings: string[] = data.offerings || []
+  const allMinistryIds = [...new Set([...selectedMinistries, ...forEveryoneMinistries.map(m => m.id)])]
+
+  if (allMinistryIds.length > 0) {
     await db.insert(member_ministries).values(
-      forEveryoneMinistries.map(m => ({
+      allMinistryIds.map(mid => ({
         member_id: member.id,
-        ministry_id: m.id,
+        ministry_id: mid,
       }))
     ).onConflictDoNothing()
   }
 
   // Create commitment for current year
   const currentYear = new Date().getFullYear()
-  const selectedMinistries: string[] = data.ministries || []
-  const selectedOfferings: string[] = data.offerings || []
-
-  // Merge selected ministries with for_everyone ministries
-  const allMinistryIds = [...new Set([...selectedMinistries, ...forEveryoneMinistries.map(m => m.id)])]
 
   const [commitment] = await db.insert(commitments).values({
     member_id: member.id,
@@ -257,6 +257,14 @@ export async function coreUpdateMember(payloadStr: string) {
     .where(eq(ministries.for_everyone, true))
 
   const allMinistryIds = [...new Set([...selectedMinistries, ...forEveryoneMinistries.map(m => m.id)])]
+
+  // Update member_ministries (global active ministries)
+  await db.delete(member_ministries).where(eq(member_ministries.member_id, id))
+  if (allMinistryIds.length > 0) {
+    await db.insert(member_ministries).values(
+      allMinistryIds.map(mid => ({ member_id: id, ministry_id: mid }))
+    )
+  }
 
   // Find existing commitment for the year
   const existingCommitments = await db

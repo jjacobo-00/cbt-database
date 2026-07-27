@@ -1756,7 +1756,6 @@ export function MemberForm({
             ) : (
               <Button 
                 type="submit" 
-                data-next-btn="true"
                 disabled={isSubmitting}
                 className="h-11 px-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
               >
