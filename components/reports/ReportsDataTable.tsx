@@ -1,0 +1,244 @@
+"use client"
+
+import * as React from "react"
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Download, SlidersHorizontal, ChevronRight, User2 } from "lucide-react"
+
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
+  filename?: string
+}
+
+export function ReportsDataTable<TData, TValue>({
+  columns,
+  data,
+  filename = "reports-export.csv",
+}: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [globalFilter, setGlobalFilter] = React.useState("")
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
+    globalFilterFn: "includesString",
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+    },
+  })
+
+  const exportFilteredToCSV = () => {
+    // Get all the rows that are currently visible/filtered
+    const rows = table.getFilteredRowModel().rows
+    
+    // Get all visible columns (excluding actions if any)
+    const visibleColumns = table.getAllColumns().filter(c => c.getIsVisible() && c.id !== "actions")
+    
+    const headers = visibleColumns.map(c => {
+      // Use column header if it's a string, else fallback to id
+      return typeof c.columnDef.header === 'string' ? c.columnDef.header : c.id
+    })
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => {
+        return visibleColumns.map(col => {
+          let cellValue = row.getValue(col.id)
+          // Escape quotes and wrap in quotes if there's a comma
+          if (cellValue === null || cellValue === undefined) cellValue = ""
+          const stringValue = String(cellValue).replace(/"/g, '""')
+          return `"${stringValue}"`
+        }).join(",")
+      })
+    ].join("\n")
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+    link.setAttribute("href", url)
+    link.setAttribute("download", filename)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <Input
+          placeholder="Search all columns..."
+          value={globalFilter ?? ""}
+          onChange={(event) => setGlobalFilter(event.target.value)}
+          className="max-w-sm"
+        />
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2 bg-background">
+                <SlidersHorizontal className="h-4 w-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[150px]">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {column.id.replace(/_/g, " ")}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button variant="default" onClick={exportFilteredToCSV} className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm border-green-700/50">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
+      </div>
+      
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="w-full overflow-auto hidden md:block">
+          <Table>
+            <TableHeader className="bg-muted/50 border-b">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="whitespace-nowrap font-medium text-foreground py-3">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="whitespace-nowrap py-3">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                    No results found matching your filters.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile View */}
+        <div className="flex flex-col md:hidden divide-y divide-border">
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const name = (row.original as any).name || "Unknown"
+              const sex = (row.original as any).sex || "-"
+              const city = (row.original as any).city || "-"
+              
+              const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
+
+              return (
+                <div key={row.id} className="p-4 flex flex-col gap-2 bg-card">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary shrink-0">
+                      {initials || <User2 className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-foreground truncate">{name}</p>
+                      <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
+                        <span className="truncate">{city}</span> • <span>{sex}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <div className="p-8 text-center text-muted-foreground">
+              No results found.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between py-2">
+        <div className="text-sm text-muted-foreground">
+          Showing {table.getFilteredRowModel().rows.length} record(s)
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="bg-background shadow-sm"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="bg-background shadow-sm"
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

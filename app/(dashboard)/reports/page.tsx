@@ -1,54 +1,33 @@
 import { db } from "@/db"
 import { members } from "@/db/schema"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ExportButton } from "@/components/reports/ExportButton"
+import { ReportsClient, ReportMember } from "./ReportsClient"
+
+export const revalidate = 0 // Disable cache for fresh reports
+
+export const metadata = { title: "Reports & Analytics | CBT Directory" }
 
 export default async function ReportsPage() {
-  // Fetch data for reports and export
+  // Fetch comprehensive data for reports and export
   const membersData = await db.select({
+    id: members.id,
     first_name: members.first_name,
     last_name: members.last_name,
     sex: members.sex,
+    age: members.age,
     city: members.city,
+    marital_status: members.marital_status,
     occupation: members.occupation,
-    contact_number: members.contact_number,
+    employment_status: members.employment_status,
+    highest_educational_attainment: members.highest_educational_attainment,
+    date_baptized: members.date_baptized,
     created_at: members.created_at
   }).from(members)
-  
-  // Aggregate data
-  const cityCount = membersData.reduce((acc, curr) => {
-    const city = curr.city || "Unknown"
-    acc[city] = (acc[city] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
 
-  const sortedCities = Object.entries(cityCount || {}).sort((a, b) => b[1] - a[1])
+  const formattedData: ReportMember[] = membersData.map(m => ({
+    ...m,
+    date_baptized: m.date_baptized?.toISOString() || null,
+    created_at: m.created_at?.toISOString() || null,
+  }))
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Reports & Analytics</h1>
-        <ExportButton data={membersData} />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Members by City</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {sortedCities.map(([city, count]) => (
-                <li key={city} className="flex justify-between items-center p-2 rounded hover:bg-muted/50 border-b last:border-0">
-                  <span className="font-medium text-muted-foreground">{city}</span>
-                  <span className="font-bold">{count}</span>
-                </li>
-              ))}
-              {sortedCities.length === 0 && <p className="text-muted-foreground text-sm">No data available.</p>}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
+  return <ReportsClient initialData={formattedData} />
 }
