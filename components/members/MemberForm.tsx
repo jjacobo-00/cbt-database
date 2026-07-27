@@ -210,14 +210,17 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     }
   })
 
+  const draftLoaded = React.useRef(false)
+
   // Auto-Save Draft (Load on mount)
   React.useEffect(() => {
-    if (!initialData) {
+    if (!initialData && !draftLoaded.current) {
       const savedDraft = localStorage.getItem("cbt_new_member_draft")
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft)
           form.reset(parsed)
+          draftLoaded.current = true
           // Use setTimeout to ensure toast fires after mount
           setTimeout(() => toast.info("Unsaved draft recovered successfully.", { icon: "📝" }), 500)
         } catch (e) {
