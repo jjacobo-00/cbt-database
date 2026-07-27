@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
-import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles, Save, Loader2, User, Heart, Church } from "lucide-react"
+import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles, Save, Loader2, User, Heart, Church, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
 import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
@@ -138,7 +138,7 @@ const STEPS = [
 
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
 type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
-type BaseMember = { id: string; first_name: string; last_name: string }
+type BaseMember = { id: string; first_name: string; last_name: string; contact_number?: string | null }
 
 export function MemberForm({ 
   initialData, 
@@ -260,6 +260,8 @@ export function MemberForm({
   const { fields: eduFields } = useFieldArray({ control: form.control, name: "education_details" })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isEmergencyMember, setIsEmergencyMember] = useState(false)
+  const [emergencyComboboxOpen, setEmergencyComboboxOpen] = useState(false)
 
   const onSubmit = async (values: z.infer<typeof memberSchema>) => {
     setIsSubmitting(true)
@@ -1093,13 +1095,120 @@ export function MemberForm({
             </div>
 
             {/* Emergency Contact */}
-            <div className="p-4 rounded-xl border bg-amber-500/5 border-amber-500/20 space-y-4">
-              <h4 className="font-semibold text-amber-600 dark:text-amber-400">Emergency Contact Person</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input {...form.register("emergency_contact_name")} placeholder="Name" className="h-11 bg-transparent" />
-                <Input {...form.register("emergency_contact_relationship")} placeholder="Relationship" className="h-11 bg-transparent" />
-                <Input {...form.register("emergency_contact_number")} placeholder="Mobile Number" className="h-11 bg-transparent" />
+            <div className="p-5 rounded-xl border bg-amber-500/5 border-amber-500/20 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h4 className="font-semibold text-amber-600 dark:text-amber-400">Emergency Contact Person</h4>
+                
+                {/* Segmented Control / Toggle */}
+                <div className="flex bg-muted p-1 rounded-lg w-full sm:w-auto self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setIsEmergencyMember(true)}
+                    className={cn(
+                      "flex-1 sm:flex-none text-xs font-medium px-4 py-1.5 rounded-md transition-colors",
+                      isEmergencyMember ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Select Member
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEmergencyMember(false)}
+                    className={cn(
+                      "flex-1 sm:flex-none text-xs font-medium px-4 py-1.5 rounded-md transition-colors",
+                      !isEmergencyMember ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Manual Input
+                  </button>
+                </div>
               </div>
+
+              {isEmergencyMember ? (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="grid gap-2">
+                    <Label className="text-xs text-muted-foreground">Search Member</Label>
+                    <Popover open={emergencyComboboxOpen} onOpenChange={setEmergencyComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={emergencyComboboxOpen}
+                          className="w-full justify-between h-11 bg-transparent border-dashed hover:bg-amber-500/10 hover:text-amber-600 border-amber-500/30"
+                        >
+                          {form.watch("emergency_contact_name")
+                            ? form.watch("emergency_contact_name")
+                            : "Search for a member..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] md:w-[384px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search member..." className="h-11" />
+                          <CommandList>
+                            <CommandEmpty className="py-6 text-center text-sm px-4">
+                              <UserX className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+                              <p>No member found.</p>
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {allMembers.filter(m => m.id !== initialData?.id).map((m) => (
+                                <CommandItem
+                                  key={m.id}
+                                  value={`${m.first_name} ${m.last_name}`}
+                                  onSelect={() => {
+                                    form.setValue("emergency_contact_name", `${m.first_name} ${m.last_name}`, { shouldDirty: true, shouldValidate: true })
+                                    form.setValue("emergency_contact_number", m.contact_number || "", { shouldDirty: true, shouldValidate: true })
+                                    setEmergencyComboboxOpen(false)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      form.watch("emergency_contact_name") === `${m.first_name} ${m.last_name}` ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span>{m.first_name} {m.last_name}</span>
+                                    {m.contact_number && (
+                                      <span className="text-xs text-muted-foreground">{m.contact_number}</span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Mobile Number</Label>
+                      <Input {...form.register("emergency_contact_number")} readOnly className="h-11 bg-transparent text-muted-foreground" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground text-amber-600 dark:text-amber-400">Relationship (Required)</Label>
+                      <Input {...form.register("emergency_contact_relationship")} placeholder="e.g. Spouse, Parent, Sibling" className="h-11 bg-background/50 border-amber-500/40 focus-visible:ring-amber-500/50" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in duration-200">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Name</Label>
+                    <Input {...form.register("emergency_contact_name")} placeholder="Full Name" className="h-11 bg-transparent" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Relationship</Label>
+                    <Input {...form.register("emergency_contact_relationship")} placeholder="e.g. Spouse, Parent" className="h-11 bg-transparent" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Mobile Number</Label>
+                    <Input {...form.register("emergency_contact_number")} placeholder="Mobile Number" className="h-11 bg-transparent" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
