@@ -13,7 +13,7 @@ import { Check, ChevronLeft, ChevronDown, GraduationCap, Briefcase, UserX, Plus,
 import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
 import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
-
+import { isRedirectError } from "next/dist/client/components/redirect-error"
 const memberSchema = z.object({
   // Step 1: Personal
   first_name: z.string().min(1, "First name is required"),
@@ -211,7 +211,10 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
         await createMember(payload)
         toast.success("New member record created successfully!")
       }
-    } catch (e) {
+    } catch (e: any) {
+      if (isRedirectError(e)) {
+        throw e
+      }
       console.error(e)
       toast.error("An error occurred while saving member profile.")
       setIsSubmitting(false)

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
 import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 
 export async function createMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
@@ -211,6 +211,54 @@ export async function updateMember(payloadStr: string) {
     education_details: data.education_details,
     awards_honors: data.awards_honors,
   }).where(eq(members.id, id))
+
+  // Update ministries & offerings for the current year
+  const currentYear = new Date().getFullYear()
+  const selectedMinistries: string[] = data.ministries || []
+  const selectedOfferings: string[] = data.offerings || []
+
+  // Auto-enroll in "for everyone" ministries
+  const forEveryoneMinistries = await db
+    .select({ id: ministries.id })
+    .from(ministries)
+    .where(eq(ministries.for_everyone, true))
+
+  const allMinistryIds = [...new Set([...selectedMinistries, ...forEveryoneMinistries.map(m => m.id)])]
+
+  // Find existing commitment for the year
+  const existingCommitments = await db
+    .select()
+    .from(commitments)
+    .where(and(eq(commitments.member_id, id), eq(commitments.year, currentYear)))
+
+  let commitmentId: string
+
+  if (existingCommitments.length > 0) {
+    commitmentId = existingCommitments[0].id
+    // Clear old associations
+    await db.delete(commitment_ministries).where(eq(commitment_ministries.commitment_id, commitmentId))
+    await db.delete(commitment_offerings).where(eq(commitment_offerings.commitment_id, commitmentId))
+  } else {
+    // Create new commitment
+    const [newCommitment] = await db.insert(commitments).values({
+      member_id: id,
+      year: currentYear,
+    }).returning()
+    commitmentId = newCommitment.id
+  }
+
+  // Insert new associations
+  if (allMinistryIds.length > 0) {
+    await db.insert(commitment_ministries).values(
+      allMinistryIds.map(mid => ({ commitment_id: commitmentId, ministry_id: mid }))
+    )
+  }
+
+  if (selectedOfferings.length > 0) {
+    await db.insert(commitment_offerings).values(
+      selectedOfferings.map(oid => ({ commitment_id: commitmentId, offering_category_id: oid }))
+    )
+  }
 
   revalidatePath("/members")
   revalidatePath(`/members/${id}`)
