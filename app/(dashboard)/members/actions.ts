@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import { db } from "@/db"
 import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links } from "@/db/schema"
 import crypto from "crypto"
-import { eq, and } from "drizzle-orm"
+import { eq, and, gt, desc, isNull } from "drizzle-orm"
 
 export async function createMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
@@ -338,6 +338,27 @@ export async function generateInviteLink(memberId?: string) {
 
   // Return just the token, the client will construct the full URL based on its origin
   return token
+}
+
+export async function getActiveInvitationLinks(memberId?: string) {
+  const now = new Date()
+  const links = await db
+    .select()
+    .from(invitation_links)
+    .where(
+      and(
+        memberId ? eq(invitation_links.member_id, memberId) : isNull(invitation_links.member_id),
+        eq(invitation_links.is_used, false),
+        gt(invitation_links.expires_at, now)
+      )
+    )
+    .orderBy(desc(invitation_links.created_at))
+
+  return links.map(l => ({
+    ...l,
+    expires_at: l.expires_at.toISOString(),
+    created_at: l.created_at?.toISOString() || null
+  }))
 }
 
 export async function getInviteDetails(token: string) {
