@@ -103,7 +103,7 @@ export function MemberProfileView({
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300 w-full min-w-0 max-w-full">
       {/* ───────────────────────────────────────────────────────────── */}
       {/* SCREEN TOP ACTION BAR (Hidden on Print) */}
       {/* ───────────────────────────────────────────────────────────── */}
@@ -257,9 +257,9 @@ export function MemberProfileView({
 
           {/* Quick Info Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t text-xs">
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <Phone className="h-4 w-4 text-primary shrink-0" />
-              <span className="truncate">
+            <div className="flex items-center gap-2.5 text-muted-foreground min-w-0">
+              <Phone className="h-4 w-4 text-primary shrink-0 mt-0.5 self-start" />
+              <span className="break-all whitespace-normal leading-tight text-foreground font-medium max-w-full">
                 {member.contact_number ? (
                   <a href={`tel:${member.contact_number}`} className="hover:underline text-foreground font-medium break-all whitespace-normal">
                     {member.contact_number}
@@ -270,8 +270,8 @@ export function MemberProfileView({
               </span>
             </div>
 
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <span className="truncate">
+            <div className="flex items-center gap-2.5 text-muted-foreground min-w-0">
+              <span className="break-all whitespace-normal leading-tight text-foreground font-medium max-w-full">
                 {member.email ? (
                   <a href={`mailto:${member.email}`} className="hover:underline text-foreground font-medium break-all whitespace-normal">
                     {member.email}
@@ -282,23 +282,23 @@ export function MemberProfileView({
               </span>
             </div>
 
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <MapPin className="h-4 w-4 text-primary shrink-0" />
+            <div className="flex items-center gap-2.5 text-muted-foreground min-w-0">
+              <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5 self-start" />
               <span className="text-foreground font-medium break-words whitespace-normal leading-tight mt-0.5 max-w-full">
                 {fullAddress || "No address specified"}
               </span>
             </div>
 
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <Briefcase className="h-4 w-4 text-primary shrink-0" />
-              <span className="truncate text-foreground font-medium">
+            <div className="flex items-center gap-2.5 text-muted-foreground min-w-0">
+              <Briefcase className="h-4 w-4 text-primary shrink-0 mt-0.5 self-start" />
+              <span className="text-foreground font-medium break-words whitespace-normal leading-tight max-w-full">
                 {member.occupation || member.position || (member.employment_status === "Student" ? "Student" : "Not specified")}
               </span>
             </div>
 
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <GraduationCap className="h-4 w-4 text-primary shrink-0" />
-              <span className="truncate text-foreground font-medium">
+            <div className="flex items-center gap-2.5 text-muted-foreground min-w-0">
+              <GraduationCap className="h-4 w-4 text-primary shrink-0 mt-0.5 self-start" />
+              <span className="text-foreground font-medium break-words whitespace-normal leading-tight max-w-full">
                 {member.highest_educational_attainment || "Not specified"}
               </span>
             </div>
