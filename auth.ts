@@ -8,7 +8,12 @@ import { whitelisted_users } from "@/db/schema"
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.SESSION_SECRET || "default_cbt_directory_secret_change_me_in_prod",
   adapter: DrizzleAdapter(db),
-  providers: [Google],
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })
+  ],
   session: {
     strategy: "jwt",
   },
