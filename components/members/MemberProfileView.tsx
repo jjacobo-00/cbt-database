@@ -24,6 +24,8 @@ type EducationDetail = {
 type SiblingDetail = {
   name: string
   age?: string | number
+  birth_date?: string
+  sibling_member_id?: string | null
 }
 
 type ChildDetail = {
@@ -832,8 +834,16 @@ export function MemberProfileView({
                   <ul className="divide-y text-sm">
                     {siblings.map((s, idx) => (
                       <li key={idx} className="py-2 flex justify-between items-center">
-                        <span className="font-medium">{s.name}</span>
-                        {s.age && <span className="text-xs text-muted-foreground">{s.age} yrs old</span>}
+                        <span className="font-medium">
+                          {s.sibling_member_id ? (
+                            <Link href={`/members/${s.sibling_member_id}`} className="text-primary hover:underline">
+                              {s.name} (Member)
+                            </Link>
+                          ) : s.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {s.birth_date ? `DOB: ${s.birth_date}` : (s.age ? `${s.age} yrs old` : "")}
+                        </span>
                       </li>
                     ))}
                   </ul>

@@ -84,9 +84,10 @@ const memberSchema = z.object({
   mother_contact_number: z.string().default(""),
   parents_civil_status: z.string().default(""),
   siblings: z.array(z.object({
-    name: z.string().default(""),
-    age: z.string().default(""),
-    relationship: z.string().default(""),
+    name: z.string().min(1, "Name is required"),
+    birth_date: z.string().optional(),
+    sibling_is_member: z.boolean().default(false),
+    sibling_member_id: z.string().optional().nullable()
   })).default([]),
   children: z.array(z.object({
     id: z.string().optional(),
@@ -223,7 +224,12 @@ export function MemberForm({
       mother_occupation: initialData?.mother_occupation || "",
       mother_contact_number: initialData?.mother_contact_number || "",
       parents_civil_status: initialData?.parents_civil_status || "",
-      siblings: initialData?.siblings?.length ? initialData.siblings : [{ name: "", age: "", relationship: "" }],
+      siblings: initialData?.siblings?.length ? initialData.siblings.map((s: any) => ({
+        name: s.name || "",
+        birth_date: s.birth_date || s.age || "",
+        sibling_is_member: !!s.sibling_member_id,
+        sibling_member_id: s.sibling_member_id || ""
+      })) : [{ name: "", birth_date: "", sibling_is_member: false, sibling_member_id: "" }],
       children: initialData?.children?.length ? initialData.children.map((c: any) => ({
         id: c.id,
         name: c.name,
@@ -1228,17 +1234,27 @@ export function MemberForm({
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
                 <h4 className="font-semibold text-lg">Siblings</h4>
-                <Button type="button" variant="outline" size="sm" onClick={() => appendSibling({ name: "", age: "", relationship: "Sibling" })} className="gap-1.5">
+                <Button type="button" variant="outline" size="sm" onClick={() => appendSibling({ name: "", birth_date: "", sibling_is_member: false, sibling_member_id: "" })} className="gap-1.5">
                   <Plus className="h-4 w-4" /> Add Sibling
                 </Button>
               </div>
               {siblingFields.map((field, index) => (
-                <div key={field.id} className="flex gap-3 items-center">
-                  <Input {...form.register(`siblings.${index}.name`)} placeholder="Sibling Name" className="h-11 bg-transparent" />
-                  <Input {...form.register(`siblings.${index}.age`)} placeholder="Age" className="h-11 w-24 bg-transparent" />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeSibling(index)} className="text-destructive">
+                <div key={field.id} className="p-4 rounded-xl border space-y-4 bg-muted/10 relative">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeSibling(index)} className="absolute top-2 right-2 text-destructive">
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <div className="grid gap-2">
+                      <Label className="text-[13px] text-muted-foreground">Name<R/></Label>
+                      <Input {...form.register(`siblings.${index}.name`)} placeholder="Sibling's Name" className="h-11 bg-transparent" />
+                      {form.formState.errors.siblings?.[index]?.name && <p className="text-sm text-destructive">{form.formState.errors.siblings[index].name.message}</p>}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-[13px] text-muted-foreground">Birth Date</Label>
+                      <Input type="date" {...form.register(`siblings.${index}.birth_date`)} className="h-11 bg-transparent" />
+                    </div>
+                  </div>
+                  {renderMemberSelect("Select Sibling (Member)", `siblings.${index}.sibling_member_id`, `siblings.${index}.name`, `siblings.${index}.sibling_is_member`, initialData?.id)}
                 </div>
               ))}
             </div>

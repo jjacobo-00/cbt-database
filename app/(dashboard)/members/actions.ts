@@ -188,6 +188,28 @@ export async function coreCreateMember(payloadStr: string) {
     }
   }
 
+  // TWO-WAY SIBLING SYNC
+  if (data.siblings && Array.isArray(data.siblings)) {
+    for (const s of data.siblings) {
+      if (s.sibling_member_id) {
+        const [siblingMember] = await db.select({ siblings: members.siblings }).from(members).where(eq(members.id, s.sibling_member_id))
+        if (siblingMember) {
+          let theirSiblings = Array.isArray(siblingMember.siblings) ? [...siblingMember.siblings] : []
+          const alreadyExists = theirSiblings.some((ts: any) => ts.sibling_member_id === member.id)
+          if (!alreadyExists) {
+            theirSiblings.push({
+              name: `${member.first_name} ${member.last_name}`,
+              birth_date: member.birth_date || "",
+              sibling_is_member: true,
+              sibling_member_id: member.id
+            })
+            await db.update(members).set({ siblings: theirSiblings }).where(eq(members.id, s.sibling_member_id))
+          }
+        }
+      }
+    }
+  }
+
   return member.id
 }
 
@@ -202,7 +224,7 @@ export async function coreUpdateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
   const id = data.id
 
-  const [existingMember] = await db.select({ spouse_member_id: members.spouse_member_id }).from(members).where(eq(members.id, id))
+  const [existingMember] = await db.select({ spouse_member_id: members.spouse_member_id, siblings: members.siblings }).from(members).where(eq(members.id, id))
 
   await db.update(members).set({
     // Step 1: Personal
@@ -399,6 +421,47 @@ export async function coreUpdateMember(payloadStr: string) {
           await db.update(members).set({ mother_member_id: id, mother_name: `${data.first_name} ${data.last_name}` }).where(eq(members.id, c.child_member_id))
         }
       }
+    }
+  }
+
+  // TWO-WAY SIBLING SYNC (UPDATE)
+  const oldSiblings = existingMember?.siblings || []
+  const newSiblings = data.siblings || []
+  
+  const oldSiblingIds = (Array.isArray(oldSiblings) ? oldSiblings : [])
+    .map((s: any) => s.sibling_member_id)
+    .filter(Boolean)
+  const newSiblingIds = (Array.isArray(newSiblings) ? newSiblings : [])
+    .map((s: any) => s.sibling_member_id)
+    .filter(Boolean)
+
+  const addedSiblings = newSiblingIds.filter(id => !oldSiblingIds.includes(id))
+  const removedSiblings = oldSiblingIds.filter(id => !newSiblingIds.includes(id))
+
+  // Process additions
+  for (const siblingId of addedSiblings) {
+    const [sm] = await db.select({ siblings: members.siblings }).from(members).where(eq(members.id, siblingId))
+    if (sm) {
+      let theirSiblings = Array.isArray(sm.siblings) ? [...sm.siblings] : []
+      if (!theirSiblings.some((ts: any) => ts.sibling_member_id === id)) {
+        theirSiblings.push({
+          name: `${data.first_name} ${data.last_name}`,
+          birth_date: data.birth_date || "",
+          sibling_is_member: true,
+          sibling_member_id: id
+        })
+        await db.update(members).set({ siblings: theirSiblings }).where(eq(members.id, siblingId))
+      }
+    }
+  }
+
+  // Process removals
+  for (const siblingId of removedSiblings) {
+    const [sm] = await db.select({ siblings: members.siblings }).from(members).where(eq(members.id, siblingId))
+    if (sm) {
+      let theirSiblings = Array.isArray(sm.siblings) ? [...sm.siblings] : []
+      theirSiblings = theirSiblings.filter((ts: any) => ts.sibling_member_id !== id)
+      await db.update(members).set({ siblings: theirSiblings }).where(eq(members.id, siblingId))
     }
   }
 
