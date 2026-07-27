@@ -1,54 +1,33 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { jwtVerify } from "jose"
-
-const secretKey = process.env.SESSION_SECRET || "default_secret_key_for_cbt_directory_change_me_in_prod"
-const key = new TextEncoder().encode(secretKey)
+import { getToken } from "next-auth/jwt"
 
 export async function proxy(request: NextRequest) {
-  const session = request.cookies.get("session")?.value
+  const token = await getToken({ req: request })
+  const isLoggedIn = !!token
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-  const isInvitePage = request.nextUrl.pathname.startsWith('/invite/')
+  const isApiAuthRoute = request.nextUrl.pathname.startsWith('/api/auth')
+  const isInvitePage = request.nextUrl.pathname.startsWith('/invite')
 
-  if (isInvitePage) {
+  // Always allow NextAuth API routes and invite pages through
+  if (isApiAuthRoute || isInvitePage) {
     return NextResponse.next()
   }
-  
+
+  // If on login page and already logged in, redirect to dashboard
   if (isLoginPage) {
-    if (session) {
-      try {
-        await jwtVerify(session, key, { algorithms: ["HS256"] })
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      } catch (e) {
-        // invalid session, let them log in
-      }
+    if (isLoggedIn) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
     return NextResponse.next()
   }
 
-  if (!session) {
+  // If not logged in and trying to access a protected page, redirect to login
+  if (!isLoggedIn) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  try {
-    const { payload } = await jwtVerify(session, key, { algorithms: ["HS256"] })
-    
-    // Refresh token expiration
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    const res = NextResponse.next()
-    res.cookies.set({
-      name: 'session',
-      value: session,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      expires: expires,
-      path: "/",
-    })
-    return res
-  } catch (error) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+  return NextResponse.next()
 }
 
 export const config = {
@@ -56,3 +35,4 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
+
