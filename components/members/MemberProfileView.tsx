@@ -121,7 +121,7 @@ export function MemberProfileView({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <GenerateInviteLinkButton memberId={member.id} variant="outline" className="hidden sm:flex" />
+          <GenerateInviteLinkButton memberId={member.id} variant="outline" className="flex" />
           <Button 
             variant="outline" 
             size="sm"
