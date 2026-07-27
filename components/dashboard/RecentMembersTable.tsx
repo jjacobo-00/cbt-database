@@ -42,7 +42,8 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block rounded-md border overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 text-muted-foreground border-b">
               <tr>
@@ -96,6 +97,58 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="grid grid-cols-1 gap-4 md:hidden mt-4">
+          {recentMembers.map((member) => {
+            const isNew = isNewMember(member.created_at)
+            return (
+              <div key={member.id} className="rounded-xl border bg-card shadow-sm p-4 space-y-4">
+                <div className="font-bold text-lg border-b pb-3 text-primary flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-medium text-xs shrink-0">
+                      {getInitials(member.first_name, member.last_name)}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {member.first_name} {member.last_name}
+                      {isNew && (
+                        <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">
+                          New
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Contact</span>
+                    <span className="font-medium text-foreground">{member.contact_number || "—"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">City</span>
+                    <span className="font-medium text-foreground">{member.city || "—"}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 col-span-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Added</span>
+                    <span className="font-medium text-foreground">
+                      {member.created_at ? new Date(member.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-4 border-t flex justify-end">
+                  <Button variant="outline" size="sm" asChild className="w-full sm:w-auto hover:bg-primary/10 hover:text-primary">
+                    <Link href={`/members/${member.id}`}>View Profile</Link>
+                  </Button>
+                </div>
+              </div>
+            )
+          })}
+          {!recentMembers.length && (
+            <div className="text-center p-8 border rounded-xl bg-card text-muted-foreground">
+              No recent members found.
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
