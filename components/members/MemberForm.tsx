@@ -938,8 +938,20 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                     return (
                       <div 
                         key={parent.id} 
+                        onClick={() => {
+                          if (isParentMandatory) return
+                          let newMins = [...currentMins]
+                          if (isParentSelected) {
+                            const childIds = children.map(c => c.id)
+                            newMins = newMins.filter(id => id !== parent.id && !childIds.includes(id))
+                          } else {
+                            if (!newMins.includes(parent.id)) newMins.push(parent.id)
+                          }
+                          form.setValue("ministries", newMins)
+                        }}
                         className={cn(
                           "rounded-2xl border p-5 transition-all shadow-2xs flex flex-col justify-between space-y-4",
+                          !isParentMandatory && "cursor-pointer select-none hover:shadow-xs",
                           isParentSelected 
                             ? "border-primary/60 bg-primary/5 dark:bg-primary/10 shadow-sm" 
                             : "border-border/60 bg-card hover:border-primary/40"
@@ -965,22 +977,8 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                             )}
                           </div>
 
-                          {/* Parent Checkbox Button */}
-                          <button
-                            type="button"
-                            disabled={isParentMandatory}
-                            onClick={() => {
-                              if (isParentMandatory) return
-                              let newMins = [...currentMins]
-                              if (isParentSelected) {
-                                // Uncheck parent and children
-                                const childIds = children.map(c => c.id)
-                                newMins = newMins.filter(id => id !== parent.id && !childIds.includes(id))
-                              } else {
-                                if (!newMins.includes(parent.id)) newMins.push(parent.id)
-                              }
-                              form.setValue("ministries", newMins)
-                            }}
+                          {/* Parent Checkbox Indicator */}
+                          <div
                             className={cn(
                               "w-6 h-6 rounded-lg border flex items-center justify-center transition-all shrink-0 mt-0.5 select-none",
                               isParentMandatory 
@@ -991,12 +989,15 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                             )}
                           >
                             {isParentSelected && <Check className="h-4 w-4 stroke-[3]" />}
-                          </button>
+                          </div>
                         </div>
 
                         {/* Nested Sub-ministries */}
                         {hasChildren && (
-                          <div className="pt-3 border-t border-border/40 space-y-2">
+                          <div 
+                            className="pt-3 border-t border-border/40 space-y-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
                               Sub-Ministries:
                             </span>
