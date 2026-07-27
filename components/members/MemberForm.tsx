@@ -1159,30 +1159,50 @@ export function MemberForm({
                               <p>No member found.</p>
                             </CommandEmpty>
                             <CommandGroup>
-                              {allMembers.filter(m => m.id !== initialData?.id).map((m) => (
-                                <CommandItem
-                                  key={m.id}
-                                  value={`${m.first_name} ${m.last_name}`}
-                                  onSelect={() => {
-                                    form.setValue("emergency_contact_name", `${m.first_name} ${m.last_name}`, { shouldDirty: true, shouldValidate: true })
-                                    form.setValue("emergency_contact_number", m.contact_number || "", { shouldDirty: true, shouldValidate: true })
-                                    setEmergencyComboboxOpen(false)
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      form.watch("emergency_contact_name") === `${m.first_name} ${m.last_name}` ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span>{m.first_name} {m.last_name}</span>
-                                    {m.contact_number && (
-                                      <span className="text-xs text-muted-foreground">{m.contact_number}</span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
+                              {allMembers.filter(m => m.id !== initialData?.id).map((m) => {
+                                const isSpouse = form.watch("spouse_member_id") === m.id
+                                return (
+                                  <CommandItem
+                                    key={m.id}
+                                    value={`${m.first_name} ${m.last_name}`}
+                                    onSelect={() => {
+                                      form.setValue("emergency_contact_name", `${m.first_name} ${m.last_name}`, { shouldDirty: true, shouldValidate: true })
+                                      if (m.contact_number) {
+                                        form.setValue("emergency_contact_number", m.contact_number, { shouldDirty: true, shouldValidate: true })
+                                      }
+                                      // Auto-set relationship based on member context
+                                      if (isSpouse) {
+                                        form.setValue("emergency_contact_relationship", "Spouse", { shouldDirty: true, shouldValidate: true })
+                                      } else {
+                                        // Clear relationship so user fills it in for non-spouse
+                                        const currentRel = form.getValues("emergency_contact_relationship")
+                                        if (currentRel === "Spouse") {
+                                          form.setValue("emergency_contact_relationship", "", { shouldDirty: true })
+                                        }
+                                      }
+                                      setEmergencyComboboxOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        form.watch("emergency_contact_name") === `${m.first_name} ${m.last_name}` ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-2">
+                                        <span>{m.first_name} {m.last_name}</span>
+                                        {isSpouse && (
+                                          <span className="text-[10px] font-medium bg-pink-500/10 text-pink-600 dark:text-pink-400 px-1.5 py-0.5 rounded-full">Spouse</span>
+                                        )}
+                                      </div>
+                                      {m.contact_number && (
+                                        <span className="text-xs text-muted-foreground">{m.contact_number}</span>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                )
+                              })}
                             </CommandGroup>
                           </CommandList>
                         </Command>
@@ -1196,8 +1216,18 @@ export function MemberForm({
                       <Input {...form.register("emergency_contact_number")} readOnly className="h-11 bg-transparent text-muted-foreground" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground text-amber-600 dark:text-amber-400">Relationship (Required)</Label>
-                      <Input {...form.register("emergency_contact_relationship")} placeholder="e.g. Spouse, Parent, Sibling" className="h-11 bg-background/50 border-amber-500/40 focus-visible:ring-amber-500/50" />
+                      <Label className="text-xs text-muted-foreground text-amber-600 dark:text-amber-400">Relationship {form.watch("emergency_contact_relationship") === "Spouse" ? "(Auto-detected)" : "(Required)"}</Label>
+                      <Input 
+                        {...form.register("emergency_contact_relationship")} 
+                        placeholder="e.g. Spouse, Parent, Sibling" 
+                        readOnly={form.watch("emergency_contact_relationship") === "Spouse"}
+                        className={cn(
+                          "h-11",
+                          form.watch("emergency_contact_relationship") === "Spouse" 
+                            ? "bg-transparent text-muted-foreground" 
+                            : "bg-background/50 border-amber-500/40 focus-visible:ring-amber-500/50"
+                        )} 
+                      />
                     </div>
                   </div>
                 </div>
