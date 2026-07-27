@@ -145,13 +145,15 @@ export function MemberForm({
   ministries = [], 
   offeringCategories = [], 
   allMembers = [],
-  onSubmitOverride 
+  onSubmitOverride,
+  hideBackButton = false
 }: { 
   initialData?: any; 
   ministries?: Ministry[]; 
   offeringCategories?: OfferingCategory[]; 
   allMembers?: BaseMember[];
-  onSubmitOverride?: (payload: string) => Promise<void> 
+  onSubmitOverride?: (payload: string) => Promise<void>;
+  hideBackButton?: boolean;
 }) {
   const [step, setStep] = useState(1)
   
@@ -447,11 +449,13 @@ export function MemberForm({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/80">
-            <Link href={initialData ? `/members/${initialData.id}` : "/members"}>
-              <ChevronLeft className="h-6 w-6" />
-            </Link>
-          </Button>
+          {!hideBackButton && (
+            <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/80">
+              <Link href={initialData ? `/members/${initialData.id}` : "/members"}>
+                <ChevronLeft className="h-6 w-6" />
+              </Link>
+            </Button>
+          )}
           <div>
             <h2 className="text-2xl font-bold tracking-tight">{initialData ? "Edit Member Profile" : "New Member Form"}</h2>
             {initialData && (
