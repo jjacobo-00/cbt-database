@@ -1,9 +1,20 @@
 "use client"
-import { Menu, Moon, Sun, UserCircle, LogOut } from "lucide-react"
+import { LogOut, Moon, Sun, UserCircle } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import { signOut } from "next-auth/react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boolean) => void }) {
   const { theme, setTheme } = useTheme()
@@ -27,15 +38,36 @@ export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boole
         </Button>
         <div className="flex items-center gap-2">
           <UserCircle className="h-8 w-8 text-muted-foreground" />
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="hidden sm:flex text-muted-foreground"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="hidden sm:flex text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Sign out of CBT Directory?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You will need to sign in again with your Google account to access the dashboard.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Sign Out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </header>
