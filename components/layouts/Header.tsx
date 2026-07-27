@@ -1,5 +1,6 @@
 "use client"
 import { Menu, Moon, Sun, UserCircle } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 
@@ -7,11 +8,11 @@ export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boole
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      <Button size="icon" variant="outline" className="sm:hidden" onClick={() => setIsMobileMenuOpen(true)}>
-        <Menu className="h-5 w-5" />
-        <span className="sr-only">Toggle Menu</span>
-      </Button>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-md px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+      <div className="flex items-center gap-2 sm:hidden">
+        <Image src="/logo.svg" alt="CBT Logo" width={28} height={28} className="object-contain" />
+        <span className="font-semibold text-primary">CBT Directory</span>
+      </div>
       
       <div className="flex flex-1 justify-end items-center gap-4">
         <Button 
