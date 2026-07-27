@@ -263,6 +263,14 @@ export function MemberForm({
   const [isEmergencyMember, setIsEmergencyMember] = useState(false)
   const [emergencyComboboxOpen, setEmergencyComboboxOpen] = useState(false)
 
+  const onInvalid = (errors: any) => {
+    const firstKey = Object.keys(errors)[0]
+    const firstError = errors[firstKey]
+    const message = firstError?.message || firstError?.root?.message || firstError?.[0]?.school_name?.message || "Please fix the errors before saving."
+    toast.error(`Validation error: ${message}`)
+    console.error("Form validation errors:", errors)
+  }
+
   const onSubmit = async (values: z.infer<typeof memberSchema>) => {
     setIsSubmitting(true)
     try {
@@ -471,7 +479,7 @@ export function MemberForm({
         {initialData && (
           <Button 
             type="button"
-            onClick={form.handleSubmit(onSubmit)}
+            onClick={() => form.handleSubmit(onSubmit, onInvalid)()}
             disabled={isSubmitting}
             className="h-11 px-6 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
           >
@@ -520,7 +528,7 @@ export function MemberForm({
 
       <form 
         ref={formRef}
-        onSubmit={form.handleSubmit(onSubmit)} 
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)} 
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             const target = e.target as HTMLElement
@@ -530,7 +538,7 @@ export function MemberForm({
             if (step < STEPS.length) {
               validateStep()
             } else {
-              form.handleSubmit(onSubmit)()
+              form.handleSubmit(onSubmit, onInvalid)()
             }
           }
         }}
@@ -1697,7 +1705,7 @@ export function MemberForm({
               <Button 
                 type="button"
                 variant="outline"
-                onClick={form.handleSubmit(onSubmit)}
+                onClick={() => form.handleSubmit(onSubmit, onInvalid)()}
                 disabled={isSubmitting}
                 className="h-11 px-5 gap-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-semibold"
               >
