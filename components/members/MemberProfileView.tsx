@@ -424,7 +424,7 @@ export function MemberProfileView({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Birth Date</p>
                   <p className="font-medium">{member.birth_date || "—"}</p>
@@ -434,6 +434,14 @@ export function MemberProfileView({
                   <p className="font-medium">{member.birth_place || "—"}</p>
                 </div>
                 <div>
+                  <p className="text-xs text-muted-foreground">Gender / Sex</p>
+                  <p className="font-medium">{member.sex || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Email Address</p>
+                  <p className="font-medium truncate" title={member.email || ""}>{member.email || "—"}</p>
+                </div>
+                <div className="col-span-2">
                   <p className="text-xs text-muted-foreground">Civil / Marital Status</p>
                   <p className="font-medium">
                     {member.marital_status === "Married" ? (
@@ -449,14 +457,6 @@ export function MemberProfileView({
                       member.marital_status || "—"
                     )}
                   </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Gender / Sex</p>
-                  <p className="font-medium">{member.sex || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Email Address</p>
-                  <p className="font-medium">{member.email || "—"}</p>
                 </div>
               </div>
             </CardContent>

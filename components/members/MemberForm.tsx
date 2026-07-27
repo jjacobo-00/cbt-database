@@ -23,6 +23,7 @@ const memberSchema = z.object({
   last_name: z.string().min(1, "Last name is required"),
   suffix: z.string().default(""),
   birth_date: z.string().min(1, "Date of birth is required"),
+  birth_place: z.string().default(""),
   gender: z.string().min(1, "Gender is required"),
   contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
   email: z.string().email("Invalid email format").or(z.literal("")),
@@ -168,6 +169,7 @@ export function MemberForm({
       last_name: initialData?.last_name || "",
       suffix: initialData?.suffix || "",
       birth_date: initialData?.birth_date || "",
+      birth_place: initialData?.birth_place || "",
       gender: initialData?.gender || "",
       contact_number: initialData?.contact_number || "",
       email: initialData?.email || "",
@@ -590,6 +592,10 @@ export function MemberForm({
                   />
                 </div>
                 {form.formState.errors.birth_date && <p className="text-sm text-destructive">{form.formState.errors.birth_date.message}</p>}
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Place of Birth</Label>
+                <Input {...form.register("birth_place")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="e.g. Olongapo City" />
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Gender<R/></Label>
