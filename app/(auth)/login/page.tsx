@@ -1,4 +1,4 @@
-import { signIn } from "@/auth"
+import { loginWithGoogle } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
@@ -30,12 +30,7 @@ export default async function LoginPage({
               </div>
             )}
             
-            <form
-              action={async () => {
-                "use server"
-                await signIn("google", { redirectTo: "/dashboard" })
-              }}
-            >
+            <form action={loginWithGoogle}>
               <Button className="w-full h-11 text-base flex items-center gap-2" type="submit" variant="outline">
                 <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                   <path
