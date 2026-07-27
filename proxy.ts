@@ -8,6 +8,11 @@ const key = new TextEncoder().encode(secretKey)
 export async function proxy(request: NextRequest) {
   const session = request.cookies.get("session")?.value
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
+  const isInvitePage = request.nextUrl.pathname.startsWith('/invite/')
+
+  if (isInvitePage) {
+    return NextResponse.next()
+  }
   
   if (isLoginPage) {
     if (session) {
