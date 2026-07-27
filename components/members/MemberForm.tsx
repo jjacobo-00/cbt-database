@@ -16,6 +16,7 @@ import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/co
 import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { DatePicker } from "@/components/ui/date-picker"
 const memberSchema = z.object({
   // Step 1: Personal
   first_name: z.string().min(1, "First name is required"),
@@ -701,14 +702,11 @@ export function MemberForm({
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Date of Birth<R/></Label>
                 <div className="relative flex items-center">
-                  <Input 
-                    type="date" 
-                    {...form.register("birth_date")} 
-                    className={cn(
-                      "h-12 w-full bg-transparent [color-scheme:dark] focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0",
-                      "[&::-webkit-calendar-picker-indicator]:opacity-50 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-3",
-                      !form.watch("birth_date") && "text-muted-foreground"
-                    )} 
+                  <DatePicker
+                    value={form.watch("birth_date")}
+                    onChange={(v) => form.setValue("birth_date", v, { shouldValidate: true, shouldDirty: true })}
+                    placeholder="Select date of birth"
+                    className="h-12 w-full"
                   />
                 </div>
                 {form.formState.errors.birth_date && <p className="text-sm text-destructive">{form.formState.errors.birth_date.message}</p>}
@@ -783,7 +781,12 @@ export function MemberForm({
                 <>
                   <div className="grid gap-2 md:col-span-1">
                     <Label className="text-[13px] text-muted-foreground">Wedding Date / Anniversary</Label>
-                    <Input type="date" {...form.register("anniversary_date")} className="h-12 bg-transparent" />
+                    <DatePicker
+                      value={form.watch("anniversary_date")}
+                      onChange={(v) => form.setValue("anniversary_date", v, { shouldValidate: true, shouldDirty: true })}
+                      placeholder="Select date"
+                      className="h-12 w-full"
+                    />
                   </div>
                   
                   <div className="grid gap-4 md:col-span-2 p-4 border rounded-lg bg-muted/20">
@@ -884,15 +887,15 @@ export function MemberForm({
               
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Membership Date (Joined CBT)</Label>
-                <Input type="date" {...form.register("membership_date")} className="h-12 bg-transparent" />
+                <DatePicker value={form.watch("membership_date")} onChange={(v) => form.setValue("membership_date", v, { shouldValidate: true, shouldDirty: true })} placeholder="Select date" className="h-12 w-full" />
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Date Saved (Salvation)</Label>
-                <Input type="date" {...form.register("date_saved")} className="h-12 bg-transparent" />
+                <DatePicker value={form.watch("date_saved")} onChange={(v) => form.setValue("date_saved", v, { shouldValidate: true, shouldDirty: true })} placeholder="Select date" className="h-12 w-full" />
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Baptism Date</Label>
-                <Input type="date" {...form.register("baptism_date")} className="h-12 bg-transparent" />
+                <DatePicker value={form.watch("baptism_date")} onChange={(v) => form.setValue("baptism_date", v, { shouldValidate: true, shouldDirty: true })} placeholder="Select date" className="h-12 w-full" />
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Baptized By</Label>
@@ -1251,7 +1254,12 @@ export function MemberForm({
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-[13px] text-muted-foreground">Birth Date</Label>
-                      <Input type="date" {...form.register(`siblings.${index}.birth_date`)} className="h-11 bg-transparent" />
+                      <DatePicker
+                        value={form.watch(`siblings.${index}.birth_date`)}
+                        onChange={(v) => form.setValue(`siblings.${index}.birth_date`, v, { shouldValidate: true, shouldDirty: true })}
+                        placeholder="Select birth date"
+                        className="h-11 w-full"
+                      />
                     </div>
                   </div>
                   {renderMemberSelect("Select Sibling (Member)", `siblings.${index}.sibling_member_id`, `siblings.${index}.name`, `siblings.${index}.sibling_is_member`, initialData?.id)}
@@ -1280,7 +1288,12 @@ export function MemberForm({
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-[13px] text-muted-foreground">Birth Date</Label>
-                      <Input type="date" {...form.register(`children.${index}.birth_date`)} className="h-11 bg-transparent" />
+                      <DatePicker
+                        value={form.watch(`children.${index}.birth_date`)}
+                        onChange={(v) => form.setValue(`children.${index}.birth_date`, v, { shouldValidate: true, shouldDirty: true })}
+                        placeholder="Select birth date"
+                        className="h-11 w-full"
+                      />
                     </div>
                   </div>
                   {renderMemberSelect("Select Child (Member)", `children.${index}.child_member_id`, `children.${index}.name`, `children.${index}.is_cbt_member`, initialData?.id)}
