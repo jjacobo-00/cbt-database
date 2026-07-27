@@ -20,7 +20,7 @@ export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boole
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-md px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-md px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 print:hidden">
       <div className="flex items-center gap-2 sm:hidden">
         <Image src="/logo.svg" alt="CBT Logo" width={28} height={28} className="object-contain" />
         <span className="font-semibold text-primary">CBT Directory</span>
