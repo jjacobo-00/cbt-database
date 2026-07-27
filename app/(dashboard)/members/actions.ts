@@ -133,6 +133,17 @@ export async function createMember(payloadStr: string) {
     )
   }
 
+  // TWO-WAY SPOUSE SYNC
+  if (data.spouse_member_id) {
+    // Link the new spouse (set their reference back to this newly created user)
+    await db.update(members).set({
+      spouse_member_id: member.id,
+      spouse_name: `${member.first_name} ${member.last_name}`,
+      marital_status: data.marital_status || "Married",
+      anniversary_date: data.anniversary_date || null
+    }).where(eq(members.id, data.spouse_member_id))
+  }
+
   revalidatePath("/members")
   revalidatePath("/commitments")
   redirect(`/members/${member.id}`)
@@ -141,6 +152,8 @@ export async function createMember(payloadStr: string) {
 export async function updateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
   const id = data.id
+
+  const [existingMember] = await db.select({ spouse_member_id: members.spouse_member_id }).from(members).where(eq(members.id, id))
 
   await db.update(members).set({
     // Step 1: Personal
@@ -268,6 +281,28 @@ export async function updateMember(payloadStr: string) {
     await db.insert(commitment_offerings).values(
       selectedOfferings.map(oid => ({ commitment_id: commitmentId, offering_category_id: oid }))
     )
+  }
+
+  // TWO-WAY SPOUSE SYNC
+  const newSpouseId = data.spouse_member_id || null
+  const oldSpouseId = existingMember?.spouse_member_id || null
+
+  if (oldSpouseId && oldSpouseId !== newSpouseId) {
+    // Unlink the old spouse (remove their reference back to this user)
+    await db.update(members).set({
+      spouse_member_id: null,
+      spouse_name: "",
+    }).where(eq(members.id, oldSpouseId))
+  }
+
+  if (newSpouseId) {
+    // Link the new spouse (set their reference back to this user)
+    await db.update(members).set({
+      spouse_member_id: id,
+      spouse_name: `${data.first_name} ${data.last_name}`,
+      marital_status: data.marital_status || "Married",
+      anniversary_date: data.anniversary_date || null
+    }).where(eq(members.id, newSpouseId))
   }
 
   revalidatePath("/members")
