@@ -141,7 +141,8 @@ export function CommitmentsClient({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground border-b">
@@ -210,6 +211,73 @@ export function CommitmentsClient({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {filtered.map(c => (
+          <div key={c.member_id} className="rounded-xl border bg-card shadow-sm p-4 space-y-4">
+            <div className="font-bold text-lg border-b pb-3 text-primary flex flex-col">
+              <span className="text-foreground">{c.first_name} {c.last_name}</span>
+              <span className="text-xs font-normal text-muted-foreground mt-0.5">{c.contact_number || "No contact"}</span>
+            </div>
+            
+            <div className="space-y-4 text-sm">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Ministries</span>
+                <div>
+                  {c.ministries.length === 0 ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">
+                      <AlertCircle className="h-3 w-3" /> None
+                    </span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {c.ministries.map(m => (
+                        <span key={m.ministry_id} className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                          {m.ministry_name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Offerings</span>
+                <div>
+                  {c.offerings.length === 0 ? (
+                    <span className="text-muted-foreground text-xs font-normal">-</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {c.offerings.map(o => (
+                        <span key={o.offering_category_id} className="text-[11px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full font-medium">
+                          {o.offering_name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t flex justify-end">
+              {c.has_pledged ? (
+                <Button variant="ghost" size="sm" onClick={() => openEdit(c)} className="w-full sm:w-auto gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Edit Commitments
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => openEdit(c)} className="w-full sm:w-auto gap-1 text-xs">
+                  <Plus className="h-3.5 w-3.5" /> Set Commitments
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="text-center p-8 border rounded-xl bg-card text-muted-foreground">
+            No members found in directory.
+          </div>
+        )}
       </div>
 
       {/* Edit Modal */}
