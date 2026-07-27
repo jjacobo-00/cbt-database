@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { cn } from "@/lib/utils/utils"
 import { deleteMember } from "@/app/(dashboard)/members/actions"
+import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 
 type EducationDetail = {
   level: string
@@ -120,6 +121,7 @@ export function MemberProfileView({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <GenerateInviteLinkButton memberId={member.id} variant="outline" className="hidden sm:flex" />
           <Button 
             variant="outline" 
             size="sm"

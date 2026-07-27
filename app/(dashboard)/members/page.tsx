@@ -6,6 +6,7 @@ import { DataTable } from "@/components/members/data-table"
 import { Button } from "@/components/ui/button"
 import { UserPlus } from "lucide-react"
 import Link from "next/link"
+import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 
 export const revalidate = 0 // Disable cache for this page to always show fresh members
 
@@ -33,9 +34,12 @@ export default async function MembersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Members Directory</h1>
-        <Button asChild>
-          <Link href="/members/new"><UserPlus className="mr-2 h-4 w-4" /> Add Member</Link>
-        </Button>
+        <div className="flex gap-2">
+          <GenerateInviteLinkButton variant="secondary" />
+          <Button asChild>
+            <Link href="/members/new"><UserPlus className="mr-2 h-4 w-4" /> Add Member</Link>
+          </Button>
+        </div>
       </div>
       <DataTable columns={columns} data={formattedMembers} />
     </div>

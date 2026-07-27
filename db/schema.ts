@@ -8,6 +8,14 @@ export const users = pgTable('users', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
+export const invitation_links = pgTable('invitation_links', {
+  token: text('token').primaryKey(),
+  member_id: uuid('member_id').references(() => members.id),
+  expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
+  is_used: boolean('is_used').default(false).notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
 export const ministries = pgTable('ministries', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),

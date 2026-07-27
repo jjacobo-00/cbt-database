@@ -140,7 +140,19 @@ type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: 
 type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
 type BaseMember = { id: string; first_name: string; last_name: string }
 
-export function MemberForm({ initialData, ministries = [], offeringCategories = [], allMembers = [] }: { initialData?: any; ministries?: Ministry[]; offeringCategories?: OfferingCategory[]; allMembers?: BaseMember[] }) {
+export function MemberForm({ 
+  initialData, 
+  ministries = [], 
+  offeringCategories = [], 
+  allMembers = [],
+  onSubmitOverride 
+}: { 
+  initialData?: any; 
+  ministries?: Ministry[]; 
+  offeringCategories?: OfferingCategory[]; 
+  allMembers?: BaseMember[];
+  onSubmitOverride?: (payload: string) => Promise<void> 
+}) {
   const [step, setStep] = useState(1)
   
   const form = useForm({
@@ -251,13 +263,18 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
     setIsSubmitting(true)
     try {
       const payload = JSON.stringify({ id: initialData?.id, ...values })
-      if (initialData) {
-        await updateMember(payload)
-        toast.success("Member profile updated successfully!")
+      
+      if (onSubmitOverride) {
+        await onSubmitOverride(payload)
       } else {
-        await createMember(payload)
-        toast.success("New member record created successfully!")
-        localStorage.removeItem("cbt_new_member_draft")
+        if (initialData) {
+          await updateMember(payload)
+          toast.success("Member profile updated successfully!")
+        } else {
+          await createMember(payload)
+          toast.success("New member record created successfully!")
+          localStorage.removeItem("cbt_new_member_draft")
+        }
       }
     } catch (e: any) {
       if (isRedirectError(e)) {

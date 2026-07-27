@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
-import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings } from "@/db/schema"
+import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links } from "@/db/schema"
+import crypto from "crypto"
 import { eq, and } from "drizzle-orm"
 
 export async function createMember(payloadStr: string) {
@@ -318,6 +319,128 @@ export async function deleteMember(id: string) {
   await db.delete(members).where(eq(members.id, id))
   revalidatePath("/members")
   redirect("/members")
+}
+
+// --------------------------------------------------------------------------------------
+// INVITATION LINKS (Self-Service)
+// --------------------------------------------------------------------------------------
+
+export async function generateInviteLink(memberId?: string) {
+  const token = crypto.randomBytes(32).toString("hex")
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30 mins
+
+  await db.insert(invitation_links).values({
+    token,
+    member_id: memberId || null,
+    expires_at: expiresAt,
+    is_used: false,
+  })
+
+  // Return just the token, the client will construct the full URL based on its origin
+  return token
+}
+
+export async function getInviteDetails(token: string) {
+  const [invite] = await db
+    .select()
+    .from(invitation_links)
+    .where(eq(invitation_links.token, token))
+
+  if (!invite) return { error: "Invalid link" }
+  if (invite.is_used) return { error: "Link already used" }
+  if (new Date() > new Date(invite.expires_at)) return { error: "Link expired" }
+
+  if (invite.member_id) {
+    const [member] = await db.select().from(members).where(eq(members.id, invite.member_id))
+    if (!member) return { error: "Member not found" }
+    // Do NOT return the full member data here to avoid exposing PII without DOB check
+    return { 
+      type: "edit", 
+      member_id: invite.member_id,
+      first_name: member.first_name, // safe to show who they are editing
+      last_name: member.last_name
+    }
+  }
+
+  return { type: "new" }
+}
+
+export async function verifyDobAndGetMember(token: string, dobString: string) {
+  const [invite] = await db
+    .select()
+    .from(invitation_links)
+    .where(eq(invitation_links.token, token))
+
+  if (!invite || invite.is_used || new Date() > new Date(invite.expires_at)) {
+    return { error: "Invalid or expired link" }
+  }
+
+  if (!invite.member_id) return { error: "Not an edit link" }
+
+  const [member] = await db.select().from(members).where(eq(members.id, invite.member_id))
+  
+  if (!member) return { error: "Member not found" }
+  
+  if (member.birth_date !== dobString) {
+    return { error: "Incorrect Date of Birth" }
+  }
+
+  // Also fetch their ministries & offerings (minimal version since they edit it in form)
+  // We'll reconstruct the shape MemberForm expects
+  const minRows = await db
+    .select({ id: member_ministries.ministry_id })
+    .from(member_ministries)
+    .where(eq(member_ministries.member_id, member.id))
+
+  // Find commitments for current year
+  const currentYear = new Date().getFullYear()
+  const existingCommitments = await db
+    .select()
+    .from(commitments)
+    .where(and(eq(commitments.member_id, member.id), eq(commitments.year, currentYear)))
+
+  let min = minRows.map(m => m.id)
+  let off: string[] = []
+
+  if (existingCommitments.length > 0) {
+    const cId = existingCommitments[0].id
+    const cMin = await db.select().from(commitment_ministries).where(eq(commitment_ministries.commitment_id, cId))
+    const cOff = await db.select().from(commitment_offerings).where(eq(commitment_offerings.commitment_id, cId))
+    min = [...new Set([...min, ...cMin.map(m => m.ministry_id)])]
+    off = cOff.map(o => o.offering_category_id)
+  }
+
+  const memberData = {
+    ...member,
+    ministries: min,
+    offerings: off
+  }
+
+  return { success: true, member: memberData }
+}
+
+export async function submitInviteForm(token: string, payloadStr: string) {
+  // Verify token again before allowing insert/update
+  const [invite] = await db
+    .select()
+    .from(invitation_links)
+    .where(eq(invitation_links.token, token))
+
+  if (!invite || invite.is_used || new Date() > new Date(invite.expires_at)) {
+    throw new Error("Link is invalid or expired")
+  }
+
+  if (invite.member_id) {
+    // Inject the correct ID to prevent ID spoofing
+    const data = JSON.parse(payloadStr)
+    data.id = invite.member_id
+    await updateMember(JSON.stringify(data))
+  } else {
+    await createMember(payloadStr)
+  }
+
+  // Mark token as used
+  await db.update(invitation_links).set({ is_used: true }).where(eq(invitation_links.token, token))
 }
 
 export async function getMembersList() {
