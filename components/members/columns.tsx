@@ -15,6 +15,8 @@ export type MemberType = {
   created_at: string
 }
 
+import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
+
 export const columns: ColumnDef<MemberType>[] = [
   {
     id: "actions",
@@ -35,6 +37,7 @@ export const columns: ColumnDef<MemberType>[] = [
               Edit
             </Link>
           </Button>
+          <GenerateInviteLinkButton memberId={member.id} variant="outline" />
         </div>
       )
     },
