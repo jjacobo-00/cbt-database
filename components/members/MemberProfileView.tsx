@@ -30,6 +30,7 @@ type ChildDetail = {
   id: string
   name: string
   birth_date: string | null
+  child_member_id?: string | null
 }
 
 type MinistryDetail = {
@@ -716,7 +717,13 @@ export function MemberProfileView({
                     <User className="h-4 w-4" /> Father's Details
                   </h4>
                   <div className="space-y-1">
-                    <p><span className="text-muted-foreground text-xs block">Full Name</span> <span className="font-medium">{member.father_name || "—"}</span></p>
+                    <p><span className="text-muted-foreground text-xs block">Full Name</span> <span className="font-medium">
+                      {member.father_member_id ? (
+                        <Link href={`/members/${member.father_member_id}`} className="text-primary hover:underline">
+                          {member.father_name} (Member)
+                        </Link>
+                      ) : (member.father_name || "—")}
+                    </span></p>
                     <p><span className="text-muted-foreground text-xs block">Occupation</span> <span className="font-medium">{member.father_occupation || "—"}</span></p>
                     <p><span className="text-muted-foreground text-xs block">Contact Number</span> <span className="font-medium">{member.father_contact_number || "—"}</span></p>
                   </div>
@@ -728,7 +735,13 @@ export function MemberProfileView({
                     <User className="h-4 w-4" /> Mother's Details
                   </h4>
                   <div className="space-y-1">
-                    <p><span className="text-muted-foreground text-xs block">Full Name</span> <span className="font-medium">{member.mother_name || "—"}</span></p>
+                    <p><span className="text-muted-foreground text-xs block">Full Name</span> <span className="font-medium">
+                      {member.mother_member_id ? (
+                        <Link href={`/members/${member.mother_member_id}`} className="text-primary hover:underline">
+                          {member.mother_name} (Member)
+                        </Link>
+                      ) : (member.mother_name || "—")}
+                    </span></p>
                     <p><span className="text-muted-foreground text-xs block">Occupation</span> <span className="font-medium">{member.mother_occupation || "—"}</span></p>
                     <p><span className="text-muted-foreground text-xs block">Contact Number</span> <span className="font-medium">{member.mother_contact_number || "—"}</span></p>
                   </div>
@@ -787,7 +800,13 @@ export function MemberProfileView({
                   <ul className="divide-y text-sm">
                     {childrenList.map((c) => (
                       <li key={c.id} className="py-2 flex justify-between items-center">
-                        <span className="font-medium">{c.name}</span>
+                        <span className="font-medium">
+                          {c.child_member_id ? (
+                            <Link href={`/members/${c.child_member_id}`} className="text-primary hover:underline">
+                              {c.name} (Member)
+                            </Link>
+                          ) : c.name}
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           {c.birth_date ? `DOB: ${c.birth_date}` : ""}
                         </span>

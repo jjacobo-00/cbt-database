@@ -73,9 +73,13 @@ const memberSchema = z.object({
   
   // Step 4: Family
   father_name: z.string().default(""),
+  father_is_member: z.boolean().default(false),
+  father_member_id: z.string().default(""),
   father_occupation: z.string().default(""),
   father_contact_number: z.string().default(""),
   mother_name: z.string().default(""),
+  mother_is_member: z.boolean().default(false),
+  mother_member_id: z.string().default(""),
   mother_occupation: z.string().default(""),
   mother_contact_number: z.string().default(""),
   parents_civil_status: z.string().default(""),
@@ -83,6 +87,13 @@ const memberSchema = z.object({
     name: z.string().default(""),
     age: z.string().default(""),
     relationship: z.string().default(""),
+  })).default([]),
+  children: z.array(z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, "Name is required"),
+    birth_date: z.string().default(""),
+    is_cbt_member: z.boolean().default(false),
+    child_member_id: z.string().default(""),
   })).default([]),
   emergency_contact_name: z.string().default(""),
   emergency_contact_relationship: z.string().default(""),
@@ -202,13 +213,24 @@ export function MemberForm({
       company: initialData?.company || "",
       position: initialData?.position || "",
       father_name: initialData?.father_name || "",
+      father_is_member: !!initialData?.father_member_id,
+      father_member_id: initialData?.father_member_id || "",
       father_occupation: initialData?.father_occupation || "",
       father_contact_number: initialData?.father_contact_number || "",
       mother_name: initialData?.mother_name || "",
+      mother_is_member: !!initialData?.mother_member_id,
+      mother_member_id: initialData?.mother_member_id || "",
       mother_occupation: initialData?.mother_occupation || "",
       mother_contact_number: initialData?.mother_contact_number || "",
       parents_civil_status: initialData?.parents_civil_status || "",
-      siblings: initialData?.siblings || [],
+      siblings: initialData?.siblings?.length ? initialData.siblings : [{ name: "", age: "", relationship: "" }],
+      children: initialData?.children?.length ? initialData.children.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        birth_date: c.birth_date || "",
+        is_cbt_member: !!c.child_member_id,
+        child_member_id: c.child_member_id || ""
+      })) : [],
       emergency_contact_name: initialData?.emergency_contact_name || "",
       emergency_contact_relationship: initialData?.emergency_contact_relationship || "",
       emergency_contact_number: initialData?.emergency_contact_number || "",
@@ -263,7 +285,8 @@ export function MemberForm({
   }, [initialData, form.watch])
 
   const { fields: siblingFields, append: appendSibling, remove: removeSibling } = useFieldArray({ control: form.control, name: "siblings" })
-  const { fields: eduFields } = useFieldArray({ control: form.control, name: "education_details" })
+  const { fields: childFields, append: appendChild, remove: removeChild } = useFieldArray({ control: form.control, name: "children" })
+  const { fields: eduFields, append: appendEdu, remove: removeEdu } = useFieldArray({ control: form.control, name: "education_details" })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEmergencyMember, setIsEmergencyMember] = useState(false)
@@ -430,6 +453,97 @@ export function MemberForm({
   }
 
   const R = () => <span className="text-destructive ml-1">*</span>
+
+  const renderMemberSelect = (
+    label: string, 
+    idField: string, 
+    nameField: string, 
+    isMemberField: string, 
+    excludeId?: string
+  ) => {
+    const isMember = form.watch(isMemberField as any)
+    const currentId = form.watch(idField as any)
+    
+    return (
+      <div className="grid gap-4 mt-2 p-4 border rounded-lg bg-muted/20">
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id={`member_check_${idField}`}
+            checked={isMember}
+            onChange={(e) => {
+              form.setValue(isMemberField as any, e.target.checked, { shouldValidate: true })
+              if (!e.target.checked) {
+                form.setValue(idField as any, "", { shouldValidate: true })
+              }
+            }}
+            className="h-4 w-4 rounded border-input bg-transparent text-primary focus:ring-primary cursor-pointer accent-primary"
+          />
+          <label htmlFor={`member_check_${idField}`} className="text-sm text-foreground font-medium cursor-pointer flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />
+            Link to an existing member profile?
+          </label>
+        </div>
+
+        {isMember ? (
+          <div className="grid gap-2 max-w-sm">
+            <Label className="text-[13px] text-muted-foreground">{label}</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className={cn(
+                    "justify-between bg-transparent h-12 w-full font-normal",
+                    !currentId && "text-muted-foreground"
+                  )}
+                >
+                  {currentId
+                    ? (() => {
+                        const m = allMembers.find((member) => member.id === currentId)
+                        return m ? `${m.first_name} ${m.last_name}` : "Select a member..."
+                      })()
+                    : "Select a member..."}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] md:w-[384px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search member..." className="h-11" />
+                  <CommandList>
+                    <CommandEmpty className="py-6 text-center text-sm px-4">
+                      <span className="block font-medium mb-1">Profile not found.</span>
+                      <span className="text-muted-foreground text-xs">Uncheck "Link to existing member" to enter their name manually for now.</span>
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {allMembers.filter(m => m.id !== excludeId).map((m) => (
+                        <CommandItem
+                          key={m.id}
+                          value={`${m.first_name} ${m.last_name}`}
+                          onSelect={() => {
+                            form.setValue(idField as any, m.id, { shouldValidate: true })
+                            form.setValue(nameField as any, `${m.first_name} ${m.last_name}`)
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4 text-primary",
+                              currentId === m.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {m.first_name} {m.last_name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
 
   const applyAddressPreset = (preset: AddressPreset, target: "current" | "permanent") => {
     if (target === "current") {
@@ -1071,12 +1185,14 @@ export function MemberForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 rounded-xl border space-y-4">
                 <h4 className="font-semibold text-primary">Father's Info</h4>
+                {renderMemberSelect("Select Father (Member)", "father_member_id", "father_name", "father_is_member", initialData?.id)}
                 <Input {...form.register("father_name")} placeholder="Father's Name" className="h-11 bg-transparent" />
                 <Input {...form.register("father_occupation")} placeholder="Father's Occupation" className="h-11 bg-transparent" />
                 <Input {...form.register("father_contact_number")} placeholder="Father's Contact Number" className="h-11 bg-transparent" />
               </div>
               <div className="p-4 rounded-xl border space-y-4">
                 <h4 className="font-semibold text-primary">Mother's Info</h4>
+                {renderMemberSelect("Select Mother (Member)", "mother_member_id", "mother_name", "mother_is_member", initialData?.id)}
                 <Input {...form.register("mother_name")} placeholder="Mother's Name" className="h-11 bg-transparent" />
                 <Input {...form.register("mother_occupation")} placeholder="Mother's Occupation" className="h-11 bg-transparent" />
                 <Input {...form.register("mother_contact_number")} placeholder="Mother's Contact Number" className="h-11 bg-transparent" />
@@ -1123,6 +1239,35 @@ export function MemberForm({
                   <Button type="button" variant="ghost" size="icon" onClick={() => removeSibling(index)} className="text-destructive">
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                </div>
+              ))}
+            </div>
+
+            {/* Children */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h4 className="font-semibold text-lg">Children</h4>
+                <Button type="button" variant="outline" size="sm" onClick={() => appendChild({ name: "", birth_date: "", is_cbt_member: false, child_member_id: "" })} className="gap-1.5">
+                  <Plus className="h-4 w-4" /> Add Child
+                </Button>
+              </div>
+              {childFields.map((field, index) => (
+                <div key={field.id} className="p-4 rounded-xl border space-y-4 bg-muted/10 relative">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeChild(index)} className="absolute top-2 right-2 text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <div className="grid gap-2">
+                      <Label className="text-[13px] text-muted-foreground">Name<R/></Label>
+                      <Input {...form.register(`children.${index}.name`)} placeholder="Child's Name" className="h-11 bg-transparent" />
+                      {form.formState.errors.children?.[index]?.name && <p className="text-sm text-destructive">{form.formState.errors.children[index].name.message}</p>}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-[13px] text-muted-foreground">Birth Date</Label>
+                      <Input type="date" {...form.register(`children.${index}.birth_date`)} className="h-11 bg-transparent" />
+                    </div>
+                  </div>
+                  {renderMemberSelect("Select Child (Member)", `children.${index}.child_member_id`, `children.${index}.name`, `children.${index}.is_cbt_member`, initialData?.id)}
                 </div>
               ))}
             </div>

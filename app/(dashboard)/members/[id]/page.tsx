@@ -21,14 +21,48 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
   }
 
   // 2. Fetch Children
-  const childrenList = await db
+  const manualChildren = await db
     .select({
       id: children.id,
       name: children.name,
       birth_date: children.birth_date,
+      child_member_id: children.child_member_id,
     })
     .from(children)
     .where(eq(children.member_id, memberId))
+
+  const { or } = await import('drizzle-orm')
+  const linkedMemberChildren = await db
+    .select({
+      id: members.id, // Using member.id as the child row ID
+      name: members.first_name,
+      last_name: members.last_name,
+      birth_date: members.birth_date,
+      child_member_id: members.id,
+    })
+    .from(members)
+    .where(
+      or(
+        eq(members.father_member_id, memberId),
+        eq(members.mother_member_id, memberId)
+      )
+    )
+
+  // Merge lists, preventing duplicates if a child is both manually added and linked
+  const childrenMap = new Map<string, any>()
+  manualChildren.forEach(c => {
+    childrenMap.set(c.child_member_id || c.id, c)
+  })
+  linkedMemberChildren.forEach(c => {
+    childrenMap.set(c.id, {
+      id: c.id,
+      name: `${c.name} ${c.last_name}`,
+      birth_date: c.birth_date,
+      child_member_id: c.id
+    })
+  })
+  
+  const childrenList = Array.from(childrenMap.values())
 
   // 3. Fetch Member's Active Enrolled Ministries
   const ministriesList = await db

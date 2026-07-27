@@ -128,9 +128,11 @@ export const members = pgTable('members', {
   marital_status: text('marital_status'),
   widowed_date: text('widowed_date'),
   father_name: text('father_name'),
+  father_member_id: uuid('father_member_id'),
   father_occupation: text('father_occupation'),
   father_contact_number: text('father_contact_number'),
   mother_name: text('mother_name'),
+  mother_member_id: uuid('mother_member_id'),
   mother_occupation: text('mother_occupation'),
   mother_contact_number: text('mother_contact_number'),
   parents_civil_status: text('parents_civil_status'),
@@ -174,6 +176,7 @@ export const members = pgTable('members', {
 export const children = pgTable('children', {
   id: uuid('id').primaryKey().defaultRandom(),
   member_id: uuid('member_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
+  child_member_id: uuid('child_member_id'),
   name: text('name').notNull(),
   birth_date: date('birth_date'),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -204,9 +207,7 @@ export const commitments = pgTable('commitments', {
   member_id: uuid('member_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
   year: integer('year').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
-}, (t) => ({
-  uniq: unique().on(t.member_id, t.year),
-}))
+})
 
 export const commitment_ministries = pgTable('commitment_ministries', {
   commitment_id: uuid('commitment_id').notNull().references(() => commitments.id, { onDelete: 'cascade' }),

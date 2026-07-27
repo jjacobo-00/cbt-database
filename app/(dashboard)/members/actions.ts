@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
-import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links } from "@/db/schema"
+import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children } from "@/db/schema"
 import crypto from "crypto"
-import { eq, and, gt, desc, isNull } from "drizzle-orm"
+import { eq, and, gt, desc, isNull, inArray, notInArray } from "drizzle-orm"
 
 export async function coreCreateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
@@ -78,9 +78,11 @@ export async function coreCreateMember(payloadStr: string) {
     
     // Step 3: Family
     father_name: data.father_name,
+    father_member_id: data.father_member_id || null,
     father_occupation: data.father_occupation,
     father_contact_number: data.father_contact_number,
     mother_name: data.mother_name,
+    mother_member_id: data.mother_member_id || null,
     mother_occupation: data.mother_occupation,
     mother_contact_number: data.mother_contact_number,
     parents_civil_status: data.parents_civil_status,
@@ -148,6 +150,42 @@ export async function coreCreateMember(payloadStr: string) {
       marital_status: data.marital_status || "Married",
       anniversary_date: data.anniversary_date || null
     }).where(eq(members.id, data.spouse_member_id))
+  }
+
+  // TWO-WAY PARENT SYNC
+  if (data.father_member_id) {
+    // We don't automatically insert into children table for them, because Profile view will automatically see it!
+  }
+
+  // PROCESS CHILDREN
+  if (data.children && Array.isArray(data.children) && data.children.length > 0) {
+    const childrenToInsert = data.children.map((c: any) => ({
+      member_id: member.id,
+      name: c.name,
+      birth_date: c.birth_date || null,
+      child_member_id: c.child_member_id || null
+    }))
+    await db.insert(children).values(childrenToInsert)
+    
+    // Auto-sync to spouse if married
+    if (data.spouse_member_id) {
+      const spouseChildrenToInsert = childrenToInsert.map((c: any) => ({
+        ...c,
+        member_id: data.spouse_member_id
+      }))
+      await db.insert(children).values(spouseChildrenToInsert)
+    }
+
+    // TWO-WAY CHILD SYNC (Update child's parents)
+    for (const c of data.children) {
+      if (c.child_member_id) {
+        if (data.gender === "Male") {
+          await db.update(members).set({ father_member_id: member.id, father_name: `${member.first_name} ${member.last_name}` }).where(eq(members.id, c.child_member_id))
+        } else {
+          await db.update(members).set({ mother_member_id: member.id, mother_name: `${member.first_name} ${member.last_name}` }).where(eq(members.id, c.child_member_id))
+        }
+      }
+    }
   }
 
   return member.id
@@ -234,9 +272,11 @@ export async function coreUpdateMember(payloadStr: string) {
     
     // Step 3: Family
     father_name: data.father_name,
+    father_member_id: data.father_member_id || null,
     father_occupation: data.father_occupation,
     father_contact_number: data.father_contact_number,
     mother_name: data.mother_name,
+    mother_member_id: data.mother_member_id || null,
     mother_occupation: data.mother_occupation,
     mother_contact_number: data.mother_contact_number,
     parents_civil_status: data.parents_civil_status,
@@ -327,6 +367,39 @@ export async function coreUpdateMember(payloadStr: string) {
       marital_status: data.marital_status || "Married",
       anniversary_date: data.anniversary_date || null
     }).where(eq(members.id, newSpouseId))
+  }
+
+  // PROCESS CHILDREN
+  await db.delete(children).where(eq(children.member_id, id))
+  if (data.children && Array.isArray(data.children) && data.children.length > 0) {
+    const childrenToInsert = data.children.map((c: any) => ({
+      member_id: id,
+      name: c.name,
+      birth_date: c.birth_date || null,
+      child_member_id: c.child_member_id || null
+    }))
+    await db.insert(children).values(childrenToInsert)
+    
+    // Auto-sync to spouse if married
+    if (newSpouseId) {
+      await db.delete(children).where(eq(children.member_id, newSpouseId))
+      const spouseChildrenToInsert = childrenToInsert.map((c: any) => ({
+        ...c,
+        member_id: newSpouseId
+      }))
+      await db.insert(children).values(spouseChildrenToInsert)
+    }
+
+    // TWO-WAY CHILD SYNC (Update child's parents)
+    for (const c of data.children) {
+      if (c.child_member_id) {
+        if (data.gender === "Male") {
+          await db.update(members).set({ father_member_id: id, father_name: `${data.first_name} ${data.last_name}` }).where(eq(members.id, c.child_member_id))
+        } else {
+          await db.update(members).set({ mother_member_id: id, mother_name: `${data.first_name} ${data.last_name}` }).where(eq(members.id, c.child_member_id))
+        }
+      }
+    }
   }
 
   return id
