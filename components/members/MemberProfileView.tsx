@@ -664,18 +664,37 @@ export function MemberProfileView({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-sm border-t">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 mt-4 text-sm border-t border-border/50">
                 <div>
                   <span className="text-muted-foreground text-xs block">Parents' Civil Status</span>
                   <span className="font-medium">{member.parents_civil_status || "—"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">Spouse Name</span>
-                  <span className="font-medium">{member.spouse_name || "—"}</span>
+                  <span className="font-medium">
+                    {member.spouse_name ? (
+                      member.spouse_member_id ? (
+                        <Link href={`/members/${member.spouse_member_id}`} className="text-primary hover:underline">
+                          {member.spouse_name} (Member)
+                        </Link>
+                      ) : (
+                        <span>{member.spouse_name} {member.spouse_occupation ? `(${member.spouse_occupation})` : ""}</span>
+                      )
+                    ) : "—"}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">Anniversary Date</span>
                   <span className="font-medium">{member.anniversary_date || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">Years Married</span>
+                  <span className="font-medium">
+                    {member.anniversary_date ? (
+                      !isNaN(new Date(member.anniversary_date).getFullYear()) ? 
+                        `${new Date().getFullYear() - new Date(member.anniversary_date).getFullYear()} years` : "—"
+                    ) : "—"}
+                  </span>
                 </div>
               </div>
             </CardContent>

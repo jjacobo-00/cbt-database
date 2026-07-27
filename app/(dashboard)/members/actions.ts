@@ -16,6 +16,11 @@ export async function createMember(payloadStr: string) {
     birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
+    marital_status: data.marital_status || "Single",
+    spouse_name: data.spouse_name || "",
+    spouse_member_id: data.spouse_member_id || null,
+    spouse_occupation: data.spouse_occupation || "",
+    anniversary_date: data.anniversary_date || null,
     house_number: data.house_number || "",
     unit_number: data.unit_number || "",
     street: data.street || data.address || "",
@@ -144,6 +149,11 @@ export async function updateMember(payloadStr: string) {
     birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
+    marital_status: data.marital_status || "Single",
+    spouse_name: data.spouse_name || "",
+    spouse_member_id: data.spouse_member_id || null,
+    spouse_occupation: data.spouse_occupation || "",
+    anniversary_date: data.anniversary_date || null,
     house_number: data.house_number || "",
     unit_number: data.unit_number || "",
     street: data.street || data.address || "",
@@ -269,5 +279,14 @@ export async function deleteMember(id: string) {
   await db.delete(members).where(eq(members.id, id))
   revalidatePath("/members")
   redirect("/members")
+}
+
+export async function getMembersList() {
+  const result = await db.select({
+    id: members.id,
+    first_name: members.first_name,
+    last_name: members.last_name
+  }).from(members)
+  return result
 }
 

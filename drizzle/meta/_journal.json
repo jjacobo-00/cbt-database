@@ -8,6 +8,13 @@
       "when": 1785083667876,
       "tag": "0000_serious_violations",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785127834605,
+      "tag": "0001_faulty_sersi",
+      "breakpoints": true
     }
   ]
 }

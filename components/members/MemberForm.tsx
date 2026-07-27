@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils/utils"
 import Link from "next/link"
 import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
 import { isRedirectError } from "next/dist/client/components/redirect-error"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 const memberSchema = z.object({
   // Step 1: Personal
   first_name: z.string().min(1, "First name is required"),
@@ -22,6 +24,12 @@ const memberSchema = z.object({
   birth_date: z.string().min(1, "Date of birth is required"),
   gender: z.string().min(1, "Gender is required"),
   contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
+  marital_status: z.string().default("Single"),
+  is_spouse_cbt_member: z.boolean().default(false),
+  spouse_name: z.string().default(""),
+  spouse_member_id: z.string().default(""),
+  spouse_occupation: z.string().default(""),
+  anniversary_date: z.string().default(""),
   
   // Spiritual info
   date_saved: z.string().default(""),
@@ -129,8 +137,9 @@ const STEPS = [
 
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
 type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
+type BaseMember = { id: string; first_name: string; last_name: string }
 
-export function MemberForm({ initialData, ministries = [], offeringCategories = [] }: { initialData?: any; ministries?: Ministry[]; offeringCategories?: OfferingCategory[] }) {
+export function MemberForm({ initialData, ministries = [], offeringCategories = [], allMembers = [] }: { initialData?: any; ministries?: Ministry[]; offeringCategories?: OfferingCategory[]; allMembers?: BaseMember[] }) {
   const [step, setStep] = useState(1)
   
   const form = useForm({
@@ -186,6 +195,12 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       education_details: initialData?.education_details || [{ level: "Elementary", school_name: "", year_started: "", year_graduated: "", is_currently_enrolled: false }],
       awards_honors: initialData?.awards_honors || "",
       ministries: initialData?.ministries || [],
+      marital_status: initialData?.marital_status || "Single",
+      is_spouse_cbt_member: !!initialData?.spouse_member_id,
+      spouse_name: initialData?.spouse_name || "",
+      spouse_member_id: initialData?.spouse_member_id || "",
+      spouse_occupation: initialData?.spouse_occupation || "",
+      anniversary_date: initialData?.anniversary_date || "",
       date_saved: initialData?.date_saved || "",
       membership_date: initialData?.membership_date || new Date().toISOString().split("T")[0],
       baptism_date: initialData?.baptism_date || "",
@@ -519,6 +534,129 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 <Input {...form.register("contact_number")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="09XX XXX XXXX" />
                 {form.formState.errors.contact_number && <p className="text-sm text-destructive">{form.formState.errors.contact_number.message}</p>}
               </div>
+
+              {/* Marital Status & Spouse Info */}
+              <div className="col-span-1 md:col-span-2 mt-2 mb-2">
+                <h4 className="font-semibold text-lg border-b pb-2">Marital & Family Background</h4>
+              </div>
+
+              <div className="grid gap-2 md:col-span-1">
+                <Label className="text-[13px] text-muted-foreground">Marital Status</Label>
+                <div className="relative flex items-center">
+                  <select 
+                    {...form.register("marital_status")} 
+                    className={cn(
+                      "flex appearance-none h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0",
+                      !form.watch("marital_status") ? "text-muted-foreground" : "text-foreground"
+                    )}
+                  >
+                    <option value="Single" className="bg-card text-foreground">Single</option>
+                    <option value="Married" className="bg-card text-foreground">Married</option>
+                    <option value="Widowed" className="bg-card text-foreground">Widowed</option>
+                    <option value="Separated" className="bg-card text-foreground">Separated / Divorced</option>
+                    <option value="Annulled" className="bg-card text-foreground">Annulled</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 h-4 w-4 text-muted-foreground opacity-50 pointer-events-none" />
+                </div>
+              </div>
+
+              {form.watch("marital_status") === "Married" && (
+                <>
+                  <div className="grid gap-2 md:col-span-1">
+                    <Label className="text-[13px] text-muted-foreground">Wedding Date / Anniversary</Label>
+                    <Input type="date" {...form.register("anniversary_date")} className="h-12 bg-transparent" />
+                  </div>
+                  
+                  <div className="grid gap-4 md:col-span-2 p-4 border rounded-lg bg-muted/20">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="isSpouseCbtMember"
+                        checked={form.watch("is_spouse_cbt_member")}
+                        onChange={(e) => {
+                          form.setValue("is_spouse_cbt_member", e.target.checked, { shouldValidate: true })
+                          if (!e.target.checked) {
+                            form.setValue("spouse_member_id", "", { shouldValidate: true })
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-input bg-transparent text-primary focus:ring-primary cursor-pointer accent-primary"
+                      />
+                      <label htmlFor="isSpouseCbtMember" className="text-sm text-foreground font-medium cursor-pointer flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-rose-500" />
+                        Link to an existing member profile?
+                      </label>
+                    </div>
+
+                    {form.watch("is_spouse_cbt_member") ? (
+                      <div className="grid gap-2 max-w-sm">
+                        <Label className="text-[13px] text-muted-foreground">Select Spouse (Member)</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "justify-between bg-transparent h-12 w-full font-normal",
+                                !form.watch("spouse_member_id") && "text-muted-foreground"
+                              )}
+                            >
+                              {form.watch("spouse_member_id")
+                                ? (() => {
+                                    const m = allMembers.find((member) => member.id === form.watch("spouse_member_id"))
+                                    return m ? `${m.first_name} ${m.last_name}` : "Select a member..."
+                                  })()
+                                : "Select a member..."}
+                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] md:w-[384px] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search member..." className="h-11" />
+                              <CommandList>
+                                <CommandEmpty className="py-6 text-center text-sm px-4">
+                                  <span className="block font-medium mb-1">Profile not found.</span>
+                                  <span className="text-muted-foreground text-xs">Uncheck "Link to existing member" to enter their name manually for now.</span>
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {allMembers.filter(m => m.id !== initialData?.id).map((m) => (
+                                    <CommandItem
+                                      key={m.id}
+                                      value={`${m.first_name} ${m.last_name}`}
+                                      onSelect={() => {
+                                        form.setValue("spouse_member_id", m.id, { shouldValidate: true })
+                                        form.setValue("spouse_name", `${m.first_name} ${m.last_name}`)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4 text-primary",
+                                          form.watch("spouse_member_id") === m.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {m.first_name} {m.last_name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label className="text-[13px] text-muted-foreground">Spouse Full Name</Label>
+                          <Input {...form.register("spouse_name")} className="h-12 bg-transparent" placeholder="Name of Spouse" />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label className="text-[13px] text-muted-foreground">Spouse Occupation</Label>
+                          <Input {...form.register("spouse_occupation")} className="h-12 bg-transparent" placeholder="e.g. Teacher, Engineer" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Spiritual details */}
               <div className="col-span-1 md:col-span-2 mt-4 mb-2">

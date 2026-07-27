@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import { MemberForm } from "@/components/members/MemberForm"
 import { getMinistries } from "@/app/(dashboard)/ministries/actions"
+import { getMembersList } from "@/app/(dashboard)/members/actions"
 
 export default async function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params
@@ -14,6 +15,7 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
   }
 
   const ministriesList = await getMinistries()
+  const allMembers = await getMembersList()
 
   // Map database format back to form expected format
   const mappedMember = {
@@ -24,7 +26,7 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="py-6 max-w-5xl">
-      <MemberForm initialData={mappedMember} ministries={ministriesList} />
+      <MemberForm initialData={mappedMember} ministries={ministriesList} allMembers={allMembers} />
     </div>
   )
 }

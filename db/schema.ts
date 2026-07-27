@@ -69,6 +69,7 @@ export const members = pgTable('members', {
   mother_occupation: text('mother_occupation'),
   mother_contact_number: text('mother_contact_number'),
   parents_civil_status: text('parents_civil_status'),
+  spouse_member_id: uuid('spouse_member_id'),
   spouse_name: text('spouse_name'),
   spouse_occupation: text('spouse_occupation'),
   anniversary_date: text('anniversary_date'),

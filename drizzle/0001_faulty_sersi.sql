@@ -1,0 +1,1 @@
+ALTER TABLE "members" ADD COLUMN "spouse_member_id" uuid;
