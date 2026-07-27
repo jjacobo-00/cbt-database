@@ -191,7 +191,7 @@ export function MemberProfileView({
       {/* ───────────────────────────────────────────────────────────── */}
       {/* HERO / MEMBER HEADER CARD */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <Card className="overflow-hidden border shadow-sm">
+      <Card className="overflow-hidden border shadow-sm print:hidden">
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-700 dark:from-slate-800 dark:via-indigo-950 dark:to-slate-900 h-24 sm:h-32 relative" />
         <CardContent className="pt-0 relative px-6 pb-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 mb-4">
@@ -1016,184 +1016,212 @@ export function MemberProfileView({
       {/* ───────────────────────────────────────────────────────────── */}
       {/* FULL PRINT VIEW DOCUMENT (Visible ONLY when printing) */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="hidden print:block text-black bg-white w-full">
+      <div className="hidden print:block text-black bg-white w-full font-sans">
+        
         {/* Document Header */}
-        <div className="border-b-2 border-black pb-4 mb-6 flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-black uppercase tracking-tight">Official Profile</h1>
-            <p className="text-sm font-semibold uppercase tracking-widest text-gray-600 mt-1">CBT Membership Directory</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-500 uppercase font-medium">Generated On</p>
-            <p className="text-sm font-bold">{new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
-          </div>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold uppercase tracking-wider">Member Profile / Bio-Data</h1>
+          <p className="text-sm uppercase">CBT Membership Directory</p>
+          <p className="text-xs mt-1">Generated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" })}</p>
         </div>
 
-        {/* Member Title Banner */}
-        <div className="mb-8 flex items-center gap-6">
-          <div className="w-24 h-24 rounded-full border-4 border-gray-200 flex items-center justify-center bg-gray-50 text-gray-400 text-3xl font-bold shrink-0">
-            {initials || <User className="h-10 w-10" />}
+        {/* Outer Bordered Container */}
+        <div className="border-2 border-black text-sm">
+          
+          {/* SECTION I: PERSONAL INFO */}
+          <div className="bg-black text-white font-bold px-2 py-1 uppercase text-xs">
+            I. Personal Information
           </div>
-          <div>
-            <h2 className="text-4xl font-extrabold tracking-tight uppercase">
-              {member.first_name} {member.middle_name ? `${member.middle_name} ` : ""}{member.last_name}
-            </h2>
-            <div className="flex gap-4 mt-2 text-sm font-bold text-gray-700 uppercase tracking-wider">
-              {member.sex && <span>{member.sex}</span>}
-              {computedAge !== null && computedAge !== undefined && (
-                <>
-                  <span className="text-gray-300">•</span>
-                  <span>{computedAge} YRS OLD</span>
-                </>
-              )}
-              {member.marital_status && (
-                <>
-                  <span className="text-gray-300">•</span>
-                  <span>{member.marital_status}</span>
-                </>
-              )}
+          <div className="grid grid-cols-3 divide-x divide-black border-b border-black">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Last Name</span>
+              <span className="font-semibold">{member.last_name || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">First Name</span>
+              <span className="font-semibold">{member.first_name || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Middle Name</span>
+              <span className="font-semibold">{member.middle_name || "—"}</span>
             </div>
           </div>
-        </div>
+          
+          <div className="grid grid-cols-4 divide-x divide-black border-b border-black">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Date of Birth</span>
+              <span className="font-semibold">{member.birth_date || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Age</span>
+              <span className="font-semibold">{computedAge !== null ? `${computedAge}` : "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Sex</span>
+              <span className="font-semibold">{member.sex || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Civil Status</span>
+              <span className="font-semibold">{member.marital_status || "—"}</span>
+            </div>
+          </div>
 
-        <div className="space-y-6">
-          {/* Section 1: Personal & Contact */}
-          <div className="break-inside-avoid">
-            <h3 className="text-sm font-black uppercase tracking-widest border-b border-gray-300 pb-1 mb-3 flex items-center gap-2">
-              <User className="h-4 w-4" /> Personal & Contact Information
-            </h3>
-            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Birth Date</span><span className="font-semibold text-sm">{member.birth_date || "—"}</span></div>
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Birth Place</span><span className="font-semibold text-sm">{member.birth_place || "—"}</span></div>
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Mobile Number</span><span className="font-semibold text-sm">{member.contact_number || "—"}</span></div>
-              <div className="col-span-2"><span className="block text-[10px] uppercase font-bold text-gray-500">Email Address</span><span className="font-semibold text-sm">{member.email || "—"}</span></div>
-              
-              <div className="col-span-3 pt-2 border-t border-gray-100">
-                <span className="block text-[10px] uppercase font-bold text-gray-500">Complete Address</span>
-                <span className="font-semibold text-sm">{fullAddress || "—"}</span>
+          <div className="grid grid-cols-2 divide-x divide-black border-b border-black">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Place of Birth</span>
+              <span className="font-semibold">{member.birth_place || "—"}</span>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-black">
+              <div className="p-1.5">
+                <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Contact No.</span>
+                <span className="font-semibold">{member.contact_number || "—"}</span>
+              </div>
+              <div className="p-1.5">
+                <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Email</span>
+                <span className="font-semibold break-all">{member.email || "—"}</span>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Family Background */}
-          <div className="break-inside-avoid">
-            <h3 className="text-sm font-black uppercase tracking-widest border-b border-gray-300 pb-1 mb-3 flex items-center gap-2 mt-4">
-              <Heart className="h-4 w-4" /> Family Background
-            </h3>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Spouse Name</span><span className="font-semibold text-sm">{member.spouse_name || "—"}</span></div>
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Wedding Anniversary</span><span className="font-semibold text-sm">{member.anniversary_date || "—"}</span></div>
-              
-              <div className="col-span-2 grid grid-cols-2 gap-6 pt-2 border-t border-gray-100">
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Father's Name</span>
-                  <span className="font-semibold text-sm">{member.father_name || "—"}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Mother's Name</span>
-                  <span className="font-semibold text-sm">{member.mother_name || "—"}</span>
-                </div>
-              </div>
+          <div className="border-b border-black p-1.5">
+            <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Complete Address</span>
+            <span className="font-semibold">{fullAddress || "—"}</span>
+          </div>
 
-              {childrenList.length > 0 && (
-                <div className="col-span-2 pt-2 border-t border-gray-100">
-                  <span className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Children ({childrenList.length})</span>
-                  <p className="font-semibold text-sm">{childrenList.map(c => c.name).join(", ")}</p>
-                </div>
-              )}
-              {siblings.length > 0 && (
-                <div className="col-span-2 pt-2 border-t border-gray-100">
-                  <span className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Siblings ({siblings.length})</span>
-                  <p className="font-semibold text-sm">{siblings.map(s => s.name).join(", ")}</p>
-                </div>
-              )}
-
-              {member.emergency_contact_name && (
-                <div className="col-span-2 bg-gray-100 p-3 rounded-lg border border-gray-300 mt-2">
-                  <span className="block text-[10px] uppercase font-black text-gray-800 mb-1 flex items-center gap-1"><ShieldAlert className="h-3 w-3" /> Emergency Contact</span>
-                  <span className="font-bold text-sm">{member.emergency_contact_name} ({member.emergency_contact_relationship}) — {member.emergency_contact_number}</span>
-                </div>
-              )}
+          {/* SECTION II: FAMILY BACKGROUND */}
+          <div className="bg-black text-white font-bold px-2 py-1 uppercase text-xs border-b border-black">
+            II. Family Background
+          </div>
+          
+          <div className="grid grid-cols-2 divide-x divide-black border-b border-black">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Spouse's Name</span>
+              <span className="font-semibold">{member.spouse_name || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Wedding Anniversary</span>
+              <span className="font-semibold">{member.anniversary_date || "—"}</span>
             </div>
           </div>
 
-          {/* Section 3: Education & Employment */}
-          <div className="break-inside-avoid">
-            <h3 className="text-sm font-black uppercase tracking-widest border-b border-gray-300 pb-1 mb-3 flex items-center gap-2 mt-4">
-              <Briefcase className="h-4 w-4" /> Education & Employment
-            </h3>
-            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Employment Status</span><span className="font-semibold text-sm">{member.employment_status || "—"}</span></div>
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Occupation / Title</span><span className="font-semibold text-sm">{member.occupation || member.position || "—"}</span></div>
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Company / Organization</span><span className="font-semibold text-sm">{member.company || "—"}</span></div>
-              <div className="col-span-3 pt-2 border-t border-gray-100"><span className="block text-[10px] uppercase font-bold text-gray-500">Highest Educational Attainment</span><span className="font-semibold text-sm">{member.highest_educational_attainment || "—"}</span></div>
+          <div className="grid grid-cols-2 divide-x divide-black border-b border-black">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Father's Name</span>
+              <span className="font-semibold">{member.father_name || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Mother's Name</span>
+              <span className="font-semibold">{member.mother_name || "—"}</span>
             </div>
           </div>
 
-          {/* Section 4: Spiritual Record */}
-          <div className="break-inside-avoid">
-            <h3 className="text-sm font-black uppercase tracking-widest border-b border-gray-300 pb-1 mb-3 flex items-center gap-2 mt-4">
-              <Church className="h-4 w-4" /> Church & Spiritual Record
-            </h3>
-            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Membership Date</span><span className="font-semibold text-sm">{member.membership_date || (member.created_at ? new Date(member.created_at).toISOString().split("T")[0] : "—")}</span></div>
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Date Saved</span><span className="font-semibold text-sm">{member.date_saved || "—"}</span></div>
-              <div><span className="block text-[10px] uppercase font-bold text-gray-500">Date Baptized</span><span className="font-semibold text-sm">{member.date_baptized || member.baptism_date || "—"}</span></div>
-              
-              <div className="col-span-3 pt-2 border-t border-gray-100 grid grid-cols-2 gap-6">
-                <div><span className="block text-[10px] uppercase font-bold text-gray-500">Current Local Church</span><span className="font-semibold text-sm">{member.current_church || "CBT"} ({member.years_in_church ? `${member.years_in_church} yrs` : "—"})</span></div>
-                <div><span className="block text-[10px] uppercase font-bold text-gray-500">Previous Church</span><span className="font-semibold text-sm">{member.prev_church_name || "—"} ({member.prev_church_years ? `${member.prev_church_years} yrs` : "—"})</span></div>
-              </div>
+          <div className="grid grid-cols-2 divide-x divide-black border-b border-black">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Children ({childrenList.length})</span>
+              <span className="font-semibold">{childrenList.map(c => c.name).join(", ") || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Siblings ({siblings.length})</span>
+              <span className="font-semibold">{siblings.map(s => s.name).join(", ") || "—"}</span>
             </div>
           </div>
 
-          {/* Section 5: Ministries & Commitments */}
+          <div className="p-1.5 border-b border-black bg-gray-50">
+            <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Emergency Contact</span>
+            <span className="font-semibold">
+              {member.emergency_contact_name ? 
+                `${member.emergency_contact_name} (${member.emergency_contact_relationship}) - ${member.emergency_contact_number}` 
+                : "—"}
+            </span>
+          </div>
+
+          {/* SECTION III: EDUCATION & EMPLOYMENT */}
+          <div className="bg-black text-white font-bold px-2 py-1 uppercase text-xs border-b border-black break-before-avoid">
+            III. Education & Employment
+          </div>
+
+          <div className="grid grid-cols-3 divide-x divide-black border-b border-black break-inside-avoid">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Highest Attainment</span>
+              <span className="font-semibold">{member.highest_educational_attainment || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Occupation</span>
+              <span className="font-semibold">{member.occupation || member.position || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Company/School</span>
+              <span className="font-semibold">{member.company || member.student_school || "—"}</span>
+            </div>
+          </div>
+
+          {/* SECTION IV: SPIRITUAL RECORD */}
+          <div className="bg-black text-white font-bold px-2 py-1 uppercase text-xs border-b border-black break-before-avoid">
+            IV. Spiritual Record
+          </div>
+
+          <div className="grid grid-cols-3 divide-x divide-black border-b border-black break-inside-avoid">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Date Saved</span>
+              <span className="font-semibold">{member.date_saved || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Date Baptized</span>
+              <span className="font-semibold">{member.date_baptized || member.baptism_date || "—"}</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Membership Date</span>
+              <span className="font-semibold">{member.membership_date || (member.created_at ? new Date(member.created_at).toISOString().split("T")[0] : "—")}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 divide-x divide-black border-b border-black break-inside-avoid">
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Current Church</span>
+              <span className="font-semibold">{member.current_church || "CBT"} ({member.years_in_church ? `${member.years_in_church} yrs` : "—"})</span>
+            </div>
+            <div className="p-1.5">
+              <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Previous Church</span>
+              <span className="font-semibold">{member.prev_church_name || "—"} ({member.prev_church_years ? `${member.prev_church_years} yrs` : "—"})</span>
+            </div>
+          </div>
+
+          {/* SECTION V: MINISTRIES */}
+          <div className="bg-black text-white font-bold px-2 py-1 uppercase text-xs border-b border-black break-before-avoid">
+            V. Active Ministries & Commitments
+          </div>
+          
+          <div className="p-1.5 border-b border-black break-inside-avoid">
+            <span className="block text-[10px] uppercase font-bold text-black mb-0.5">Currently Enrolled Ministries ({ministriesList.length})</span>
+            <span className="font-semibold">{ministriesList.map(m => m.name).join(", ") || "None"}</span>
+          </div>
+
           <div className="break-inside-avoid">
-            <h3 className="text-sm font-black uppercase tracking-widest border-b border-gray-300 pb-1 mb-3 flex items-center gap-2 mt-4">
-              <Gift className="h-4 w-4" /> Active Ministries & Commitments
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <span className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Currently Enrolled Ministries ({ministriesList.length})</span>
-                {ministriesList.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {ministriesList.map(m => (
-                      <span key={m.id} className="font-semibold text-sm bg-gray-100 border border-gray-300 px-2 py-1 rounded">
-                        {m.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="font-semibold text-sm italic text-gray-500">None</span>
+            <div className="p-1.5 border-b border-black bg-gray-50">
+              <span className="block text-[10px] uppercase font-bold text-black">Annual Recommitments History</span>
+            </div>
+            <table className="w-full text-left">
+              <thead className="bg-gray-100 text-[10px] uppercase text-black border-b border-black">
+                <tr>
+                  <th className="p-1.5 border-r border-black font-bold w-16">Year</th>
+                  <th className="p-1.5 border-r border-black font-bold">Ministries</th>
+                  <th className="p-1.5 font-bold">Offerings</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black">
+                {commitmentsHistory.length > 0 ? commitmentsHistory.map(c => (
+                  <tr key={c.year}>
+                    <td className="p-1.5 border-r border-black font-bold">{c.year}</td>
+                    <td className="p-1.5 border-r border-black font-semibold">{c.ministries.join(", ") || "—"}</td>
+                    <td className="p-1.5 font-semibold">{c.offerings.join(", ") || "—"}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={3} className="p-1.5 italic font-semibold text-center border-t-0">No commitment records found.</td>
+                  </tr>
                 )}
-              </div>
-              
-              {commitmentsHistory.length > 0 && (
-                <div className="pt-3 border-t border-gray-200">
-                  <span className="block text-[10px] uppercase font-bold text-gray-500 mb-2">Annual Recommitments History</span>
-                  <div className="border border-gray-300 rounded-lg overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-gray-100 text-[10px] uppercase font-bold text-gray-600 border-b border-gray-300">
-                        <tr>
-                          <th className="px-3 py-2 border-r border-gray-300">Year</th>
-                          <th className="px-3 py-2 border-r border-gray-300">Ministries</th>
-                          <th className="px-3 py-2">Offerings</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {commitmentsHistory.map(c => (
-                          <tr key={c.year}>
-                            <td className="px-3 py-2 border-r border-gray-200 font-bold">{c.year}</td>
-                            <td className="px-3 py-2 border-r border-gray-200 font-medium">{c.ministries.join(", ") || "—"}</td>
-                            <td className="px-3 py-2 font-medium">{c.offerings.join(", ") || "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
+              </tbody>
+            </table>
           </div>
 
         </div>
