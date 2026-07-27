@@ -1,34 +1,28 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { getToken } from "next-auth/jwt"
+import { auth } from "@/auth"
 
-export async function proxy(request: NextRequest) {
-  const token = await getToken({ req: request })
-  const isLoggedIn = !!token
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-  const isApiAuthRoute = request.nextUrl.pathname.startsWith('/api/auth')
-  const isInvitePage = request.nextUrl.pathname.startsWith('/invite')
+export const proxy = auth((req) => {
+  const isLoggedIn = !!req.auth;
+  const isAuthPage = req.nextUrl.pathname.startsWith('/login');
+  const isApiAuthRoute = req.nextUrl.pathname.startsWith('/api/auth');
+  const isInviteRoute = req.nextUrl.pathname.startsWith('/invite'); // Don't protect invite routes
 
-  // Always allow NextAuth API routes and invite pages through
-  if (isApiAuthRoute || isInvitePage) {
-    return NextResponse.next()
+  if (isApiAuthRoute || isInviteRoute) {
+    return;
   }
 
-  // If on login page and already logged in, redirect to dashboard
-  if (isLoginPage) {
+  if (isAuthPage) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return Response.redirect(new URL('/dashboard', req.nextUrl));
     }
-    return NextResponse.next()
+    return;
   }
 
-  // If not logged in and trying to access a protected page, redirect to login
   if (!isLoggedIn) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return Response.redirect(new URL('/login', req.nextUrl));
   }
 
-  return NextResponse.next()
-}
+  return;
+})
 
 export const config = {
   matcher: [
