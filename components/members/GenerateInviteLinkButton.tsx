@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Link2, Loader2, Check, Copy, Plus } from "lucide-react"
 import { generateInviteLink, getActiveInvitationLinks } from "@/app/(dashboard)/members/actions"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils/utils"
 import {
   Dialog,
   DialogContent,
@@ -109,21 +110,24 @@ export function GenerateInviteLinkButton({
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-md w-full p-6">
-          <DialogHeader>
-            <DialogTitle>
-              {memberId ? "Share Profile Update Link" : "Share Registration Link"}
-            </DialogTitle>
-            <DialogDescription>
-              Any active link allows self-service form submission for up to 30 minutes.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-md w-full p-0 overflow-hidden bg-card border-slate-800 shadow-2xl">
+          <div className="p-6 pb-4">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <Link2 className="h-5 w-5 text-primary" />
+                {memberId ? "Share Profile Update Link" : "Share Registration Link"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-1">
+                Any active link allows self-service form submission for up to 30 minutes.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
-          <div className="space-y-4 mt-4">
+          <div className="px-6 pb-6 space-y-5">
             <Button 
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="w-full gap-2 h-11"
+              className="w-full gap-2 h-11 font-semibold shadow-md bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 transition-all duration-200"
             >
               {isGenerating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -133,61 +137,78 @@ export function GenerateInviteLinkButton({
               Generate New Form Link
             </Button>
 
-            <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-4 py-2 border-b text-xs font-semibold text-muted-foreground flex justify-between">
-                <span>Active Links</span>
-                <span>Time Left</span>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-1">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Active Links
+                </span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Status
+                </span>
               </div>
               
-              <div className="divide-y max-h-[240px] overflow-y-auto">
-                {isLoading ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground flex justify-center items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    Loading links...
-                  </div>
-                ) : links.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">
-                    No active links. Click above to generate one.
-                  </div>
-                ) : (
-                  links.map((link) => {
-                    const isCopied = copiedToken === link.token
-                    const timeRemaining = getTimeRemaining(link.expires_at)
-                    
-                    return (
-                      <div 
-                        key={link.token} 
-                        className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/30 transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-mono truncate text-muted-foreground">
-                            {window.location.origin}/invite/{link.token.substring(0, 12)}...
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            Created {link.created_at ? new Date(link.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "recently"}
-                          </p>
+              <div className="border border-slate-800 rounded-xl overflow-hidden bg-muted/20">
+                <div className="divide-y divide-slate-800/60 max-h-[220px] overflow-y-auto">
+                  {isLoading ? (
+                    <div className="p-8 text-center text-sm text-muted-foreground flex justify-center items-center gap-2">
+                      <Loader2 className="h-4.5 w-4.5 animate-spin text-primary" />
+                      Loading links...
+                    </div>
+                  ) : links.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-muted-foreground">
+                      No active links. Click above to generate one.
+                    </div>
+                  ) : (
+                    links.map((link) => {
+                      const isCopied = copiedToken === link.token
+                      const timeRemaining = getTimeRemaining(link.expires_at)
+                      const isExpired = timeRemaining === "Expired"
+                      
+                      return (
+                        <div 
+                          key={link.token} 
+                          className="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-muted/40 transition-colors min-w-0"
+                        >
+                          <div className="min-w-0 flex-1 pr-2">
+                            <p className="text-xs font-mono truncate text-foreground/90 font-medium">
+                              {window.location.origin}/invite/{link.token}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              Created {link.created_at ? new Date(link.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "recently"}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={cn(
+                              "text-[10px] px-2 py-0.5 rounded-full font-semibold border shadow-sm",
+                              isExpired 
+                                ? "bg-red-500/10 text-red-400 border-red-500/20"
+                                : "bg-amber-500/10 text-amber-500 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400"
+                            )}>
+                              {timeRemaining}
+                            </span>
+                            
+                            <Button
+                              size="icon"
+                              variant="secondary"
+                              className={cn(
+                                "h-8 w-8 rounded-lg border border-slate-800 transition-all hover:bg-primary hover:text-white",
+                                isCopied && "bg-green-600/20 border-green-500/30 text-green-400 hover:bg-green-600/20"
+                              )}
+                              onClick={() => handleCopy(link.token)}
+                            >
+                              {isCopied ? (
+                                <Check className="h-3.5 w-3.5" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                            {timeRemaining}
-                          </span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                            onClick={() => handleCopy(link.token)}
-                          >
-                            {isCopied ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
+                      )
+                    })
+                  )}
+                </div>
               </div>
             </div>
           </div>
