@@ -145,16 +145,19 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 min-w-0">
+              <div 
+                className={`flex items-center gap-2 min-w-0 flex-1 ${!isChild && hasChildren ? 'cursor-pointer select-none group' : ''}`}
+                onClick={() => { if (!isChild && hasChildren) toggleExpand(m.id) }}
+              >
                 {!isChild && hasChildren && (
-                  <button onClick={() => toggleExpand(m.id)} className="p-0.5 rounded hover:bg-muted/50 transition-colors shrink-0">
-                    {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                  </button>
+                  <div className="p-0.5 rounded group-hover:bg-muted/50 transition-colors shrink-0 flex items-center justify-center">
+                    {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" /> : <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />}
+                  </div>
                 )}
                 {!isChild && !hasChildren && <div className="w-5" />}
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium">{m.name}</p>
+                    <p className={`font-medium transition-colors ${!isChild && hasChildren ? 'group-hover:text-primary' : ''}`}>{m.name}</p>
                     {m.for_everyone && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-primary/15 text-primary px-2 py-0.5 rounded-full">
                         <Users className="h-3 w-3" /> For Everyone
