@@ -138,7 +138,7 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-t-4 border-t-blue-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
@@ -190,13 +190,13 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       </div>
 
       {/* Charts Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Gender Distribution */}
-        <Card className="col-span-1 shadow-sm">
+        <Card className="col-span-1 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Gender Distribution</CardTitle>
           </CardHeader>
-          <CardContent className="h-[250px]">
+          <CardContent className="h-[250px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -220,11 +220,11 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
         </Card>
 
         {/* Marital Status */}
-        <Card className="col-span-1 md:col-span-1 lg:col-span-2 shadow-sm">
+        <Card className="col-span-1 md:col-span-1 lg:col-span-2 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Marital Status</CardTitle>
           </CardHeader>
-          <CardContent className="h-[250px]">
+          <CardContent className="h-[250px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={maritalData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
@@ -238,11 +238,11 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
         </Card>
 
         {/* Age Demographics */}
-        <Card className="col-span-1 md:col-span-2 shadow-sm">
+        <Card className="col-span-1 md:col-span-2 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Age Demographics</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[300px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ageData} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
@@ -256,11 +256,11 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
         </Card>
 
         {/* Top Cities */}
-        <Card className="col-span-1 shadow-sm">
+        <Card className="col-span-1 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Top Cities</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[300px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={cityData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
@@ -275,11 +275,11 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       </div>
 
       {/* Educational Attainment (Full Width) */}
-      <Card className="shadow-sm">
+      <Card className="min-w-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base">Educational Attainment</CardTitle>
         </CardHeader>
-        <CardContent className="h-[250px]">
+        <CardContent className="h-[250px] min-w-0 overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={eduData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
@@ -293,7 +293,7 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       </Card>
 
       {/* Data Table */}
-      <Card className="shadow-sm overflow-hidden">
+      <Card className="min-w-0 shadow-sm overflow-hidden">
         <CardHeader className="bg-muted/30 border-b">
           <CardTitle>Raw Data & Export</CardTitle>
           <CardDescription>
