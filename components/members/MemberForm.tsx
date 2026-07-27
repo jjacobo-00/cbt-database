@@ -282,18 +282,22 @@ export function MemberForm({
       
       if (onSubmitOverride) {
         await onSubmitOverride(payload)
+        if (!initialData) localStorage.removeItem("cbt_new_member_draft")
       } else {
         if (initialData) {
           await updateMember(payload)
-          toast.success("Member profile updated successfully!")
         } else {
           await createMember(payload)
-          toast.success("New member record created successfully!")
-          localStorage.removeItem("cbt_new_member_draft")
         }
       }
     } catch (e: any) {
       if (isRedirectError(e)) {
+        if (!initialData) {
+          toast.success("New member record created successfully!")
+          localStorage.removeItem("cbt_new_member_draft")
+        } else {
+          toast.success("Member profile updated successfully!")
+        }
         throw e
       }
       console.error(e)
