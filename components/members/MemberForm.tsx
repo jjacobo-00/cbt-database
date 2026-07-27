@@ -24,6 +24,7 @@ const memberSchema = z.object({
   birth_date: z.string().min(1, "Date of birth is required"),
   gender: z.string().min(1, "Gender is required"),
   contact_number: z.string().regex(/^09\d{9}$/, "Must be a valid 11-digit Philippine mobile number starting with 09"),
+  email: z.string().email("Invalid email format").or(z.literal("")),
   marital_status: z.string().default("Single"),
   is_spouse_cbt_member: z.boolean().default(false),
   spouse_name: z.string().default(""),
@@ -152,6 +153,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
       birth_date: initialData?.birth_date || "",
       gender: initialData?.gender || "",
       contact_number: initialData?.contact_number || "",
+      email: initialData?.email || "",
       
       // Current Address
       house_number: initialData?.house_number || "",
@@ -355,7 +357,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
 
     // If we are creating, validate current step first before going forward
     let fieldsToValidate: any[] = []
-    if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number"]
+    if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "email"]
     if (step === 2) fieldsToValidate = []
     if (step === 3) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
     if (step === 4) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
@@ -374,7 +376,7 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
 
   const validateStep = async () => {
     let fieldsToValidate: any[] = []
-    if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number"]
+    if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "email"]
     if (step === 2) fieldsToValidate = [] // Address step
     if (step === 3) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
     if (step === 4) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
@@ -522,6 +524,11 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 {form.formState.errors.first_name && <p className="text-sm text-destructive">{form.formState.errors.first_name.message}</p>}
               </div>
               <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Middle Name</Label>
+                <Input {...form.register("middle_name")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Optional" />
+                {form.formState.errors.middle_name && <p className="text-sm text-destructive">{form.formState.errors.middle_name.message}</p>}
+              </div>
+              <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Last Name<R/></Label>
                 <Input {...form.register("last_name")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" />
                 {form.formState.errors.last_name && <p className="text-sm text-destructive">{form.formState.errors.last_name.message}</p>}
@@ -560,10 +567,15 @@ export function MemberForm({ initialData, ministries = [], offeringCategories = 
                 {form.formState.errors.gender && <p className="text-sm text-destructive">{form.formState.errors.gender.message}</p>}
               </div>
 
-              <div className="grid gap-2 md:col-span-2">
+              <div className="grid gap-2 md:col-span-1">
                 <Label className="text-[13px] text-muted-foreground">Contact Number<R/></Label>
                 <Input {...form.register("contact_number")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="09XX XXX XXXX" />
                 {form.formState.errors.contact_number && <p className="text-sm text-destructive">{form.formState.errors.contact_number.message}</p>}
+              </div>
+              <div className="grid gap-2 md:col-span-1">
+                <Label className="text-[13px] text-muted-foreground">Email Address</Label>
+                <Input {...form.register("email")} type="email" className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="Optional" />
+                {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
               </div>
 
               {/* Marital Status & Spouse Info */}

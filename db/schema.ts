@@ -27,6 +27,7 @@ export const members = pgTable('members', {
   birth_date: text('birth_date'),
   birth_place: text('birth_place'),
   contact_number: text('contact_number'),
+  email: text('email'),
   
   // Address - Current
   house_number: text('house_number'),

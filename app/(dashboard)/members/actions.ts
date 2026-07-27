@@ -12,10 +12,12 @@ export async function createMember(payloadStr: string) {
   const [member] = await db.insert(members).values({
     // Step 1: Personal
     first_name: data.first_name,
+    middle_name: data.middle_name || "",
     last_name: data.last_name,
     birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
+    email: data.email || "",
     marital_status: data.marital_status || "Single",
     spouse_name: data.spouse_name || "",
     spouse_member_id: data.spouse_member_id || null,
@@ -158,10 +160,12 @@ export async function updateMember(payloadStr: string) {
   await db.update(members).set({
     // Step 1: Personal
     first_name: data.first_name,
+    middle_name: data.middle_name || "",
     last_name: data.last_name,
     birth_date: data.birth_date || null,
     sex: data.gender,
     contact_number: data.contact_number,
+    email: data.email || "",
     marital_status: data.marital_status || "Single",
     spouse_name: data.spouse_name || "",
     spouse_member_id: data.spouse_member_id || null,

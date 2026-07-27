@@ -269,6 +269,18 @@ export function MemberProfileView({
             </div>
 
             <div className="flex items-center gap-2.5 text-muted-foreground">
+              <span className="truncate">
+                {member.email ? (
+                  <a href={`mailto:${member.email}`} className="hover:underline text-foreground font-medium">
+                    {member.email}
+                  </a>
+                ) : (
+                  "No email address"
+                )}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 text-muted-foreground">
               <MapPin className="h-4 w-4 text-primary shrink-0" />
               <span className="truncate text-foreground font-medium">
                 {fullAddress || "No address specified"}
@@ -421,6 +433,10 @@ export function MemberProfileView({
                   <p className="text-xs text-muted-foreground">Gender / Sex</p>
                   <p className="font-medium">{member.sex || "—"}</p>
                 </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Email Address</p>
+                  <p className="font-medium">{member.email || "—"}</p>
+                </div>
               </div>
               <div className="pt-2 border-t">
                 <p className="text-xs text-muted-foreground">Full Address</p>
@@ -531,6 +547,10 @@ export function MemberProfileView({
                 <div>
                   <span className="text-muted-foreground block text-xs">Contact Mobile Number</span>
                   <span className="font-medium">{member.contact_number || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs">Email Address</span>
+                  <span className="font-medium">{member.email || "—"}</span>
                 </div>
               </div>
             </div>
