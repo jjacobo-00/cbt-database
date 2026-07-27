@@ -107,19 +107,17 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Mobile Card View (Compact List Tiles) */}
-      <div className="flex flex-col md:hidden border rounded-xl bg-card shadow-sm overflow-hidden divide-y">
+      <div className="flex flex-col md:hidden gap-3 mt-2">
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => {
             const cells = row.getVisibleCells();
-            const nameCell = cells.find(c => c.column.id === "name");
-            const contactCell = cells.find(c => c.column.id === "contact_number");
             
-            // Extract text from the cell for a cleaner mobile display if possible, or just render it
             // We use (row.original as any) because TData is generic in this component
             const memberId = (row.original as any).id;
             const firstName = (row.original as any).first_name || "";
             const lastName = (row.original as any).last_name || "";
             const contact = (row.original as any).contact_number || "No contact info";
+            const role = (row.original as any).occupation || "Member";
             
             const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
@@ -127,28 +125,36 @@ export function DataTable<TData, TValue>({
               <Link 
                 key={row.id} 
                 href={`/members/${memberId}`}
-                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors active:bg-muted/80"
+                className="group relative flex items-center justify-between p-4 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-all active:scale-[0.98] overflow-hidden"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                    {initials || <User2 className="h-5 w-5" />}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center gap-4 min-w-0 relative z-10">
+                  <div className="h-12 w-12 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-inner">
+                    {initials || <User2 className="h-6 w-6" />}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-semibold text-foreground truncate">
+                    <span className="font-semibold text-foreground text-base truncate">
                       {firstName} {lastName}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate">
-                      {contact}
-                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground truncate bg-muted px-2 py-0.5 rounded-full">
+                        {role}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {contact}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-3" />
+                <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 ml-3 group-hover:bg-primary group-hover:text-primary-foreground transition-colors relative z-10">
+                  <ChevronRight className="h-4 w-4" />
+                </div>
               </Link>
             )
           })
         ) : (
-          <div className="text-center p-8 text-muted-foreground">
-            No results found.
+          <div className="text-center p-8 text-muted-foreground border rounded-2xl bg-card">
+            No members found.
           </div>
         )}
       </div>

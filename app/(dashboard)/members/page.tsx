@@ -32,11 +32,11 @@ export default async function MembersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Members Directory</h1>
-        <div className="flex gap-2">
-          <GenerateInviteLinkButton variant="secondary" />
-          <Button asChild>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <GenerateInviteLinkButton variant="secondary" className="flex-1 sm:flex-none" />
+          <Button asChild className="flex-1 sm:flex-none">
             <Link href="/members/new"><UserPlus className="mr-2 h-4 w-4" /> Add Member</Link>
           </Button>
         </div>

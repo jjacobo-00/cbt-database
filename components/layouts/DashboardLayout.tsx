@@ -8,7 +8,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40 pb-16 sm:pb-0">
+    <div className="flex min-h-[100dvh] w-full flex-col bg-muted/40 pb-24 sm:pb-0 relative">
       <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
       <div className="flex min-w-0 flex-col sm:gap-4 sm:py-4 sm:pl-64">
         <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
