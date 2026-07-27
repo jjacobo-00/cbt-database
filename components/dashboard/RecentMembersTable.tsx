@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Users } from "lucide-react"
+import { Users, ChevronRight, User2 } from "lucide-react"
 
 interface RecentMember {
   id: string
@@ -99,49 +99,35 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
           </table>
         </div>
 
-        {/* Mobile Card View */}
-        <div className="grid grid-cols-1 gap-4 md:hidden mt-4">
+        {/* Mobile Card View (Compact List Tiles) */}
+        <div className="flex flex-col md:hidden border rounded-xl bg-card shadow-sm overflow-hidden divide-y mt-4">
           {recentMembers.map((member) => {
             const isNew = isNewMember(member.created_at)
+            const initials = getInitials(member.first_name, member.last_name)
             return (
-              <div key={member.id} className="rounded-xl border bg-card shadow-sm p-4 space-y-4">
-                <div className="font-bold text-lg border-b pb-3 text-primary flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-medium text-xs shrink-0">
-                      {getInitials(member.first_name, member.last_name)}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+              <Link 
+                key={member.id} 
+                href={`/members/${member.id}`}
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors active:bg-muted/80"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm relative">
+                    {initials || <User2 className="h-5 w-5" />}
+                    {isNew && (
+                      <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-500 border-2 border-background" />
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-foreground truncate">
                       {member.first_name} {member.last_name}
-                      {isNew && (
-                        <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">
-                          New
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Contact</span>
-                    <span className="font-medium text-foreground">{member.contact_number || "—"}</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">City</span>
-                    <span className="font-medium text-foreground">{member.city || "—"}</span>
-                  </div>
-                  <div className="flex flex-col gap-1 col-span-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Added</span>
-                    <span className="font-medium text-foreground">
-                      {member.created_at ? new Date(member.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {member.city || member.contact_number || "No contact info"}
                     </span>
                   </div>
                 </div>
-                <div className="pt-4 border-t flex justify-end">
-                  <Button variant="outline" size="sm" asChild className="w-full sm:w-auto hover:bg-primary/10 hover:text-primary">
-                    <Link href={`/members/${member.id}`}>View Profile</Link>
-                  </Button>
-                </div>
-              </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-3" />
+              </Link>
             )
           })}
           {!recentMembers.length && (

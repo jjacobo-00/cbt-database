@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useTransition } from "react"
-import { Search, Loader2, Pencil, X, Check, Plus, AlertCircle } from "lucide-react"
+import { Search, Loader2, Pencil, X, Check, Plus, AlertCircle, ChevronRight, User2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "./actions"
@@ -213,68 +213,37 @@ export function CommitmentsClient({
         </div>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {filtered.map(c => (
-          <div key={c.member_id} className="rounded-xl border bg-card shadow-sm p-4 space-y-4">
-            <div className="font-bold text-lg border-b pb-3 text-primary flex flex-col">
-              <span className="text-foreground">{c.first_name} {c.last_name}</span>
-              <span className="text-xs font-normal text-muted-foreground mt-0.5">{c.contact_number || "No contact"}</span>
-            </div>
-            
-            <div className="space-y-4 text-sm">
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Ministries</span>
-                <div>
-                  {c.ministries.length === 0 ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">
-                      <AlertCircle className="h-3 w-3" /> None
-                    </span>
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {c.ministries.map(m => (
-                        <span key={m.ministry_id} className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                          {m.ministry_name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+      {/* Mobile Card View (Compact List Tiles) */}
+      <div className="flex flex-col md:hidden border rounded-xl bg-card shadow-sm overflow-hidden divide-y mt-4">
+        {filtered.map(c => {
+          const initials = `${c.first_name.charAt(0)}${c.last_name.charAt(0)}`.toUpperCase();
+          return (
+            <button
+              key={c.member_id}
+              onClick={() => openEdit(c)}
+              className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors active:bg-muted/80 text-left w-full"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                  {initials || <User2 className="h-5 w-5" />}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-semibold text-foreground truncate">
+                    {c.first_name} {c.last_name}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {c.has_pledged 
+                      ? `${c.ministries.length} Ministries • ${c.offerings.length} Offerings`
+                      : "No commitments set"}
+                  </span>
                 </div>
               </div>
-              
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Offerings</span>
-                <div>
-                  {c.offerings.length === 0 ? (
-                    <span className="text-muted-foreground text-xs font-normal">-</span>
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {c.offerings.map(o => (
-                        <span key={o.offering_category_id} className="text-[11px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full font-medium">
-                          {o.offering_name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t flex justify-end">
-              {c.has_pledged ? (
-                <Button variant="ghost" size="sm" onClick={() => openEdit(c)} className="w-full sm:w-auto gap-1">
-                  <Pencil className="h-3.5 w-3.5" /> Edit Commitments
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={() => openEdit(c)} className="w-full sm:w-auto gap-1 text-xs">
-                  <Plus className="h-3.5 w-3.5" /> Set Commitments
-                </Button>
-              )}
-            </div>
-          </div>
-        ))}
+              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-3" />
+            </button>
+          )
+        })}
         {filtered.length === 0 && (
-          <div className="text-center p-8 border rounded-xl bg-card text-muted-foreground">
+          <div className="text-center p-8 text-muted-foreground">
             No members found in directory.
           </div>
         )}

@@ -14,6 +14,8 @@ import {
 } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { ChevronRight, User2 } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -104,71 +106,77 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
+      {/* Mobile Card View (Compact List Tiles) */}
+      <div className="flex flex-col md:hidden border rounded-xl bg-card shadow-sm overflow-hidden divide-y">
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => {
             const cells = row.getVisibleCells();
             const nameCell = cells.find(c => c.column.id === "name");
             const contactCell = cells.find(c => c.column.id === "contact_number");
-            const cityCell = cells.find(c => c.column.id === "city");
-            const occupationCell = cells.find(c => c.column.id === "occupation");
-            const actionsCell = cells.find(c => c.column.id === "actions");
+            
+            // Extract text from the cell for a cleaner mobile display if possible, or just render it
+            // We use (row.original as any) because TData is generic in this component
+            const memberId = (row.original as any).id;
+            const firstName = (row.original as any).first_name || "";
+            const lastName = (row.original as any).last_name || "";
+            const contact = (row.original as any).contact_number || "No contact info";
+            
+            const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
             return (
-              <div key={row.id} className="rounded-xl border bg-card shadow-sm p-4 space-y-4 animate-in fade-in duration-300">
-                <div className="font-bold text-lg border-b pb-3 text-primary flex items-center justify-between">
-                  {nameCell ? flexRender(nameCell.column.columnDef.cell, nameCell.getContext()) : null}
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Contact Number</span>
-                    <span className="font-medium text-foreground">
-                      {contactCell ? flexRender(contactCell.column.columnDef.cell, contactCell.getContext()) : "—"}
-                    </span>
+              <Link 
+                key={row.id} 
+                href={`/members/${memberId}`}
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors active:bg-muted/80"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                    {initials || <User2 className="h-5 w-5" />}
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">City</span>
-                    <span className="font-medium text-foreground">
-                      {cityCell ? flexRender(cityCell.column.columnDef.cell, cityCell.getContext()) : "—"}
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-foreground truncate">
+                      {firstName} {lastName}
                     </span>
-                  </div>
-                  <div className="flex flex-col gap-1 col-span-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">Occupation</span>
-                    <span className="font-medium text-foreground">
-                      {occupationCell ? flexRender(occupationCell.column.columnDef.cell, occupationCell.getContext()) : "—"}
+                    <span className="text-xs text-muted-foreground truncate">
+                      {contact}
                     </span>
                   </div>
                 </div>
-                <div className="pt-4 border-t flex justify-end">
-                  {actionsCell ? flexRender(actionsCell.column.columnDef.cell, actionsCell.getContext()) : null}
-                </div>
-              </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-3" />
+              </Link>
             )
           })
         ) : (
-          <div className="text-center p-8 border rounded-xl bg-card text-muted-foreground">
+          <div className="text-center p-8 text-muted-foreground">
             No results found.
           </div>
         )}
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+      {/* Refined Pagination */}
+      <div className="flex items-center justify-between py-4">
+        <div className="text-sm text-muted-foreground hidden sm:block">
+          Showing page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+        </div>
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="flex-1 sm:flex-none h-10"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="flex-1 sm:flex-none h-10"
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   )
