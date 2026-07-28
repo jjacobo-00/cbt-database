@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 interface InvitationLink {
   token: string
@@ -23,11 +24,13 @@ interface InvitationLink {
 export function GenerateInviteLinkButton({ 
   memberId, 
   variant = "outline", 
-  className 
+  className,
+  asDropdownItem = false
 }: { 
   memberId?: string
   variant?: "default" | "outline" | "ghost" | "secondary"
   className?: string 
+  asDropdownItem?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -100,14 +103,27 @@ export function GenerateInviteLinkButton({
 
   return (
     <>
-      <Button 
-        variant={variant}
-        onClick={() => setIsOpen(true)} 
-        className={className}
-      >
-        <Link2 className="h-4 w-4 mr-2" />
-        {memberId ? "Share update form" : "Share member form"}
-      </Button>
+      {asDropdownItem ? (
+        <DropdownMenuItem 
+          onClick={(e) => {
+            e.preventDefault()
+            setIsOpen(true)
+          }}
+          className={className}
+        >
+          <Link2 className="h-4 w-4 mr-2" />
+          {memberId ? "Share update form" : "Share member form"}
+        </DropdownMenuItem>
+      ) : (
+        <Button 
+          variant={variant}
+          onClick={() => setIsOpen(true)} 
+          className={className}
+        >
+          <Link2 className="h-4 w-4 mr-2" />
+          {memberId ? "Share update form" : "Share member form"}
+        </Button>
+      )}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md w-full p-0 overflow-hidden bg-card border-slate-800 shadow-2xl">

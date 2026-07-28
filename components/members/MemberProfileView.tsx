@@ -5,13 +5,20 @@ import Link from "next/link"
 import { 
   ArrowLeft, Edit, Printer, Trash2, User, Phone, MapPin, Briefcase, 
   GraduationCap, Calendar, Heart, ShieldAlert, Church, Gift, Check,
-  BookOpen, Award, Sparkles, Building, Layers, School, AlertTriangle, Loader2, Mail, Users
+  BookOpen, Award, Sparkles, Building, Layers, School, AlertTriangle, Loader2, Mail, Users, MoreHorizontal
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { cn } from "@/lib/utils/utils"
 import { deleteMember } from "@/app/(dashboard)/members/actions"
 import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 type EducationDetail = {
   level: string
@@ -136,31 +143,43 @@ export function MemberProfileView({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap min-w-0 w-full sm:w-auto mt-2 sm:mt-0">
-          <GenerateInviteLinkButton memberId={member.id} variant="outline" className="flex" />
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="gap-1.5"
-            onClick={() => window.print()}
-          >
-            <Printer className="h-4 w-4" />
-            <span>Print Profile</span>
-          </Button>
-          <Button size="sm" asChild className="gap-1.5">
+          <Button size="sm" asChild className="gap-1.5 px-4 font-medium">
             <Link href={`/members/${member.id}/edit`}>
               <Edit className="h-4 w-4" />
-              <span>Edit Profile</span>
+              <span>Edit</span>
             </Link>
           </Button>
-          <Button 
-            variant="destructive" 
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-            <span>Delete Profile</span>
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">More options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <GenerateInviteLinkButton 
+                memberId={member.id} 
+                asDropdownItem={true}
+                className="cursor-pointer font-medium"
+              />
+              <DropdownMenuItem 
+                onClick={() => window.print()}
+                className="cursor-pointer font-medium"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                <span>Print Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-medium"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                <span>Delete Profile</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
