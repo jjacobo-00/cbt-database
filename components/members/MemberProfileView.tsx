@@ -1427,20 +1427,18 @@ export function MemberProfileView({
               <thead className="bg-slate-50 text-[10px] uppercase text-slate-500 border-b border-slate-300">
                 <tr>
                   <th className="p-2 border-r border-slate-300 font-semibold w-16">Year</th>
-                  <th className="p-2 border-r border-slate-300 font-semibold">Ministries</th>
-                  <th className="p-2 font-semibold">Offerings</th>
+                  <th className="p-2 font-semibold">Ministries</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-300">
                 {commitmentsHistory.length > 0 ? commitmentsHistory.map(c => (
                   <tr key={c.year}>
                     <td className="p-2 border-r border-slate-300 font-bold text-black">{c.year}</td>
-                    <td className="p-2 border-r border-slate-300 font-semibold text-black text-sm">{c.ministries.join(", ") || "—"}</td>
-                    <td className="p-2 font-semibold text-black text-sm">{c.offerings.join(", ") || "—"}</td>
+                    <td className="p-2 font-semibold text-black text-sm">{c.ministries.join(", ") || "—"}</td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={3} className="p-2 italic font-semibold text-slate-400 text-center text-sm border-t-0">No commitment records found.</td>
+                    <td colSpan={2} className="p-2 italic font-semibold text-slate-400 text-center text-sm border-t-0">No commitment records found.</td>
                   </tr>
                 )}
               </tbody>
