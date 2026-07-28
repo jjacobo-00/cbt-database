@@ -1083,7 +1083,7 @@ export function MemberProfileView({
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <span className="text-muted-foreground text-xs block">Current Local Church</span>
-                  <span className="font-medium">{member.current_church || "CBT"}</span>
+                  <span className="font-medium">{!member.current_church || member.current_church === "Current Church" || member.current_church === "CBT" ? "Christian Baptist Tabernacle - Olongapo" : member.current_church}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">Years in Current Church</span>
@@ -1393,7 +1393,7 @@ export function MemberProfileView({
           <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
             <div className="p-2">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Current Church</span>
-              <span className="font-semibold text-black">{member.current_church || "CBT"} {member.years_in_church ? `(${member.years_in_church} yrs)` : ""}</span>
+              <span className="font-semibold text-black">{(!member.current_church || member.current_church === "Current Church" || member.current_church === "CBT" ? "Christian Baptist Tabernacle - Olongapo" : member.current_church)} {member.years_in_church ? `(${member.years_in_church} yrs)` : ""}</span>
             </div>
             <div className="p-2">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Previous Church</span>
