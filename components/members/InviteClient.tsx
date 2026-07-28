@@ -124,6 +124,7 @@ export function InviteClient({
           allMembers={allMembers}
           onSubmitOverride={handleSubmit}
           hideBackButton={true}
+          isInvite={true}
         />
       </div>
     </div>

@@ -244,7 +244,7 @@ export async function coreUpdateMember(payloadStr: string) {
     }
   }
 
-  const [existingMember] = await db.select({ spouse_member_id: members.spouse_member_id, siblings: members.siblings }).from(members).where(eq(members.id, id))
+  const [existingMember] = await db.select({ spouse_member_id: members.spouse_member_id, siblings: members.siblings, church_role: members.church_role }).from(members).where(eq(members.id, id))
 
   await db.update(members).set({
     // Step 1: Personal
@@ -289,7 +289,7 @@ export async function coreUpdateMember(payloadStr: string) {
     medical_conditions: data.medical_conditions || "",
     
     // Spiritual & Church Info
-    church_role: data.church_role || "Member",
+    church_role: data.church_role || existingMember?.church_role || "Member",
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
     baptism_date: data.baptism_date || null,
