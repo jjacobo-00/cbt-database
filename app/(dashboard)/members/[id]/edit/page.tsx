@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { members } from "@/db/schema"
+import { members, member_ministries } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import { MemberForm } from "@/components/members/MemberForm"
@@ -14,6 +14,14 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
     notFound()
   }
 
+  // Fetch current enrolled ministries
+  const currentMinistries = await db
+    .select({ ministry_id: member_ministries.ministry_id })
+    .from(member_ministries)
+    .where(eq(member_ministries.member_id, resolvedParams.id))
+  
+  const ministryIds = currentMinistries.map(m => m.ministry_id)
+
   const ministriesList = await getMinistries()
   const allMembers = await getMembersList()
 
@@ -22,6 +30,7 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
     ...member,
     gender: member.sex,
     address: member.street || member.house_number || "",
+    ministries: ministryIds,
   }
 
   return (

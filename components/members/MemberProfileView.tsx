@@ -1392,7 +1392,7 @@ export function MemberProfileView({
             </div>
             <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Witnessed By</span>
-              <span className="font-semibold text-black break-words">{member.witnessed_by || "—"}</span>
+              <span className="font-semibold text-black break-words">{member.witness_by || member.witnessed_by || "—"}</span>
             </div>
           </div>
 
