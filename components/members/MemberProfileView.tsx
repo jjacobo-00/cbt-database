@@ -253,6 +253,17 @@ export function MemberProfileView({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
+                  {member.church_role && member.church_role !== "Member" && (
+                    <span className={cn(
+                      "px-2.5 py-0.5 rounded-full font-semibold border text-xs flex items-center gap-1 shadow-xs",
+                      member.church_role === "Main Pastor" && "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+                      member.church_role === "Mission Pastor" && "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30",
+                      member.church_role === "Ministry Leader" && "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30"
+                    )}>
+                      <Sparkles className="h-3.5 w-3.5" />
+                      {member.church_role}
+                    </span>
+                  )}
                   {member.sex && (
                     <span className="px-2.5 py-0.5 rounded-full font-medium bg-secondary text-secondary-foreground border">
                       {member.sex}

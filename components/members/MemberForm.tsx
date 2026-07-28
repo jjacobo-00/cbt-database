@@ -38,6 +38,7 @@ const memberSchema = z.object({
   anniversary_date: z.string().default(""),
   
   // Spiritual info
+  church_role: z.string().default("Member"),
   date_saved: z.string().default(""),
   membership_date: z.string().default(""),
   baptism_date: z.string().default(""),
@@ -261,6 +262,7 @@ export function MemberForm({
       spouse_member_id: initialData?.spouse_member_id || "",
       spouse_occupation: initialData?.spouse_occupation || "",
       anniversary_date: initialData?.anniversary_date || "",
+      church_role: initialData?.church_role || "Member",
       date_saved: initialData?.date_saved || "",
       membership_date: initialData?.membership_date || new Date().toISOString().split("T")[0],
       baptism_date: initialData?.baptism_date || "",
@@ -949,6 +951,24 @@ export function MemberForm({
               {/* Spiritual details */}
               <div className="col-span-1 md:col-span-2 mt-4 mb-2">
                 <h4 className="font-semibold text-lg border-b pb-2">Spiritual & Church Background</h4>
+              </div>
+
+              <div className="grid gap-2 col-span-1 md:col-span-2">
+                <Label className="text-[13px] text-muted-foreground font-medium">Church Role / Position</Label>
+                <Select value={form.watch("church_role") || "Member"} onValueChange={(val) => form.setValue("church_role", val, { shouldValidate: true, shouldDirty: true })}>
+                  <SelectTrigger className="h-12 w-full bg-transparent">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Main Pastor">Main Pastor</SelectItem>
+                    <SelectItem value="Mission Pastor">Mission Pastor</SelectItem>
+                    <SelectItem value="Ministry Leader">Ministry Leader</SelectItem>
+                    <SelectItem value="Member">Member</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.watch("church_role") === "Main Pastor" && (
+                  <p className="text-xs text-amber-500 font-medium">Note: Designating this member as Main Pastor will automatically set them as Senior Leader in the Org Chart.</p>
+                )}
               </div>
               
               <div className="grid gap-2">

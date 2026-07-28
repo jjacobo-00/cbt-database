@@ -162,6 +162,7 @@ export const members = pgTable('members', {
   emergency_contact_number: text('emergency_contact_number'),
   
   // Church / Spiritual Info
+  church_role: text('church_role').default('Member'),
   current_church: text('current_church').default('Current Church'),
   date_saved: date('date_saved'),
   membership_date: date('membership_date'),

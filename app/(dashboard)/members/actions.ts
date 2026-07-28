@@ -3,12 +3,16 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
-import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children } from "@/db/schema"
+import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children, org_chart_nodes } from "@/db/schema"
 import crypto from "crypto"
-import { eq, and, gt, desc, isNull, inArray, notInArray } from "drizzle-orm"
+import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
 
 export async function coreCreateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
+
+  if (data.church_role === "Main Pastor") {
+    await db.update(members).set({ church_role: "Member" }).where(eq(members.church_role, "Main Pastor"))
+  }
 
   const [member] = await db.insert(members).values({
     // Step 1: Personal
@@ -53,6 +57,7 @@ export async function coreCreateMember(payloadStr: string) {
     medical_conditions: data.medical_conditions || "",
     
     // Spiritual & Church Info
+    church_role: data.church_role || "Member",
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
     baptism_date: data.baptism_date || null,
@@ -229,6 +234,16 @@ export async function coreUpdateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
   const id = data.id
 
+  if (data.church_role === "Main Pastor") {
+    await db.update(members).set({ church_role: "Member" }).where(and(eq(members.church_role, "Main Pastor"), ne(members.id, id)))
+    const existingNodes = await db.select().from(org_chart_nodes).where(isNull(org_chart_nodes.parent_id))
+    if (existingNodes.length > 0) {
+      await db.update(org_chart_nodes).set({ member_id: id, role_title: "Main Pastor" }).where(eq(org_chart_nodes.id, existingNodes[0].id))
+    } else {
+      await db.insert(org_chart_nodes).values({ role_title: "Main Pastor", member_id: id, parent_id: null, sort_order: 0 })
+    }
+  }
+
   const [existingMember] = await db.select({ spouse_member_id: members.spouse_member_id, siblings: members.siblings }).from(members).where(eq(members.id, id))
 
   await db.update(members).set({
@@ -274,6 +289,7 @@ export async function coreUpdateMember(payloadStr: string) {
     medical_conditions: data.medical_conditions || "",
     
     // Spiritual & Church Info
+    church_role: data.church_role || "Member",
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
     baptism_date: data.baptism_date || null,

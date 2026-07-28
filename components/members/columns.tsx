@@ -9,6 +9,7 @@ export type MemberType = {
   id: string
   first_name: string
   last_name: string
+  church_role?: string | null
   contact_number: string | null
   city: string | null
   occupation: string | null
@@ -59,10 +60,27 @@ export const columns: ColumnDef<MemberType>[] = [
     accessorFn: (row) => `${row.first_name} ${row.last_name}`,
     cell: ({ row }) => {
       return (
-        <div className="font-medium">
-          {row.original.first_name} {row.original.last_name}
+        <div className="font-medium flex items-center gap-2">
+          <span>{row.original.first_name} {row.original.last_name}</span>
         </div>
       )
+    },
+  },
+  {
+    accessorKey: "church_role",
+    header: "Role",
+    cell: ({ row }) => {
+      const role = row.original.church_role || "Member"
+      if (role === "Main Pastor") {
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">Main Pastor</span>
+      }
+      if (role === "Mission Pastor") {
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">Mission Pastor</span>
+      }
+      if (role === "Ministry Leader") {
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-500/30">Ministry Leader</span>
+      }
+      return <span className="text-muted-foreground text-xs">{role}</span>
     },
   },
   {

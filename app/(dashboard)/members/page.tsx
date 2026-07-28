@@ -15,6 +15,7 @@ export default async function MembersPage() {
     id: members.id,
     first_name: members.first_name,
     last_name: members.last_name,
+    church_role: members.church_role,
     contact_number: members.contact_number,
     city: members.city,
     occupation: members.occupation,
@@ -26,6 +27,7 @@ export default async function MembersPage() {
 
   const formattedMembers = membersList.map(member => ({
     ...member,
+    church_role: member.church_role || "Member",
     occupation: member.occupation || member.position || (member.employment_status === "Student" ? "Student" : member.company ? `${member.position || "Employee"} at ${member.company}` : (member.employment_status && member.employment_status !== "None") ? member.employment_status : "-"),
     created_at: member.created_at?.toISOString() || ""
   }))
