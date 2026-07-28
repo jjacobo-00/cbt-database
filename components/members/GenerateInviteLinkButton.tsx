@@ -252,7 +252,7 @@ export function GenerateInviteLinkButton({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Mother Church (Default)</SelectItem>
+                        <SelectItem value="none">CBT Olongapo (Default)</SelectItem>
                         {missions.map(m => (
                           <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                         ))}

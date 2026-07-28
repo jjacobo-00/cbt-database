@@ -1003,12 +1003,13 @@ export function MemberForm({
                     type="checkbox"
                     id="sameAsMotherChurch"
                     checked={
+                      form.watch("place_of_baptism") === "CBT Olongapo" || 
                       form.watch("place_of_baptism") === "CBT (Mother Church)" || 
                       form.watch("place_of_baptism") === "CBT"
                     }
                     onChange={(e) => {
                       if (e.target.checked) {
-                        form.setValue("place_of_baptism", "CBT (Mother Church)", { shouldValidate: true, shouldDirty: true })
+                        form.setValue("place_of_baptism", "CBT Olongapo", { shouldValidate: true, shouldDirty: true })
                       } else {
                         form.setValue("place_of_baptism", "", { shouldValidate: true, shouldDirty: true })
                       }
@@ -1017,7 +1018,7 @@ export function MemberForm({
                   />
                   <label htmlFor="sameAsMotherChurch" className="text-xs text-muted-foreground cursor-pointer select-none font-medium flex items-center gap-1.5 hover:text-foreground transition-colors">
                     <Church className="h-3.5 w-3.5 text-primary" />
-                    Baptized at Mother Church (CBT)
+                    Baptized at CBT Olongapo
                   </label>
                 </div>
               </div>

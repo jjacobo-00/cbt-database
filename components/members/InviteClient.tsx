@@ -125,7 +125,7 @@ export function InviteClient({
             <div>
               <p className="text-xs text-muted-foreground font-medium">Registration Assignment</p>
               <p className="text-sm font-bold text-foreground">
-                {inviteDetails.mission_name ? `Mission: ${inviteDetails.mission_name}` : "CBT Mother Church"}
+                {inviteDetails.mission_name ? `Mission: ${inviteDetails.mission_name}` : "CBT Olongapo"}
                 {inviteDetails.preset_role ? ` — Role: ${inviteDetails.preset_role}` : ""}
               </p>
             </div>
