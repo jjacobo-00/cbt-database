@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { members, member_ministries } from "@/db/schema"
+import { members, member_ministries, children } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import { MemberForm } from "@/components/members/MemberForm"
@@ -22,6 +22,17 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
   
   const ministryIds = currentMinistries.map(m => m.ministry_id)
 
+  // Fetch current registered children
+  const existingChildren = await db
+    .select({
+      id: children.id,
+      name: children.name,
+      birth_date: children.birth_date,
+      child_member_id: children.child_member_id
+    })
+    .from(children)
+    .where(eq(children.member_id, resolvedParams.id))
+
   const ministriesList = await getMinistries()
   const allMembers = await getMembersList()
 
@@ -31,6 +42,13 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
     gender: member.sex,
     address: member.street || member.house_number || "",
     ministries: ministryIds,
+    children: existingChildren.map(c => ({
+      id: c.id,
+      name: c.name,
+      birth_date: c.birth_date || "",
+      child_member_id: c.child_member_id || "",
+      is_cbt_member: !!c.child_member_id
+    }))
   }
 
   return (

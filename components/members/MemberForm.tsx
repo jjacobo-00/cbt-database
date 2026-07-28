@@ -587,7 +587,6 @@ export function MemberForm({
             const input = firstErrorEl.tagName === "INPUT" || firstErrorEl.tagName === "SELECT" || firstErrorEl.tagName === "TEXTAREA" 
               ? firstErrorEl 
               : firstErrorEl.parentElement?.querySelector('input, select, textarea') as HTMLElement
-            input?.focus?.()
           }
         }, 150)
       }
@@ -596,6 +595,10 @@ export function MemberForm({
     }
   }
 
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [step])
+
   const R = () => <span className="text-destructive ml-1">*</span>
 
   const renderMemberSelect = (
@@ -603,7 +606,9 @@ export function MemberForm({
     idField: string, 
     nameField: string, 
     isMemberField: string, 
-    excludeId?: string
+    excludeId?: string,
+    occupationField?: string,
+    contactField?: string
   ) => {
     const isMember = form.watch(isMemberField as any)
     const currentId = form.watch(idField as any)
@@ -625,7 +630,7 @@ export function MemberForm({
           />
           <label htmlFor={`member_check_${idField}`} className="text-sm text-foreground font-medium cursor-pointer flex items-center gap-2">
             <User className="h-4 w-4 text-primary" />
-            Link to an existing member profile?
+            Is CBT member?
           </label>
         </div>
 
@@ -657,16 +662,23 @@ export function MemberForm({
                   <CommandList>
                     <CommandEmpty className="py-6 text-center text-sm px-4">
                       <span className="block font-medium mb-1">Profile not found.</span>
-                      <span className="text-muted-foreground text-xs">Uncheck "Link to existing member" to enter their name manually for now.</span>
+                      <span className="text-muted-foreground text-xs">Uncheck "Is CBT member?" to enter their name manually for now.</span>
                     </CommandEmpty>
                     <CommandGroup>
-                      {allMembers.filter(m => m.id !== excludeId).map((m) => (
+                      {allMembers.filter(m => m.id !== excludeId).map((m: any) => (
                         <CommandItem
                           key={m.id}
                           value={`${m.first_name} ${m.last_name}`}
                           onSelect={() => {
                             form.setValue(idField as any, m.id, { shouldValidate: true })
-                            form.setValue(nameField as any, `${m.first_name} ${m.last_name}`)
+                            form.setValue(nameField as any, `${m.first_name} ${m.last_name}`, { shouldValidate: true })
+                            if (occupationField) {
+                              const occ = m.position || m.company || ""
+                              if (occ) form.setValue(occupationField as any, occ, { shouldValidate: true })
+                            }
+                            if (contactField) {
+                              if (m.contact_number) form.setValue(contactField as any, m.contact_number, { shouldValidate: true })
+                            }
                           }}
                         >
                           <Check
@@ -800,13 +812,11 @@ export function MemberForm({
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             const target = e.target as HTMLElement
-            if (target.tagName === "TEXTAREA") return
+            if (target.tagName === "TEXTAREA" || target.tagName === "BUTTON") return
 
             e.preventDefault()
             if (step < STEPS.length) {
               validateStep()
-            } else {
-              form.handleSubmit(onSubmit, onInvalid)()
             }
           }
         }}
@@ -945,7 +955,7 @@ export function MemberForm({
                       />
                       <label htmlFor="isSpouseCbtMember" className="text-sm text-foreground font-medium cursor-pointer flex items-center gap-2">
                         <Heart className="h-4 w-4 text-rose-500" />
-                        Link to an existing member profile?
+                        Is CBT member?
                       </label>
                     </div>
 
@@ -977,16 +987,18 @@ export function MemberForm({
                               <CommandList>
                                 <CommandEmpty className="py-6 text-center text-sm px-4">
                                   <span className="block font-medium mb-1">Profile not found.</span>
-                                  <span className="text-muted-foreground text-xs">Uncheck "Link to existing member" to enter their name manually for now.</span>
+                                  <span className="text-muted-foreground text-xs">Uncheck "Is CBT member?" to enter their name manually for now.</span>
                                 </CommandEmpty>
                                 <CommandGroup>
-                                  {allMembers.filter(m => m.id !== initialData?.id).map((m) => (
+                                  {allMembers.filter(m => m.id !== initialData?.id).map((m: any) => (
                                     <CommandItem
                                       key={m.id}
                                       value={`${m.first_name} ${m.last_name}`}
                                       onSelect={() => {
                                         form.setValue("spouse_member_id", m.id, { shouldValidate: true })
-                                        form.setValue("spouse_name", `${m.first_name} ${m.last_name}`)
+                                        form.setValue("spouse_name", `${m.first_name} ${m.last_name}`, { shouldValidate: true })
+                                        const occ = m.position || m.company || ""
+                                        if (occ) form.setValue("spouse_occupation", occ, { shouldValidate: true })
                                       }}
                                     >
                                       <Check
@@ -1412,14 +1424,14 @@ export function MemberForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 rounded-xl border space-y-4">
                 <h4 className="font-semibold text-primary">Father's Info</h4>
-                {renderMemberSelect("Select Father (Member)", "father_member_id", "father_name", "father_is_member", initialData?.id)}
+                {renderMemberSelect("Select Father (Member)", "father_member_id", "father_name", "father_is_member", initialData?.id, "father_occupation", "father_contact_number")}
                 <Input {...form.register("father_name")} placeholder="Father's Name" className="h-11 bg-transparent" />
                 <Input {...form.register("father_occupation")} placeholder="Father's Occupation" className="h-11 bg-transparent" />
                 <Input {...form.register("father_contact_number")} placeholder="Father's Contact Number" className="h-11 bg-transparent" />
               </div>
               <div className="p-4 rounded-xl border space-y-4">
                 <h4 className="font-semibold text-primary">Mother's Info</h4>
-                {renderMemberSelect("Select Mother (Member)", "mother_member_id", "mother_name", "mother_is_member", initialData?.id)}
+                {renderMemberSelect("Select Mother (Member)", "mother_member_id", "mother_name", "mother_is_member", initialData?.id, "mother_occupation", "mother_contact_number")}
                 <Input {...form.register("mother_name")} placeholder="Mother's Name" className="h-11 bg-transparent" />
                 <Input {...form.register("mother_occupation")} placeholder="Mother's Occupation" className="h-11 bg-transparent" />
                 <Input {...form.register("mother_contact_number")} placeholder="Mother's Contact Number" className="h-11 bg-transparent" />
