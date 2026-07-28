@@ -410,31 +410,50 @@ export function MemberProfileView({
             </CardContent>
           </Card>
 
-          {/* Emergency Contact Highlight Card */}
+          {/* Health & Emergency Profile Card */}
           <Card className="shadow-sm border-amber-500/30 bg-amber-500/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                <ShieldAlert className="h-5 w-5" /> Emergency Contact Info
+                <ShieldAlert className="h-5 w-5" /> Health & Emergency Profile
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between border-b border-amber-500/20 pb-2 gap-4">
-                <span className="text-muted-foreground shrink-0">Full Name</span>
-                <span className="font-semibold text-right break-words whitespace-normal min-w-0">{member.emergency_contact_name || "—"}</span>
+            <CardContent className="space-y-4 text-sm">
+              {/* Emergency Contact Block */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-amber-600/70 border-b border-amber-500/20 pb-1 mb-2">Emergency Contact</h4>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground shrink-0">Name & Rel.</span>
+                  <span className="font-semibold text-right break-words whitespace-normal min-w-0">
+                    {member.emergency_contact_name || "—"} {member.emergency_contact_relationship ? `(${member.emergency_contact_relationship})` : ""}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground shrink-0">Contact Number</span>
+                  {member.emergency_contact_number ? (
+                    <a href={`tel:${member.emergency_contact_number}`} className="font-bold text-primary hover:underline text-right break-all whitespace-normal min-w-0">
+                      {member.emergency_contact_number}
+                    </a>
+                  ) : (
+                    <span>—</span>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between border-b border-amber-500/20 pb-2 gap-4">
-                <span className="text-muted-foreground shrink-0">Relationship</span>
-                <span className="font-semibold text-right break-words whitespace-normal min-w-0">{member.emergency_contact_relationship || "—"}</span>
-              </div>
-              <div className="flex justify-between pt-1 gap-4">
-                <span className="text-muted-foreground shrink-0">Contact Number</span>
-                {member.emergency_contact_number ? (
-                  <a href={`tel:${member.emergency_contact_number}`} className="font-bold text-primary hover:underline text-right break-all whitespace-normal min-w-0">
-                    {member.emergency_contact_number}
-                  </a>
-                ) : (
-                  <span>—</span>
-                )}
+
+              {/* Medical Information Block */}
+              <div className="space-y-2 pt-2 border-t border-amber-500/20">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-amber-600/70 border-b border-amber-500/20 pb-1 mb-2">Medical Information</h4>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground shrink-0">Blood Type</span>
+                  <span className="font-semibold text-right break-words whitespace-normal min-w-0">{member.blood_type || "—"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground shrink-0">Allergies</span>
+                  <span className="font-semibold text-right break-words whitespace-normal min-w-0 text-red-600 dark:text-red-400">{member.allergies || "None"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground shrink-0">Conditions</span>
+                  <span className="font-semibold text-right break-words whitespace-normal min-w-0">{member.medical_conditions || "None"}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -717,6 +736,28 @@ export function MemberProfileView({
                 )}
               </div>
             </div>
+
+            {/* Health & Medical Data Section */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 border-b pb-1 flex items-center gap-2">
+                <Heart className="h-4 w-4" /> Health & Medical Data
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm bg-muted/10 p-4 rounded-xl border border-muted/50">
+                <div>
+                  <span className="text-muted-foreground block text-xs">Blood Type</span>
+                  <span className="font-medium text-destructive">{member.blood_type || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs">Allergies</span>
+                  <span className="font-medium">{member.allergies || "None declared"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs">Medical Conditions</span>
+                  <span className="font-medium">{member.medical_conditions || "None declared"}</span>
+                </div>
+              </div>
+            </div>
+
           </CardContent>
         </Card>
       )}
