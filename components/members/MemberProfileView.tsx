@@ -5,7 +5,7 @@ import Link from "next/link"
 import { 
   ArrowLeft, Edit, Printer, Trash2, User, Phone, MapPin, Briefcase, 
   GraduationCap, Calendar, Heart, ShieldAlert, Church, Gift, Check,
-  BookOpen, Award, Sparkles, Building, Layers, School, AlertTriangle, Loader2, Mail
+  BookOpen, Award, Sparkles, Building, Layers, School, AlertTriangle, Loader2, Mail, Users
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -709,8 +709,9 @@ export function MemberProfileView({
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Heart className="h-5 w-5 text-primary" /> Parents & Marital Information
+                <Users className="h-5 w-5 text-primary" /> Parents' Information
               </CardTitle>
+
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -720,15 +721,15 @@ export function MemberProfileView({
                     <User className="h-4 w-4" /> Father's Details
                   </h4>
                   <div className="space-y-1">
-                    <p><span className="text-muted-foreground text-xs block">Full Name</span> <span className="font-medium">
+                    <p><span className="text-muted-foreground text-xs block mb-0.5">Full Name</span> <span className="font-medium">
                       {member.father_member_id ? (
                         <Link href={`/members/${member.father_member_id}`} className="text-primary hover:underline">
                           {member.father_name} (Member)
                         </Link>
-                      ) : (member.father_name || "—")}
+                      ) : (member.father_name || <span className="text-muted-foreground/50">—</span>)}
                     </span></p>
-                    <p><span className="text-muted-foreground text-xs block">Occupation</span> <span className="font-medium">{member.father_occupation || "—"}</span></p>
-                    <p><span className="text-muted-foreground text-xs block">Contact Number</span> <span className="font-medium">{member.father_contact_number || "—"}</span></p>
+                    <p><span className="text-muted-foreground text-xs block mb-0.5">Occupation</span> <span className="font-medium">{member.father_occupation || <span className="text-muted-foreground/50">—</span>}</span></p>
+                    <p><span className="text-muted-foreground text-xs block mb-0.5">Contact Number</span> <span className="font-medium">{member.father_contact_number || <span className="text-muted-foreground/50">—</span>}</span></p>
                   </div>
                 </div>
 
@@ -738,26 +739,37 @@ export function MemberProfileView({
                     <User className="h-4 w-4" /> Mother's Details
                   </h4>
                   <div className="space-y-1">
-                    <p><span className="text-muted-foreground text-xs block">Full Name</span> <span className="font-medium">
+                    <p><span className="text-muted-foreground text-xs block mb-0.5">Full Name</span> <span className="font-medium">
                       {member.mother_member_id ? (
                         <Link href={`/members/${member.mother_member_id}`} className="text-primary hover:underline">
                           {member.mother_name} (Member)
                         </Link>
-                      ) : (member.mother_name || "—")}
+                      ) : (member.mother_name || <span className="text-muted-foreground/50">—</span>)}
                     </span></p>
-                    <p><span className="text-muted-foreground text-xs block">Occupation</span> <span className="font-medium">{member.mother_occupation || "—"}</span></p>
-                    <p><span className="text-muted-foreground text-xs block">Contact Number</span> <span className="font-medium">{member.mother_contact_number || "—"}</span></p>
+                    <p><span className="text-muted-foreground text-xs block mb-0.5">Occupation</span> <span className="font-medium">{member.mother_occupation || <span className="text-muted-foreground/50">—</span>}</span></p>
+                    <p><span className="text-muted-foreground text-xs block mb-0.5">Contact Number</span> <span className="font-medium">{member.mother_contact_number || <span className="text-muted-foreground/50">—</span>}</span></p>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 mt-4 text-sm border-t border-border/50">
-                <div>
-                  <span className="text-muted-foreground text-xs block">Parents' Civil Status</span>
-                  <span className="font-medium">{member.parents_civil_status || "—"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground text-xs block">Spouse Name</span>
+              <div className="pt-4 border-t border-border/50">
+                <span className="text-muted-foreground text-xs block mb-1">Parents' Civil Status</span>
+                <span className="font-medium">{member.parents_civil_status || <span className="text-muted-foreground/50">—</span>}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Marital Information */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Heart className="h-5 w-5 text-primary" /> Marital Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+                <div className="bg-muted/10 p-4 rounded-xl border border-border/50">
+                  <span className="text-muted-foreground text-xs block mb-1">Spouse Name</span>
                   <span className="font-medium">
                     {member.spouse_name ? (
                       member.spouse_member_id ? (
@@ -767,20 +779,20 @@ export function MemberProfileView({
                       ) : (
                         <span>{member.spouse_name} {member.spouse_occupation ? `(${member.spouse_occupation})` : ""}</span>
                       )
-                    ) : "—"}
+                    ) : <span className="text-muted-foreground/50">—</span>}
                   </span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground text-xs block">Anniversary Date</span>
-                  <span className="font-medium">{member.anniversary_date || "—"}</span>
+                <div className="bg-muted/10 p-4 rounded-xl border border-border/50">
+                  <span className="text-muted-foreground text-xs block mb-1">Anniversary Date</span>
+                  <span className="font-medium">{member.anniversary_date || <span className="text-muted-foreground/50">—</span>}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground text-xs block">Years Married</span>
+                <div className="bg-muted/10 p-4 rounded-xl border border-border/50">
+                  <span className="text-muted-foreground text-xs block mb-1">Years Married</span>
                   <span className="font-medium">
                     {member.anniversary_date ? (
                       !isNaN(new Date(member.anniversary_date).getFullYear()) ? 
-                        `${new Date().getFullYear() - new Date(member.anniversary_date).getFullYear()} years` : "—"
-                    ) : "—"}
+                        `${new Date().getFullYear() - new Date(member.anniversary_date).getFullYear()} years` : <span className="text-muted-foreground/50">—</span>
+                    ) : <span className="text-muted-foreground/50">—</span>}
                   </span>
                 </div>
               </div>
