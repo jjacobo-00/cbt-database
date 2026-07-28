@@ -92,6 +92,11 @@ export const members = pgTable('members', {
   contact_number: text('contact_number'),
   email: text('email'),
   
+  // Medical & Health
+  blood_type: text('blood_type'),
+  allergies: text('allergies'),
+  medical_conditions: text('medical_conditions'),
+  
   // Address - Current
   house_number: text('house_number'),
   unit_number: text('unit_number'),

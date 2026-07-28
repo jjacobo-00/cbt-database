@@ -1197,7 +1197,7 @@ export function MemberProfileView({
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Place of Birth</span>
               <span className="font-semibold text-black">{member.birth_place || "—"}</span>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-slate-300">
+            <div className="grid grid-cols-3 divide-x divide-slate-300">
               <div className="p-2">
                 <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Blood Type</span>
                 <span className="font-semibold text-black">{member.blood_type || "—"}</span>
@@ -1205,6 +1205,10 @@ export function MemberProfileView({
               <div className="p-2">
                 <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Allergies</span>
                 <span className="font-semibold text-black">{member.allergies || "—"}</span>
+              </div>
+              <div className="p-2">
+                <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Med Conditions</span>
+                <span className="font-semibold text-black">{member.medical_conditions || "—"}</span>
               </div>
             </div>
           </div>

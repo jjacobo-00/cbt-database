@@ -16,6 +16,7 @@ import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/co
 import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 const memberSchema = z.object({
   // Step 1: Personal
@@ -64,7 +65,12 @@ const memberSchema = z.object({
   perm_zip_code: z.string().default(""),
   perm_country: z.string().default("Philippines"),
   
-  // Step 3: Status
+  // Step 3: Medical & Health
+  blood_type: z.string().default(""),
+  allergies: z.string().default(""),
+  medical_conditions: z.string().default(""),
+  
+  // Step 4: Status
   employment_status: z.enum(["Student", "Employed", "None"]),
   student_school: z.string().default(""),
   student_year_level: z.string().default(""),
@@ -145,11 +151,12 @@ const memberSchema = z.object({
 const STEPS = [
   { id: 1, title: "Personal" },
   { id: 2, title: "Address" },
-  { id: 3, title: "Status" },
-  { id: 4, title: "Family" },
-  { id: 5, title: "Education" },
-  { id: 6, title: "Commitment" },
-  { id: 7, title: "Review" },
+  { id: 3, title: "Medical" },
+  { id: 4, title: "Status" },
+  { id: 5, title: "Family" },
+  { id: 6, title: "Education" },
+  { id: 7, title: "Commitment" },
+  { id: 8, title: "Review" },
 ]
 
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
@@ -207,8 +214,10 @@ export function MemberForm({
       perm_province: initialData?.perm_province || "",
       perm_zip_code: initialData?.perm_zip_code || "",
       perm_country: initialData?.perm_country || "Philippines",
-
-      employment_status: initialData?.employment_status || "None",
+      blood_type: initialData?.blood_type || "",
+      allergies: initialData?.allergies || "",
+      medical_conditions: initialData?.medical_conditions || "",
+      employment_status: (initialData?.employment_status as any) || "None",
       student_school: initialData?.student_school || "",
       student_year_level: initialData?.student_year_level || "",
       student_course: initialData?.student_course || "",
@@ -309,10 +318,11 @@ export function MemberForm({
     let targetStep = step
     if (["first_name", "last_name", "birth_date", "gender", "contact_number", "email"].includes(firstKey)) targetStep = 1;
     else if (firstKey.includes("street") || firstKey.includes("city") || firstKey.includes("province") || firstKey.includes("zip") || firstKey.includes("barangay") || firstKey.includes("house") || firstKey.includes("unit")) targetStep = 2;
-    else if (["employment_status", "student_school", "student_year_level", "student_course", "company", "position"].includes(firstKey)) targetStep = 3;
-    else if (["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "children", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number", "marital_status", "widowed_date", "spouse_name", "spouse_occupation", "anniversary_date"].includes(firstKey)) targetStep = 4;
-    else if (["highest_educational_attainment", "education_details"].includes(firstKey)) targetStep = 5;
-    else if (["ministries", "date_saved", "membership_date", "baptism_date"].includes(firstKey)) targetStep = 6;
+    else if (["blood_type", "allergies", "medical_conditions"].includes(firstKey)) targetStep = 3;
+    else if (["employment_status", "student_school", "student_year_level", "student_course", "company", "position"].includes(firstKey)) targetStep = 4;
+    else if (["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "children", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number", "marital_status", "widowed_date", "spouse_name", "spouse_occupation", "anniversary_date"].includes(firstKey)) targetStep = 5;
+    else if (["highest_educational_attainment", "education_details"].includes(firstKey)) targetStep = 6;
+    else if (["ministries", "date_saved", "membership_date", "baptism_date"].includes(firstKey)) targetStep = 7;
 
     if (targetStep !== step) {
       setStep(targetStep)
@@ -393,7 +403,7 @@ export function MemberForm({
     })
     
     if (changed || newFields.length !== currentFields.length) {
-      form.setValue("education_details", newFields as any, { shouldValidate: step === 5 })
+      form.setValue("education_details", newFields as any, { shouldValidate: step === 6 })
     }
   }, [highestAttainment, form, step])
 
@@ -451,9 +461,10 @@ export function MemberForm({
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "email"]
     if (step === 2) fieldsToValidate = []
-    if (step === 3) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
-    if (step === 4) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
-    if (step === 5) fieldsToValidate = ["highest_educational_attainment", "education_details"]
+    if (step === 3) fieldsToValidate = ["blood_type", "allergies", "medical_conditions"]
+    if (step === 4) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
+    if (step === 5) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
+    if (step === 6) fieldsToValidate = ["highest_educational_attainment", "education_details"]
 
     if (fieldsToValidate.length > 0) {
       const isValid = await form.trigger(fieldsToValidate as any)
@@ -482,9 +493,10 @@ export function MemberForm({
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "email"]
     if (step === 2) fieldsToValidate = [] // Address step
-    if (step === 3) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
-    if (step === 4) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
-    if (step === 5) fieldsToValidate = ["highest_educational_attainment", "education_details"]
+    if (step === 3) fieldsToValidate = ["blood_type", "allergies", "medical_conditions"]
+    if (step === 4) fieldsToValidate = ["employment_status", "student_school", "student_year_level", "student_course", "company", "position"]
+    if (step === 5) fieldsToValidate = ["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number"]
+    if (step === 6) fieldsToValidate = ["highest_educational_attainment", "education_details"]
     
     if (fieldsToValidate.length > 0) {
       const isValid = await form.trigger(fieldsToValidate as any)
@@ -1194,8 +1206,51 @@ export function MemberForm({
           </div>
         )}
 
-        {/* STEP 3: EMPLOYMENT & ACADEMIC STATUS */}
+        {/* STEP 3: MEDICAL & HEALTH */}
         {step === 3 && (
+          <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-6">
+            <h3 className="text-xl font-semibold border-b pb-2">Medical & Health Information</h3>
+            <p className="text-sm text-muted-foreground -mt-3">
+              Providing this information is optional but highly recommended to help church organizers ensure safety during retreats, camps, and activities.
+            </p>
+            <div className="grid gap-6">
+              <div className="grid gap-2 max-w-xs">
+                <Label className="text-[13px] text-muted-foreground">Blood Type</Label>
+                <Select onValueChange={(val) => form.setValue("blood_type", val)} value={form.watch("blood_type") || ""}>
+                  <SelectTrigger className="h-12 bg-transparent"><SelectValue placeholder="Select Blood Type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="B+">B+</SelectItem>
+                    <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="AB+">AB+</SelectItem>
+                    <SelectItem value="AB-">AB-</SelectItem>
+                    <SelectItem value="O+">O+</SelectItem>
+                    <SelectItem value="O-">O-</SelectItem>
+                    <SelectItem value="Unknown">Unknown</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Allergies (Food, Drugs, etc.)</Label>
+                <Input {...form.register("allergies")} className="h-12 bg-transparent" placeholder="e.g. Peanuts, Penicillin (Leave blank if none)" />
+              </div>
+
+              <div className="grid gap-2">
+                <Label className="text-[13px] text-muted-foreground">Medical Conditions</Label>
+                <textarea 
+                  {...form.register("medical_conditions")} 
+                  className="min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="e.g. Asthma, Hypertension, Diabetes (Leave blank if none)"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: EMPLOYMENT & ACADEMIC STATUS */}
+        {step === 4 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-6">
             <h3 className="text-xl font-semibold border-b pb-2">Employment & Status</h3>
             <div className="grid gap-2 max-w-xs">
@@ -1241,8 +1296,8 @@ export function MemberForm({
           </div>
         )}
 
-        {/* STEP 4: FAMILY & EMERGENCY CONTACT */}
-        {step === 4 && (
+        {/* STEP 5: FAMILY & EMERGENCY CONTACT */}
+        {step === 5 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
             <h3 className="text-xl font-semibold border-b pb-2">Family & Emergency Contact</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1504,8 +1559,8 @@ export function MemberForm({
           </div>
         )}
 
-        {/* STEP 5: EDUCATION BACKGROUND */}
-        {step === 5 && (
+        {/* STEP 6: EDUCATION BACKGROUND */}
+        {step === 6 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
             <h3 className="text-xl font-semibold border-b pb-2">Education Background</h3>
             
@@ -1561,8 +1616,8 @@ export function MemberForm({
           </div>
         )}
 
-        {/* STEP 6: COMMITMENT & MINISTRIES */}
-        {step === 6 && (() => {
+        {/* STEP 7: COMMITMENT & MINISTRIES */}
+        {step === 7 && (() => {
           const topLevelMinistries = ministries.filter(m => !m.parent_id)
           const getChildren = (parentId: string) => ministries.filter(m => m.parent_id === parentId)
           const orphanChildren = ministries.filter(m => m.parent_id && !topLevelMinistries.some(p => p.id === m.parent_id))
@@ -1740,7 +1795,7 @@ export function MemberForm({
         })()}
 
         {/* STEP 7: REVIEW SUMMARY */}
-        {step === 7 && (() => {
+        {step === 8 && (() => {
           const v = form.getValues()
           const currentMins: string[] = v.ministries || []
           const selectedMinistryObjects = ministries.filter(m => currentMins.includes(m.id) || m.for_everyone || m.name.toLowerCase().includes("evangelistic"))

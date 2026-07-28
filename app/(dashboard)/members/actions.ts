@@ -47,6 +47,11 @@ export async function coreCreateMember(payloadStr: string) {
     perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
     
+    // Medical & Health
+    blood_type: data.blood_type || "",
+    allergies: data.allergies || "",
+    medical_conditions: data.medical_conditions || "",
+    
     // Spiritual & Church Info
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
@@ -262,6 +267,11 @@ export async function coreUpdateMember(payloadStr: string) {
     perm_province: data.is_perm_same_as_current ? (data.province || "") : (data.perm_province || ""),
     perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
+    
+    // Medical & Health
+    blood_type: data.blood_type || "",
+    allergies: data.allergies || "",
+    medical_conditions: data.medical_conditions || "",
     
     // Spiritual & Church Info
     date_saved: data.date_saved || null,
