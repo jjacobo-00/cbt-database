@@ -65,6 +65,12 @@ export const whitelisted_users = pgTable("whitelisted_users", {
 export const invitation_links = pgTable('invitation_links', {
   token: text('token').primaryKey(),
   member_id: uuid('member_id').references(() => members.id),
+  title: text('title'),
+  max_uses: integer('max_uses'),
+  use_count: integer('use_count').default(0).notNull(),
+  preset_role: text('preset_role'),
+  preset_mission_id: uuid('preset_mission_id').references(() => missions.id, { onDelete: 'set null' }),
+  is_disabled: boolean('is_disabled').default(false).notNull(),
   expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
   is_used: boolean('is_used').default(false).notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),

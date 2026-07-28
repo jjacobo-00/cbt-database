@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Lock, CheckCircle2 } from "lucide-react"
+import { Lock, CheckCircle2, Sparkles } from "lucide-react"
 
 export function InviteClient({ 
   token, 
@@ -115,6 +115,26 @@ export function InviteClient({
           Please fill out the form below. Your progress is auto-saved locally.
         </p>
       </div>
+
+      {(inviteDetails.preset_role || inviteDetails.mission_name) && (
+        <div className="mb-6 p-4 rounded-xl border bg-primary/5 border-primary/20 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Registration Assignment</p>
+              <p className="text-sm font-bold text-foreground">
+                {inviteDetails.mission_name ? `Mission: ${inviteDetails.mission_name}` : "CBT Mother Church"}
+                {inviteDetails.preset_role ? ` — Role: ${inviteDetails.preset_role}` : ""}
+              </p>
+            </div>
+          </div>
+          <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-primary/10 text-primary border border-primary/20">
+            Pre-configured Link
+          </span>
+        </div>
+      )}
 
       <div className="bg-card border rounded-xl shadow-sm p-4 sm:p-8">
         <MemberForm 
