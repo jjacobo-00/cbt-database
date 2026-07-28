@@ -1397,13 +1397,13 @@ export function MemberProfileView({
           </div>
 
           <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Church Name</span>
-              <span className="font-semibold text-black">Christian Baptist Tabernacle {member.years_in_church ? `(${member.years_in_church} yrs)` : ""}</span>
+              <span className="font-semibold text-black break-words">Christian Baptist Tabernacle {member.years_in_church ? `(${member.years_in_church} yrs)` : ""}</span>
             </div>
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Location</span>
-              <span className="font-semibold text-black">
+              <span className="font-semibold text-black break-words">
                 Keith Streets, Gordon Heights, Olongapo City
               </span>
             </div>
