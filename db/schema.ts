@@ -79,6 +79,15 @@ export const ministries = pgTable('ministries', {
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
+export const missions = pgTable('missions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  location: text('location'),
+  pastor_name: text('pastor_name'),
+  established_date: date('established_date'),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
 export const members = pgTable('members', {
   id: uuid('id').primaryKey().defaultRandom(),
   first_name: text('first_name').notNull(),

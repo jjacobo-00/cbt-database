@@ -2,7 +2,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart, ChevronDown, Gift, RefreshCw, Network } from "lucide-react"
+import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart, ChevronDown, Gift, RefreshCw, Network, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Image from "next/image"
 
@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Members", href: "/members", icon: Users },
   { name: "Ministries", href: "/ministries", icon: Church },
+  { name: "Missions", href: "/missions", icon: MapPin },
   { 
     name: "Commitments", 
     href: "/commitments",
