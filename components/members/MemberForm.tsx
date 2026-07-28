@@ -74,6 +74,7 @@ const memberSchema = z.object({
   // Step 4: Status
   employment_status: z.enum(["Student", "Employed", "None"]),
   student_school: z.string().default(""),
+  student_level: z.string().default("College"),
   student_year_level: z.string().default(""),
   student_course: z.string().default(""),
   company: z.string().default(""),
@@ -222,6 +223,7 @@ export function MemberForm({
       medical_conditions: initialData?.medical_conditions || "",
       employment_status: (initialData?.employment_status as any) || "None",
       student_school: initialData?.student_school || "",
+      student_level: initialData?.student_level || "College",
       student_year_level: initialData?.student_year_level || "",
       student_course: initialData?.student_course || "",
       company: initialData?.company || "",
@@ -410,6 +412,76 @@ export function MemberForm({
       form.setValue("education_details", newFields as any, { shouldValidate: step === 6 })
     }
   }, [highestAttainment, form, step])
+
+  const studentSchool = form.watch("student_school")
+  const studentLevel = form.watch("student_level")
+  const studentYearLevel = form.watch("student_year_level")
+  const studentCourse = form.watch("student_course")
+
+  // Auto-detect student education level from year level / course text
+  React.useEffect(() => {
+    if (employmentStatus !== "Student") return
+    const text = `${studentYearLevel} ${studentCourse}`.toLowerCase()
+    if (!text.trim()) return
+
+    if (/grade\s*(11|12)|shs|senior\s*high|stem|humss|abm|gas|tvl/.test(text)) {
+      if (studentLevel !== "Senior High School") form.setValue("student_level", "Senior High School")
+    } else if (/grade\s*([7-9]|10)|jhs|junior\s*high|high\s*school/.test(text)) {
+      if (studentLevel !== "High School") form.setValue("student_level", "High School")
+    } else if (/grade\s*[1-6]|elem|elementary/.test(text)) {
+      if (studentLevel !== "Elementary") form.setValue("student_level", "Elementary")
+    } else if (/bs|ab|bachelor|college|university|tertiary|1st\s*year|2nd\s*year|3rd\s*year|4th\s*year|5th\s*year/.test(text)) {
+      if (studentLevel !== "College") form.setValue("student_level", "College")
+    } else if (/master|doctor|postgrad|phd|ms|ma/.test(text)) {
+      if (studentLevel !== "Postgraduate") form.setValue("student_level", "Postgraduate")
+    }
+  }, [studentYearLevel, studentCourse, employmentStatus, studentLevel, form])
+
+  // Auto-sync Student Status (Step 4) -> Education Details (Step 6)
+  React.useEffect(() => {
+    if (employmentStatus !== "Student") return
+    const currentTargetLevel = studentLevel || "College"
+
+    // 1. Sync highest_educational_attainment if needed
+    if (highestAttainment !== currentTargetLevel) {
+      form.setValue("highest_educational_attainment", currentTargetLevel, { shouldValidate: step === 6 })
+    }
+
+    // 2. Sync school_name & currently_enrolled flag into education_details
+    const currentFields = form.getValues("education_details") || []
+    if (currentFields.length > 0) {
+      let updated = false
+      const nextFields = currentFields.map(field => {
+        if (field.level === currentTargetLevel) {
+          const newSchool = studentSchool || field.school_name
+          if (field.school_name !== newSchool || !field.is_currently_enrolled) {
+            updated = true
+            return {
+              ...field,
+              school_name: newSchool,
+              is_currently_enrolled: true,
+              year_graduated: ""
+            }
+          }
+        }
+        return field
+      })
+
+      if (updated) {
+        form.setValue("education_details", nextFields as any, { shouldValidate: step === 6 })
+      }
+    }
+  }, [employmentStatus, studentSchool, studentLevel, highestAttainment, form, step])
+
+  // Reverse sync: Step 6 -> Step 4 student_school if currently enrolled
+  const eduDetailsWatched = form.watch("education_details")
+  React.useEffect(() => {
+    if (employmentStatus !== "Student" || !eduDetailsWatched || !Array.isArray(eduDetailsWatched)) return
+    const enrolledCard = eduDetailsWatched.find(f => f.is_currently_enrolled)
+    if (enrolledCard && enrolledCard.school_name && enrolledCard.school_name !== studentSchool) {
+      form.setValue("student_school", enrolledCard.school_name)
+    }
+  }, [eduDetailsWatched, employmentStatus, studentSchool, form])
 
   React.useEffect(() => {
     if (!ministries || ministries.length === 0) return
@@ -1286,17 +1358,31 @@ export function MemberForm({
             </div>
 
             {employmentStatus === "Student" && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 rounded-xl border bg-muted/20">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl border bg-muted/20">
+                <div className="grid gap-2">
+                  <Label className="text-[13px] text-muted-foreground font-medium">Education Level</Label>
+                  <select 
+                    {...form.register("student_level")} 
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                  >
+                    <option value="College">College / University</option>
+                    <option value="Senior High School">Senior High School (SHS)</option>
+                    <option value="High School">High School (JHS)</option>
+                    <option value="Elementary">Elementary</option>
+                    <option value="Vocational">Vocational</option>
+                    <option value="Postgraduate">Postgraduate</option>
+                  </select>
+                </div>
                 <div className="grid gap-2">
                   <Label className="text-[13px] text-muted-foreground">School / University</Label>
-                  <Input {...form.register("student_school")} className="h-12 bg-transparent" />
+                  <Input {...form.register("student_school")} className="h-12 bg-transparent" placeholder="e.g. Subic Bay Colleges" />
                 </div>
                 <div className="grid gap-2">
                   <Label className="text-[13px] text-muted-foreground">Year Level</Label>
                   <Input {...form.register("student_year_level")} className="h-12 bg-transparent" placeholder="e.g. 3rd Year" />
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-[13px] text-muted-foreground">Course / Track</Label>
+                  <Label className="text-[13px] text-muted-foreground">Course / Track / Strand</Label>
                   <Input {...form.register("student_course")} className="h-12 bg-transparent" placeholder="e.g. BS IT" />
                 </div>
               </div>
@@ -1618,6 +1704,11 @@ export function MemberForm({
                       <div className="grid gap-2 md:col-span-3">
                         <Label className="text-xs text-muted-foreground">School Name</Label>
                         <Input {...form.register(`education_details.${index}.school_name`)} className="h-11 bg-transparent" />
+                        {employmentStatus === "Student" && isEnrolled && (
+                          <p className="text-[11px] text-primary font-medium flex items-center gap-1 mt-0.5">
+                            <Sparkles className="h-3 w-3 text-primary" /> Synced with Student Status (Step 4)
+                          </p>
+                        )}
                       </div>
                       <div className="grid gap-2">
                         <Label className="text-xs text-muted-foreground">Year Started</Label>
