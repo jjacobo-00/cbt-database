@@ -124,6 +124,16 @@ export function MemberProfileView({
     }
   }
 
+  const handlePrint = () => {
+    const originalTitle = document.title
+    const dateStr = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    document.title = `${member.last_name || ""} ${member.first_name || ""} ${dateStr}`.trim()
+    window.print()
+    setTimeout(() => {
+      document.title = originalTitle
+    }, 1000)
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300 w-full min-w-0 max-w-full">
       {/* ───────────────────────────────────────────────────────────── */}
@@ -164,7 +174,7 @@ export function MemberProfileView({
                 className="cursor-pointer font-medium"
               />
               <DropdownMenuItem 
-                onClick={() => window.print()}
+                onClick={handlePrint}
                 className="cursor-pointer font-medium"
               >
                 <Printer className="h-4 w-4 mr-2" />
