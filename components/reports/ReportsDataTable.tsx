@@ -185,7 +185,7 @@ export function ReportsDataTable<TData, TValue>({
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => {
               const name = (row.original as any).name || "Unknown"
-              const sex = (row.original as any).sex || "-"
+              const gender = (row.original as any).gender || (row.original as any).sex || "-"
               const city = (row.original as any).city || "-"
               
               const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()

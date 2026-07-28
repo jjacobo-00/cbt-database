@@ -14,6 +14,7 @@ export type ReportMember = {
   id: string
   first_name: string
   last_name: string
+  gender: string | null
   sex: string | null
   age: number | null
   city: string | null
@@ -48,8 +49,8 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
   // Top KPIs
   const totalMembers = filteredData.length
   const baptizedMembers = filteredData.filter(m => m.date_baptized).length
-  const maleCount = filteredData.filter(m => m.sex === "Male").length
-  const femaleCount = filteredData.filter(m => m.sex === "Female").length
+  const maleCount = filteredData.filter(m => (m.gender || m.sex) === "Male").length
+  const femaleCount = filteredData.filter(m => (m.gender || m.sex) === "Female").length
   const uniqueCities = new Set(filteredData.map(m => m.city).filter(Boolean)).size
 
   // Gender Data for Chart

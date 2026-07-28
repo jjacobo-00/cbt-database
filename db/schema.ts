@@ -99,7 +99,7 @@ export const members = pgTable('members', {
   first_name: text('first_name').notNull(),
   middle_name: text('middle_name'),
   last_name: text('last_name').notNull(),
-  suffix: text('suffix'),
+  gender: text('gender'),
   sex: text('sex'),
   age: integer('age'),
   birth_date: text('birth_date'),

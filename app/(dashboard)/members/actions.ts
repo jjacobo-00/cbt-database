@@ -22,6 +22,7 @@ export async function coreCreateMember(payloadStr: string) {
     suffix: data.suffix || "",
     birth_date: data.birth_date || null,
     birth_place: data.birth_place || "",
+    gender: data.gender,
     sex: data.gender,
     contact_number: data.contact_number,
     email: data.email || "",

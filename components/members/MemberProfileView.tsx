@@ -274,6 +274,11 @@ export function MemberProfileView({
                       {computedAge} yrs old
                     </span>
                   )}
+                  {(member.gender || member.sex) && (
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {member.gender || member.sex}
+                    </span>
+                  )}
                   {member.marital_status && (
                     <span className="px-2.5 py-0.5 rounded-full font-medium bg-primary/10 text-primary border border-primary/20">
                       {member.marital_status}
@@ -497,8 +502,8 @@ export function MemberProfileView({
                   <p className="font-medium">{member.birth_place || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Gender / Sex</p>
-                  <p className="font-medium">{member.sex || "—"}</p>
+                  <p className="text-xs text-muted-foreground">Gender</p>
+                  <p className="font-medium">{(member.gender || member.sex) || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Email Address</p>
@@ -639,8 +644,8 @@ export function MemberProfileView({
                   <span className="font-medium">{member.last_name || "—"}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-xs">Sex / Gender</span>
-                  <span className="font-medium">{member.sex || "—"}</span>
+                  <span className="text-muted-foreground block text-xs">Gender</span>
+                  <span className="font-medium">{(member.gender || member.sex) || "—"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground block text-xs">Birth Date</span>
@@ -1241,8 +1246,8 @@ export function MemberProfileView({
               <span className="font-semibold text-black">{computedAge !== null ? `${computedAge}` : "—"}</span>
             </div>
             <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Sex</span>
-              <span className="font-semibold text-black">{member.sex || "—"}</span>
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Gender</span>
+              <span className="font-semibold text-black">{(member.gender || member.sex) || "—"}</span>
             </div>
             <div className="p-2">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Civil Status</span>

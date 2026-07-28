@@ -30,9 +30,9 @@ export const columns: ColumnDef<ReportMember>[] = [
     accessorFn: (row) => `${row.first_name} ${row.last_name}`,
   },
   {
-    accessorKey: "sex",
-    header: "Sex",
-    cell: ({ row }) => row.original.sex || "-",
+    accessorKey: "gender",
+    header: "Gender",
+    cell: ({ row }) => (row.original as any).gender || row.original.sex || "-",
   },
   {
     accessorKey: "age",

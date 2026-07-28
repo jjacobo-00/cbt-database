@@ -12,6 +12,7 @@ export default async function ReportsPage() {
     id: members.id,
     first_name: members.first_name,
     last_name: members.last_name,
+    gender: members.gender,
     sex: members.sex,
     age: members.age,
     city: members.city,
