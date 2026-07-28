@@ -6,7 +6,7 @@ import { RefreshCw } from "lucide-react"
 
 export const revalidate = 0
 
-export const metadata = { title: "Recommitment Tracker | CBT Directory" }
+export const metadata = { title: "Recommitment Tracker | CBT Database" }
 
 export default async function RecommitmentPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const currentYear = new Date().getFullYear()

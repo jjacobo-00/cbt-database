@@ -2,7 +2,7 @@ import { getMinistries } from "./actions"
 import { MinistriesClient } from "./MinistriesClient"
 import { ChurchIcon } from "lucide-react"
 
-export const metadata = { title: "Ministries | CBT Directory" }
+export const metadata = { title: "Ministries | CBT Database" }
 
 export default async function MinistriesPage() {
   const ministries = await getMinistries()

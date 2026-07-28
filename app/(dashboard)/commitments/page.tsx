@@ -6,7 +6,7 @@ import { HandHeart } from "lucide-react"
 
 export const revalidate = 0
 
-export const metadata = { title: "Commitments | CBT Directory" }
+export const metadata = { title: "Commitments | CBT Database" }
 
 export default async function CommitmentsPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const currentYear = new Date().getFullYear()

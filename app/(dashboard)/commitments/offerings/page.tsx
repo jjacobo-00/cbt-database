@@ -5,7 +5,7 @@ import { Gift } from "lucide-react"
 
 export const revalidate = 0
 
-export const metadata = { title: "Offering Commitments | CBT Directory" }
+export const metadata = { title: "Offering Commitments | CBT Database" }
 
 export default async function OfferingsPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const currentYear = new Date().getFullYear()

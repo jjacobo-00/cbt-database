@@ -4,7 +4,7 @@ import { ReportsClient, ReportMember } from "./ReportsClient"
 
 export const revalidate = 0 // Disable cache for fresh reports
 
-export const metadata = { title: "Reports & Analytics | CBT Directory" }
+export const metadata = { title: "Reports & Analytics | CBT Database" }
 
 export default async function ReportsPage() {
   // Fetch comprehensive data for reports and export

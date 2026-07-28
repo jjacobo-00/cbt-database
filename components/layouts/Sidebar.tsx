@@ -121,7 +121,7 @@ export function Sidebar({
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
             <Image src="/logo.svg" alt="CBT Logo" width={32} height={32} className="object-contain" />
-            <span>CBT Directory</span>
+            <span>CBT Database</span>
           </Link>
         </div>
         <nav className="grid gap-1 px-2 py-4 lg:px-4">
@@ -141,7 +141,7 @@ export function Sidebar({
         <div className="flex h-14 items-center justify-between border-b px-4">
           <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
             <Image src="/logo.svg" alt="CBT Logo" width={32} height={32} className="object-contain" />
-            <span>CBT Directory</span>
+            <span>CBT Database</span>
           </Link>
           <button onClick={() => setIsMobileMenuOpen(false)} className="text-muted-foreground hover:text-primary">
             <X className="h-5 w-5" />
