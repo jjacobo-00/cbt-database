@@ -1219,6 +1219,7 @@ export function MemberForm({
                 <Select onValueChange={(val) => form.setValue("blood_type", val)} value={form.watch("blood_type") || ""}>
                   <SelectTrigger className="h-12 bg-transparent"><SelectValue placeholder="Select Blood Type" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="I don't know">I don't know</SelectItem>
                     <SelectItem value="A+">A+</SelectItem>
                     <SelectItem value="A-">A-</SelectItem>
                     <SelectItem value="B+">B+</SelectItem>
@@ -1227,7 +1228,6 @@ export function MemberForm({
                     <SelectItem value="AB-">AB-</SelectItem>
                     <SelectItem value="O+">O+</SelectItem>
                     <SelectItem value="O-">O-</SelectItem>
-                    <SelectItem value="Unknown">Unknown</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
