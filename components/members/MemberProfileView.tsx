@@ -1174,7 +1174,7 @@ export function MemberProfileView({
       {/* ───────────────────────────────────────────────────────────── */}
       {/* FULL PRINT VIEW DOCUMENT (Visible ONLY when printing) */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="hidden print:block text-slate-900 bg-white w-full font-sans max-w-4xl mx-auto">
+      <div className="hidden print:block text-slate-900 bg-white w-full font-sans max-w-4xl mx-auto print:p-8 print:pt-4">
         
         {/* Document Header */}
         <div className="text-center mb-6">

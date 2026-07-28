@@ -8,9 +8,6 @@
   @page {
     margin: 0;
   }
-  body {
-    margin: 1.6cm;
-  }
 }
 @theme {
   --font-sans: var(--font-inter);
