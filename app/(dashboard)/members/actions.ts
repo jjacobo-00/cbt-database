@@ -738,6 +738,7 @@ export async function getMembersList() {
     middle_name: members.middle_name,
     last_name: members.last_name,
     suffix: members.suffix,
+    sex: members.sex,
     email: members.email,
     contact_number: members.contact_number,
     position: members.position,

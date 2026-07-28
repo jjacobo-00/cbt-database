@@ -608,7 +608,8 @@ export function MemberForm({
     isMemberField: string, 
     excludeId?: string,
     occupationField?: string,
-    contactField?: string
+    contactField?: string,
+    filterGender?: "Male" | "Female"
   ) => {
     const isMember = form.watch(isMemberField as any)
     const currentId = form.watch(idField as any)
@@ -665,7 +666,10 @@ export function MemberForm({
                       <span className="text-muted-foreground text-xs">Uncheck "Is CBT member?" to enter their name manually for now.</span>
                     </CommandEmpty>
                     <CommandGroup>
-                      {allMembers.filter(m => m.id !== excludeId).map((m: any) => (
+                      {allMembers
+                        .filter(m => m.id !== excludeId)
+                        .filter(m => !filterGender || (m as any).gender === filterGender || (m as any).sex === filterGender)
+                        .map((m: any) => (
                         <CommandItem
                           key={m.id}
                           value={`${m.first_name} ${m.last_name}`}
@@ -1424,14 +1428,14 @@ export function MemberForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 rounded-xl border space-y-4">
                 <h4 className="font-semibold text-primary">Father's Info</h4>
-                {renderMemberSelect("Select Father (Member)", "father_member_id", "father_name", "father_is_member", initialData?.id, "father_occupation", "father_contact_number")}
+                {renderMemberSelect("Select Father (Member)", "father_member_id", "father_name", "father_is_member", initialData?.id, "father_occupation", "father_contact_number", "Male")}
                 <Input {...form.register("father_name")} placeholder="Father's Name" className="h-11 bg-transparent" />
                 <Input {...form.register("father_occupation")} placeholder="Father's Occupation" className="h-11 bg-transparent" />
                 <Input {...form.register("father_contact_number")} placeholder="Father's Contact Number" className="h-11 bg-transparent" />
               </div>
               <div className="p-4 rounded-xl border space-y-4">
                 <h4 className="font-semibold text-primary">Mother's Info</h4>
-                {renderMemberSelect("Select Mother (Member)", "mother_member_id", "mother_name", "mother_is_member", initialData?.id, "mother_occupation", "mother_contact_number")}
+                {renderMemberSelect("Select Mother (Member)", "mother_member_id", "mother_name", "mother_is_member", initialData?.id, "mother_occupation", "mother_contact_number", "Female")}
                 <Input {...form.register("mother_name")} placeholder="Mother's Name" className="h-11 bg-transparent" />
                 <Input {...form.register("mother_occupation")} placeholder="Mother's Occupation" className="h-11 bg-transparent" />
                 <Input {...form.register("mother_contact_number")} placeholder="Mother's Contact Number" className="h-11 bg-transparent" />
