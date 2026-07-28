@@ -1,11 +1,19 @@
 import { getMissions } from "./actions"
 import { MissionsClient } from "./MissionsClient"
 import { MapPin } from "lucide-react"
+import { db } from "@/db"
+import { members } from "@/db/schema"
+import { asc } from "drizzle-orm"
 
 export const metadata = { title: "Missions | CBT Database" }
 
 export default async function MissionsPage() {
-  const missions = await getMissions()
+  const missionsList = await getMissions()
+  const membersList = await db.select({ 
+    id: members.id, 
+    first_name: members.first_name, 
+    last_name: members.last_name 
+  }).from(members).orderBy(asc(members.last_name))
 
   return (
     <div className="space-y-6">
@@ -19,7 +27,7 @@ export default async function MissionsPage() {
         </div>
       </div>
       
-      <MissionsClient initialMissions={missions} />
+      <MissionsClient initialMissions={missionsList} members={membersList} />
     </div>
   )
 }

@@ -20,7 +20,13 @@ type Mission = {
   established_date: string | null
 }
 
-export function MissionsClient({ initialMissions }: { initialMissions: Mission[] }) {
+export function MissionsClient({ 
+  initialMissions, 
+  members 
+}: { 
+  initialMissions: Mission[]
+  members: { id: string, first_name: string, last_name: string }[]
+}) {
   const [missions, setMissions] = useState<Mission[]>(initialMissions)
   const [searchQuery, setSearchQuery] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -187,7 +193,13 @@ export function MissionsClient({ initialMissions }: { initialMissions: Mission[]
             </div>
             <div className="space-y-2">
               <Label htmlFor="pastor_name">Designated Pastor</Label>
-              <Input id="pastor_name" value={formData.pastor_name} onChange={(e) => setFormData({...formData, pastor_name: e.target.value})} placeholder="e.g. Ptr. John Doe" />
+              <Input id="pastor_name" list="members-list" value={formData.pastor_name} onChange={(e) => setFormData({...formData, pastor_name: e.target.value})} placeholder="e.g. Ptr. John Doe" />
+              <datalist id="members-list">
+                {members.map(member => (
+                  <option key={member.id} value={`${member.first_name} ${member.last_name}`} />
+                ))}
+              </datalist>
+              <p className="text-xs text-muted-foreground">Select an existing member or type a new name.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="established_date">Established Date</Label>
