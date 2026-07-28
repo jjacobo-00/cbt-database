@@ -1410,7 +1410,7 @@ export function MemberProfileView({
           </div>
 
           {/* SECTION IV: MINISTRIES */}
-          <div className="bg-slate-100 text-slate-800 font-bold px-3 py-1.5 uppercase text-xs border-b border-slate-300 break-before-avoid tracking-wide">
+          <div className="bg-slate-100 text-slate-800 font-bold px-3 py-1.5 uppercase text-xs border-y border-slate-300 break-before-avoid tracking-wide">
             IV. Active Ministries & Commitments
           </div>
           
