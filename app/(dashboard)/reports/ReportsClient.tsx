@@ -138,7 +138,7 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       </div>
 
       {/* KPI Cards */}
-      <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="border-t-4 border-t-blue-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
@@ -190,7 +190,7 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       </div>
 
       {/* Charts Grid */}
-      <div className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {/* Gender Distribution */}
         <Card className="col-span-1 min-w-0 shadow-sm">
           <CardHeader>
@@ -220,7 +220,7 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
         </Card>
 
         {/* Marital Status */}
-        <Card className="col-span-1 md:col-span-1 lg:col-span-2 min-w-0 shadow-sm">
+        <Card className="col-span-1 md:col-span-1 xl:col-span-2 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Marital Status</CardTitle>
           </CardHeader>
