@@ -107,7 +107,7 @@ export function MissionsClient({ initialMissions }: { initialMissions: Mission[]
           placeholder="Search missions..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-md bg-white"
+          className="max-w-md bg-card"
         />
         <Button onClick={openAddModal} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" /> Add Mission
@@ -116,8 +116,12 @@ export function MissionsClient({ initialMissions }: { initialMissions: Mission[]
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredMissions.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-muted-foreground bg-white border border-dashed rounded-lg">
-            No missions found.
+          <div className="col-span-full flex flex-col items-center justify-center py-16 px-4 text-center text-muted-foreground bg-card border border-dashed rounded-xl shadow-sm">
+            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <MapPin className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-1">No missions found</h3>
+            <p className="text-sm max-w-sm">There are no mission churches matching your criteria. Try adjusting your search or add a new mission.</p>
           </div>
         ) : (
           filteredMissions.map(mission => (
