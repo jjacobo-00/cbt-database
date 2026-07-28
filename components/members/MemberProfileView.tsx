@@ -1090,22 +1090,18 @@ export function MemberProfileView({
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 border-b pb-1">
                 Church History & Membership
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="text-muted-foreground text-xs block">Current Local Church</span>
-                  <span className="font-medium">{!member.current_church || member.current_church === "Current Church" || member.current_church === "CBT" ? "Christian Baptist Tabernacle - Olongapo" : member.current_church}</span>
+                  <span className="text-muted-foreground text-xs block">Church Name</span>
+                  <span className="font-medium">Christian Baptist Tabernacle</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs block">Years in Current Church</span>
+                  <span className="text-muted-foreground text-xs block">Location</span>
+                  <span className="font-medium">Olongapo</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">Years in Church</span>
                   <span className="font-medium">{member.years_in_church ? `${member.years_in_church} years` : "—"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground text-xs block">Previous Church Name</span>
-                  <span className="font-medium">{member.prev_church_name || "—"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground text-xs block">Years in Previous Church</span>
-                  <span className="font-medium">{member.prev_church_years ? `${member.prev_church_years} years` : "—"}</span>
                 </div>
               </div>
             </div>
@@ -1402,13 +1398,13 @@ export function MemberProfileView({
 
           <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
             <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Current Church</span>
-              <span className="font-semibold text-black">{(!member.current_church || member.current_church === "Current Church" || member.current_church === "CBT" ? "Christian Baptist Tabernacle - Olongapo" : member.current_church)} {member.years_in_church ? `(${member.years_in_church} yrs)` : ""}</span>
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Church Name</span>
+              <span className="font-semibold text-black">Christian Baptist Tabernacle {member.years_in_church ? `(${member.years_in_church} yrs)` : ""}</span>
             </div>
             <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Previous Church</span>
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Location</span>
               <span className="font-semibold text-black">
-                {member.prev_church_name ? `${member.prev_church_name} ${member.prev_church_years ? `(${member.prev_church_years} yrs)` : ""}` : "—"}
+                Olongapo
               </span>
             </div>
           </div>
