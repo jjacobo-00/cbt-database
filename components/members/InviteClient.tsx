@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Lock, CheckCircle2 } from "lucide-react"
 
 export function InviteClient({ 
@@ -88,12 +89,10 @@ export function InviteClient({
             <form onSubmit={handleVerify} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Date of Birth</label>
-                <Input 
-                  type="date" 
+                <DatePicker 
                   value={dobInput}
-                  onChange={e => setDobInput(e.target.value)}
-                  required
-                  className="h-12 [color-scheme:dark]"
+                  onChange={setDobInput}
+                  className="h-12 w-full"
                 />
               </div>
               <Button type="submit" className="w-full h-12" disabled={isLoading || !dobInput}>
