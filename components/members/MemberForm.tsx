@@ -828,8 +828,6 @@ export function MemberForm({
                     <option value="Single" className="bg-card text-foreground">Single</option>
                     <option value="Married" className="bg-card text-foreground">Married</option>
                     <option value="Widowed" className="bg-card text-foreground">Widowed</option>
-                    <option value="Separated" className="bg-card text-foreground">Separated / Divorced</option>
-                    <option value="Annulled" className="bg-card text-foreground">Annulled</option>
                   </select>
                   <ChevronDown className="absolute right-3 h-4 w-4 text-muted-foreground opacity-50 pointer-events-none" />
                 </div>
