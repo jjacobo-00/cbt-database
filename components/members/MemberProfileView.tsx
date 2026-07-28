@@ -1097,7 +1097,7 @@ export function MemberProfileView({
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">Location</span>
-                  <span className="font-medium">Olongapo</span>
+                  <span className="font-medium">Keith Streets, Gordon Heights, Olongapo City</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">Years in Church</span>
@@ -1404,7 +1404,7 @@ export function MemberProfileView({
             <div className="p-2">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Location</span>
               <span className="font-semibold text-black">
-                Olongapo
+                Keith Streets, Gordon Heights, Olongapo City
               </span>
             </div>
           </div>
