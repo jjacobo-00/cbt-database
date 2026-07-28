@@ -305,6 +305,29 @@ export function MemberForm({
     const message = firstError?.message || firstError?.root?.message || firstError?.[0]?.school_name?.message || "Please fix the errors before saving."
     toast.error(`Validation error: ${message}`)
     console.error("Form validation errors:", errors)
+
+    let targetStep = step
+    if (["first_name", "last_name", "birth_date", "gender", "contact_number", "email"].includes(firstKey)) targetStep = 1;
+    else if (firstKey.includes("street") || firstKey.includes("city") || firstKey.includes("province") || firstKey.includes("zip") || firstKey.includes("barangay") || firstKey.includes("house") || firstKey.includes("unit")) targetStep = 2;
+    else if (["employment_status", "student_school", "student_year_level", "student_course", "company", "position"].includes(firstKey)) targetStep = 3;
+    else if (["father_name", "father_occupation", "father_contact_number", "mother_name", "mother_occupation", "mother_contact_number", "parents_civil_status", "siblings", "children", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number", "marital_status", "widowed_date", "spouse_name", "spouse_occupation", "anniversary_date"].includes(firstKey)) targetStep = 4;
+    else if (["highest_educational_attainment", "education_details"].includes(firstKey)) targetStep = 5;
+    else if (["ministries", "date_saved", "membership_date", "baptism_date"].includes(firstKey)) targetStep = 6;
+
+    if (targetStep !== step) {
+      setStep(targetStep)
+    }
+
+    setTimeout(() => {
+      const firstErrorEl = document.querySelector('[aria-invalid="true"], .text-destructive, p.text-destructive') as HTMLElement
+      if (firstErrorEl) {
+        firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" })
+        const input = firstErrorEl.tagName === "INPUT" || firstErrorEl.tagName === "SELECT" || firstErrorEl.tagName === "TEXTAREA" 
+          ? firstErrorEl 
+          : firstErrorEl.parentElement?.querySelector('input, select, textarea') as HTMLElement
+        input?.focus?.()
+      }
+    }, 150)
   }
 
   const onSubmit = async (values: z.infer<typeof memberSchema>) => {
@@ -437,6 +460,18 @@ export function MemberForm({
       if (isValid) {
         // Only allow jumping up to step + 1 to prevent skipping steps in create mode
         setStep(Math.min(step + 1, targetStepId))
+      } else {
+        toast.error("Please fill in all required fields correctly.")
+        setTimeout(() => {
+          const firstErrorEl = document.querySelector('[aria-invalid="true"], .text-destructive, p.text-destructive') as HTMLElement
+          if (firstErrorEl) {
+            firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" })
+            const input = firstErrorEl.tagName === "INPUT" || firstErrorEl.tagName === "SELECT" || firstErrorEl.tagName === "TEXTAREA" 
+              ? firstErrorEl 
+              : firstErrorEl.parentElement?.querySelector('input, select, textarea') as HTMLElement
+            input?.focus?.()
+          }
+        }, 150)
       }
     } else {
       setStep(Math.min(step + 1, targetStepId))
@@ -453,7 +488,21 @@ export function MemberForm({
     
     if (fieldsToValidate.length > 0) {
       const isValid = await form.trigger(fieldsToValidate as any)
-      if (isValid) setStep(s => Math.min(STEPS.length, s + 1))
+      if (isValid) {
+        setStep(s => Math.min(STEPS.length, s + 1))
+      } else {
+        toast.error("Please fill in all required fields correctly.")
+        setTimeout(() => {
+          const firstErrorEl = document.querySelector('[aria-invalid="true"], .text-destructive, p.text-destructive') as HTMLElement
+          if (firstErrorEl) {
+            firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" })
+            const input = firstErrorEl.tagName === "INPUT" || firstErrorEl.tagName === "SELECT" || firstErrorEl.tagName === "TEXTAREA" 
+              ? firstErrorEl 
+              : firstErrorEl.parentElement?.querySelector('input, select, textarea') as HTMLElement
+            input?.focus?.()
+          }
+        }, 150)
+      }
     } else {
       setStep(s => Math.min(STEPS.length, s + 1))
     }
