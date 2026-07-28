@@ -1420,10 +1420,10 @@ export function MemberProfileView({
           </div>
 
           <div className="break-inside-avoid">
-            <div className="p-2 border-y border-slate-300 bg-slate-50/50">
+            <div className="p-2 border-t border-slate-300 bg-slate-50/50">
               <span className="block text-[10px] uppercase font-semibold text-slate-500">Annual Recommitments History</span>
             </div>
-            <table className="w-full text-left">
+            <table className="w-full text-left border-t border-slate-300">
               <thead className="bg-slate-50 text-[10px] uppercase text-slate-500 border-b border-slate-300">
                 <tr>
                   <th className="p-2 border-r border-slate-300 font-semibold w-16">Year</th>
