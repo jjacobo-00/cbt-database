@@ -199,7 +199,7 @@ export function ReportsDataTable<TData, TValue>({
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-foreground truncate">{name}</p>
                       <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
-                        <span className="truncate">{city}</span> • <span>{sex}</span>
+                        <span className="truncate">{city}</span> • <span>{gender}</span>
                       </div>
                     </div>
                   </div>
