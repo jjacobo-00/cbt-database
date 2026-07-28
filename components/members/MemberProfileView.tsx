@@ -1360,21 +1360,21 @@ export function MemberProfileView({
           </div>
 
           <div className="grid grid-cols-3 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Date Saved</span>
-              <span className="font-semibold text-black">
+              <span className="font-semibold text-black break-words">
                 {member.date_saved ? new Date(member.date_saved).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
               </span>
             </div>
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Date Baptized</span>
-              <span className="font-semibold text-black">
+              <span className="font-semibold text-black break-words">
                 {member.date_baptized || member.baptism_date ? new Date(member.date_baptized || member.baptism_date || "").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
               </span>
             </div>
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Membership Date</span>
-              <span className="font-semibold text-black">
+              <span className="font-semibold text-black break-words">
                 {member.membership_date ? new Date(member.membership_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : 
                  (member.created_at ? new Date(member.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—")}
               </span>
@@ -1382,17 +1382,17 @@ export function MemberProfileView({
           </div>
           
           <div className="grid grid-cols-3 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Baptized By</span>
-              <span className="font-semibold text-black">{member.baptized_by || "—"}</span>
+              <span className="font-semibold text-black break-words">{member.baptized_by || "—"}</span>
             </div>
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Place of Baptism</span>
-              <span className="font-semibold text-black">{member.place_of_baptism || "—"}</span>
+              <span className="font-semibold text-black break-words">{member.place_of_baptism || "—"}</span>
             </div>
-            <div className="p-2">
+            <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Witnessed By</span>
-              <span className="font-semibold text-black">{member.witnessed_by || "—"}</span>
+              <span className="font-semibold text-black break-words">{member.witnessed_by || "—"}</span>
             </div>
           </div>
 
