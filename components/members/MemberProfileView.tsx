@@ -1138,11 +1138,11 @@ export function MemberProfileView({
         {/* Document Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold uppercase tracking-wider text-black">MEMBER PROFILE</h1>
-          <p className="text-sm text-slate-500 mt-1">Generated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</p>
+          <p className="text-sm text-slate-500 mt-1">{new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
         </div>
 
         {/* Outer Bordered Container */}
-        <div className="border border-slate-300 rounded-lg overflow-hidden text-sm shadow-sm">
+        <div className="border border-slate-300 rounded-lg text-sm shadow-sm">
           
           {/* SECTION I: PERSONAL INFO */}
           <div className="bg-slate-100 text-slate-800 font-bold px-3 py-1.5 uppercase text-xs border-b border-slate-300 tracking-wide">
@@ -1191,6 +1191,44 @@ export function MemberProfileView({
               <span className="font-semibold text-black">{member.marital_status || "—"}</span>
             </div>
           </div>
+          
+          {(member.marital_status === "Married" || member.marital_status === "Widow" || member.marital_status === "Widower") && (
+            <div className="grid grid-cols-3 divide-x divide-slate-300 border-b border-slate-300 bg-slate-50/50">
+              <div className="p-2">
+                <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Spouse's Name</span>
+                <span className="font-semibold text-black">{member.spouse_name || "—"}</span>
+              </div>
+              <div className="p-2">
+                <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Wedding Anniversary</span>
+                <span className="font-semibold text-black">
+                  {member.anniversary_date ? new Date(member.anniversary_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                </span>
+              </div>
+              <div className="p-2">
+                <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Years Married</span>
+                <span className="font-semibold text-black">
+                  {member.anniversary_date ? (() => {
+                    const today = new Date();
+                    const ann = new Date(member.anniversary_date);
+                    let years = today.getFullYear() - ann.getFullYear();
+                    if (today.getMonth() < ann.getMonth() || (today.getMonth() === ann.getMonth() && today.getDate() < ann.getDate())) {
+                      years--;
+                    }
+                    return Math.max(0, years) + " yrs";
+                  })() : "—"}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {(member.marital_status === "Widow" || member.marital_status === "Widower" || member.widowed_date) && (
+            <div className="p-2 border-b border-slate-300 bg-slate-50/50">
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Widowed Date</span>
+              <span className="font-semibold text-black">
+                {member.widowed_date ? new Date(member.widowed_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+              </span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300">
             <div className="p-2">
@@ -1224,129 +1262,54 @@ export function MemberProfileView({
             </div>
           </div>
 
-          <div className="border-b border-slate-300 p-2">
-            <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Complete Address</span>
-            <span className="font-semibold text-black">{fullAddress || "—"}</span>
-          </div>
-
-          {/* SECTION II: FAMILY BACKGROUND */}
-          <div className="bg-slate-100 text-slate-800 font-bold px-3 py-1.5 uppercase text-xs border-b border-slate-300 tracking-wide">
-            II. Family Background
-          </div>
-          
-          <div className="grid grid-cols-3 divide-x divide-slate-300 border-b border-slate-300">
-            <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Spouse's Name</span>
-              <span className="font-semibold text-black">{member.spouse_name || "—"}</span>
+          <div className="border-b border-slate-300">
+            <div className="p-2 border-b border-slate-200">
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Current Address</span>
+              <span className="font-semibold text-black">{fullAddress || "—"}</span>
             </div>
             <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Spouse Occupation</span>
-              <span className="font-semibold text-black">{member.spouse_occupation || "—"}</span>
-            </div>
-            <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Wedding Anniversary</span>
-              <span className="font-semibold text-black">
-                {member.anniversary_date ? new Date(member.anniversary_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
-              </span>
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Permanent Address</span>
+              <span className="font-semibold text-black">{member.is_perm_same_as_current ? fullAddress : (
+                [
+                  member.perm_house_number,
+                  member.perm_unit_number,
+                  member.perm_street,
+                  member.perm_barangay,
+                  member.perm_city,
+                  member.perm_province,
+                  member.perm_zip_code,
+                  member.perm_country
+                ].filter(Boolean).join(", ") || "—"
+              )}</span>
             </div>
           </div>
-          
-          {(member.marital_status === "Widow" || member.marital_status === "Widower" || member.widowed_date) && (
-            <div className="p-2 border-b border-slate-300 bg-slate-50/50">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Widowed Date</span>
-              <span className="font-semibold text-black">
-                {member.widowed_date ? new Date(member.widowed_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
-              </span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-3 divide-x divide-slate-300 border-b border-slate-300">
-            <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Father's Name</span>
-              <span className="font-semibold text-black">{member.father_name || "—"}</span>
-            </div>
-            <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Mother's Name</span>
-              <span className="font-semibold text-black">{member.mother_name || "—"}</span>
-            </div>
-            <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Parents' Civil Status</span>
-              <span className="font-semibold text-black">{member.parents_civil_status || "—"}</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300">
-            <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Children ({childrenList.length})</span>
-              <span className="font-semibold text-black">{childrenList.map(c => c.name).join(", ") || "—"}</span>
-            </div>
-            <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Siblings ({siblings.length})</span>
-              <span className="font-semibold text-black">{siblings.map(s => s.name).join(", ") || "—"}</span>
-            </div>
-          </div>
-
-          <div className="p-2 border-b border-slate-300 bg-slate-50">
-            <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Emergency Contact</span>
-            <span className="font-semibold text-black">
-              {member.emergency_contact_name ? 
-                `${member.emergency_contact_name} (${member.emergency_contact_relationship}) - ${member.emergency_contact_number}` 
-                : "—"}
-            </span>
-          </div>
-
-          {/* SECTION III: EDUCATION & EMPLOYMENT */}
+          {/* SECTION II: EDUCATION & EMPLOYMENT */}
           <div className="bg-slate-100 text-slate-800 font-bold px-3 py-1.5 uppercase text-xs border-b border-slate-300 break-before-avoid tracking-wide">
-            III. Education & Employment
+            II. Education & Employment
           </div>
 
           <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
             <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Occupation</span>
-              <span className="font-semibold text-black">{member.occupation || member.position || "—"}</span>
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Latest Education</span>
+              <span className="font-semibold text-black">
+                {educationDetails.length > 0 
+                  ? `${educationDetails[educationDetails.length - 1].level} - ${educationDetails[educationDetails.length - 1].school_name}`
+                  : member.highest_educational_attainment || "—"}
+              </span>
             </div>
             <div className="p-2">
-              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Company/School</span>
-              <span className="font-semibold text-black">{member.company || member.student_school || "—"}</span>
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Current Employment / Occupation</span>
+              <span className="font-semibold text-black">
+                {member.employment_status === "Employed" || member.employment_status === "Self-employed" || member.company || member.occupation ? 
+                  [member.occupation || member.position, member.company].filter(Boolean).join(" at ") || member.employment_status || "—" 
+                  : member.employment_status || "—"}
+              </span>
             </div>
           </div>
-          
-          <div className="break-inside-avoid border-b border-slate-300">
-            {educationDetails.length > 0 ? (
-              <div className="grid grid-cols-3 divide-x divide-slate-300 bg-slate-50/50">
-                <div className="p-2 col-span-3 pb-1 border-b border-slate-200">
-                  <span className="block text-[10px] uppercase font-semibold text-slate-500">Education Details</span>
-                </div>
-                {educationDetails.map((ed, idx) => (
-                  <React.Fragment key={idx}>
-                    <div className="p-2 border-b border-slate-200 last:border-0">
-                      <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Level</span>
-                      <span className="font-semibold text-black text-xs">{ed.level || "—"}</span>
-                    </div>
-                    <div className="p-2 border-b border-slate-200 last:border-0">
-                      <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">School</span>
-                      <span className="font-semibold text-black text-xs">{ed.school_name || "—"}</span>
-                    </div>
-                    <div className="p-2 border-b border-slate-200 last:border-0">
-                      <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Years</span>
-                      <span className="font-semibold text-black text-xs">
-                        {ed.year_started || "?"} - {ed.is_currently_enrolled ? "Present" : (ed.year_graduated || "?")}
-                      </span>
-                    </div>
-                  </React.Fragment>
-                ))}
-              </div>
-            ) : (
-               <div className="p-2">
-                 <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Highest Attainment</span>
-                 <span className="font-semibold text-black">{member.highest_educational_attainment || "—"}</span>
-               </div>
-            )}
-          </div>
 
-          {/* SECTION IV: SPIRITUAL RECORD */}
+          {/* SECTION III: SPIRITUAL RECORD */}
           <div className="bg-slate-100 text-slate-800 font-bold px-3 py-1.5 uppercase text-xs border-b border-slate-300 break-before-avoid tracking-wide">
-            IV. Spiritual Record
+            III. Spiritual Record
           </div>
 
           <div className="grid grid-cols-3 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
@@ -1399,9 +1362,9 @@ export function MemberProfileView({
             </div>
           </div>
 
-          {/* SECTION V: MINISTRIES */}
+          {/* SECTION IV: MINISTRIES */}
           <div className="bg-slate-100 text-slate-800 font-bold px-3 py-1.5 uppercase text-xs border-b border-slate-300 break-before-avoid tracking-wide">
-            V. Active Ministries & Commitments
+            IV. Active Ministries & Commitments
           </div>
           
           <div className="p-2 border-b border-slate-300 break-inside-avoid">

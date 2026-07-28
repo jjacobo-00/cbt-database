@@ -4,6 +4,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@media print {
+  @page {
+    margin: 0;
+  }
+  body {
+    margin: 1.6cm;
+  }
+}
 @theme {
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
