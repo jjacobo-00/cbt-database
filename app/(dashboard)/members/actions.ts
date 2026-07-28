@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
-import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children, org_chart_nodes } from "@/db/schema"
+import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children, org_chart_nodes, missions } from "@/db/schema"
 import crypto from "crypto"
 import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
 
