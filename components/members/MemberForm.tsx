@@ -2184,6 +2184,7 @@ export function MemberForm({
 
             {step < STEPS.length ? (
               <Button 
+                key="btn-next-step"
                 type="button" 
                 data-next-btn="true"
                 onClick={validateStep}
@@ -2193,7 +2194,9 @@ export function MemberForm({
               </Button>
             ) : (
               <Button 
-                type="submit" 
+                key="btn-save-member"
+                type="button" 
+                onClick={() => form.handleSubmit(onSubmit, onInvalid)()}
                 disabled={isSubmitting}
                 className="h-11 px-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
               >
