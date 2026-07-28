@@ -1414,13 +1414,13 @@ export function MemberProfileView({
             IV. Active Ministries & Commitments
           </div>
           
-          <div className="p-2 border-b border-slate-300 break-inside-avoid">
+          <div className="p-2 break-inside-avoid">
             <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Currently Enrolled Ministries ({ministriesList.length})</span>
-            <span className="font-semibold text-black">{ministriesList.map(m => m.name).join(", ") || "None"}</span>
+            <span className="font-semibold text-black break-words">{ministriesList.map(m => m.name).join(", ") || "None"}</span>
           </div>
 
           <div className="break-inside-avoid">
-            <div className="p-2 border-b border-slate-300 bg-slate-50/50">
+            <div className="p-2 border-y border-slate-300 bg-slate-50/50">
               <span className="block text-[10px] uppercase font-semibold text-slate-500">Annual Recommitments History</span>
             </div>
             <table className="w-full text-left">
