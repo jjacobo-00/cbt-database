@@ -772,8 +772,13 @@ export function MemberForm({
 
               {form.watch("marital_status") === "Widowed" && (
                 <div className="grid gap-2 md:col-span-1 p-4 border rounded-lg bg-muted/20">
-                  <Label className="text-[13px] text-muted-foreground">Date Widowed (Month/Year)</Label>
-                  <Input type="month" {...form.register("widowed_date")} className="h-12 bg-transparent" />
+                  <Label className="text-[13px] text-muted-foreground">Date Widowed</Label>
+                  <DatePicker
+                    value={form.watch("widowed_date")}
+                    onChange={(v) => form.setValue("widowed_date", v, { shouldValidate: true, shouldDirty: true })}
+                    placeholder="Select date"
+                    className="h-12 w-full"
+                  />
                 </div>
               )}
 
