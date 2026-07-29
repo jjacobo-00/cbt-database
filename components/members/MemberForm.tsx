@@ -401,7 +401,6 @@ export function MemberForm({
       children: [],
       ministries: [],
       church_role: "Member",
-      preset_mission_id: "",
       date_saved: "",
       membership_date: new Date().toISOString().split("T")[0],
       baptism_date: "",
