@@ -276,35 +276,141 @@ export function MemberForm({
     }
   })
 
-  const draftLoaded = React.useRef(false)
+  const [pendingDraft, setPendingDraft] = React.useState<any | null>(null)
 
-  // Auto-Save Draft (Load on mount)
+  // Draft Recovery Check (On Mount)
   React.useEffect(() => {
-    if (!initialData && !draftLoaded.current) {
+    if (!initialData) {
       const savedDraft = localStorage.getItem("cbt_new_member_draft")
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft)
-          form.reset(parsed)
-          draftLoaded.current = true
-          // Use setTimeout to ensure toast fires after mount
-          setTimeout(() => toast.info("Unsaved draft recovered successfully.", { icon: "📝" }), 500)
+          const hasMeaningfulContent = Boolean(
+            parsed.first_name || 
+            parsed.last_name || 
+            parsed.contact_number || 
+            parsed.email ||
+            parsed.father_name || 
+            parsed.mother_name || 
+            (parsed.ministries && parsed.ministries.length > 0)
+          )
+          if (hasMeaningfulContent) {
+            setPendingDraft(parsed)
+          } else {
+            localStorage.removeItem("cbt_new_member_draft")
+          }
         } catch (e) {
           console.error("Failed to parse draft", e)
+          localStorage.removeItem("cbt_new_member_draft")
         }
       }
+    } else {
+      // Clean up any stale draft when editing an existing member
+      localStorage.removeItem("cbt_new_member_draft")
     }
-  }, [initialData, form])
+  }, [initialData])
 
-  // Auto-Save Draft (Save on change)
+  // Auto-Save Draft (Only save when user types meaningful content and no pending draft prompt)
   React.useEffect(() => {
-    if (!initialData) {
+    if (!initialData && !pendingDraft) {
       const subscription = form.watch((value) => {
-        localStorage.setItem("cbt_new_member_draft", JSON.stringify(value))
+        const hasMeaningfulContent = Boolean(
+          value.first_name || 
+          value.last_name || 
+          value.contact_number || 
+          value.email ||
+          value.father_name || 
+          value.mother_name || 
+          (value.ministries && value.ministries.length > 0)
+        )
+        if (hasMeaningfulContent) {
+          localStorage.setItem("cbt_new_member_draft", JSON.stringify(value))
+        } else {
+          localStorage.removeItem("cbt_new_member_draft")
+        }
       })
       return () => subscription.unsubscribe()
     }
-  }, [initialData, form.watch])
+  }, [initialData, pendingDraft, form.watch])
+
+  const handleRestoreDraft = () => {
+    if (pendingDraft) {
+      form.reset(pendingDraft)
+      setPendingDraft(null)
+      toast.success("Draft recovered successfully! You can review or edit your details.", { icon: "📝" })
+    }
+  }
+
+  const handleDiscardDraft = () => {
+    localStorage.removeItem("cbt_new_member_draft")
+    setPendingDraft(null)
+    form.reset({
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      suffix: "",
+      birth_date: "",
+      birth_place: "",
+      contact_number: "",
+      email: "",
+      marital_status: "Single",
+      widowed_date: "",
+      spouse_name: "",
+      spouse_occupation: "",
+      anniversary_date: "",
+      house_number: "",
+      unit_number: "",
+      street: "",
+      barangay: "",
+      city: "",
+      province: "",
+      zip_code: "",
+      country: "Philippines",
+      is_perm_same_as_current: true,
+      perm_house_number: "",
+      perm_unit_number: "",
+      perm_street: "",
+      perm_barangay: "",
+      perm_city: "",
+      perm_province: "",
+      perm_zip_code: "",
+      perm_country: "Philippines",
+      blood_type: "Unknown",
+      allergies: "",
+      medical_conditions: "",
+      employment_status: "Employed",
+      student_school: "",
+      student_level: "",
+      student_year_level: "",
+      student_course: "",
+      company: "",
+      position: "",
+      father_name: "",
+      father_occupation: "",
+      father_contact_number: "",
+      mother_name: "",
+      mother_occupation: "",
+      mother_contact_number: "",
+      parents_civil_status: "Married",
+      emergency_contact_name: "",
+      emergency_contact_relationship: "",
+      emergency_contact_number: "",
+      highest_educational_attainment: "High School",
+      education_details: [],
+      siblings: [],
+      children: [],
+      ministries: [],
+      church_role: "Member",
+      preset_mission_id: "",
+      date_saved: "",
+      membership_date: new Date().toISOString().split("T")[0],
+      baptism_date: "",
+      baptized_by: "",
+      witness_by: "",
+      place_of_baptism: "",
+    })
+    toast.info("Draft discarded. Form reset to blank.")
+  }
 
   const { fields: siblingFields, append: appendSibling, remove: removeSibling } = useFieldArray({ control: form.control, name: "siblings" })
   const { fields: childFields, append: appendChild, remove: removeChild } = useFieldArray({ control: form.control, name: "children" })
@@ -826,6 +932,41 @@ export function MemberForm({
         }}
         className="space-y-6"
       >
+        {/* DRAFT RECOVERY BANNER */}
+        {pendingDraft && (
+          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg shrink-0">
+                📝
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm text-foreground">Unsaved Draft Found</h4>
+                <p className="text-xs text-muted-foreground">
+                  An unsaved draft from a previous session was detected ({pendingDraft.first_name || pendingDraft.last_name ? `${pendingDraft.first_name || ""} ${pendingDraft.last_name || ""}`.trim() : "Unsubmitted form"}).
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleDiscardDraft}
+                className="text-xs border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+              >
+                Discard & Start Fresh
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleRestoreDraft}
+                className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-xs"
+              >
+                Restore Draft
+              </Button>
+            </div>
+          </div>
+        )}
         {/* STEP 1: PERSONAL INFORMATION */}
         {step === 1 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
@@ -2158,15 +2299,27 @@ export function MemberForm({
 
         {/* BOTTOM NAVIGATION BUTTONS */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t mt-8">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => setStep(s => Math.max(1, s - 1))}
-            disabled={step === 1}
-            className="h-11 px-6"
-          >
-            Back
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setStep(s => Math.max(1, s - 1))}
+              disabled={step === 1}
+              className="h-11 px-6"
+            >
+              Back
+            </Button>
+            {!initialData && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleDiscardDraft}
+                className="h-11 px-4 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                Discard Draft
+              </Button>
+            )}
+          </div>
 
           <div className="flex items-center gap-3">
             {initialData && step < STEPS.length && (
