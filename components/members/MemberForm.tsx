@@ -294,9 +294,9 @@ export function MemberForm({
     )
   }
 
-  // Draft Recovery Check (On Mount)
+  // Draft Recovery Check (On Mount) - DISABLED for shareable invite links & member edits
   React.useEffect(() => {
-    if (!initialData) {
+    if (!initialData && !isInvite) {
       const savedDraft = localStorage.getItem("cbt_new_member_draft")
       if (savedDraft) {
         try {
@@ -322,14 +322,14 @@ export function MemberForm({
         }
       }
     } else {
-      // Clean up any stale draft when editing an existing member
+      // Clean up any stale draft when on a shareable link or editing an existing member
       localStorage.removeItem("cbt_new_member_draft")
     }
-  }, [initialData])
+  }, [initialData, isInvite])
 
-  // Auto-Save Draft (Saves whenever any meaningful content is present, purges when completely empty)
+  // Auto-Save Draft (Only for normal admin add member; DISABLED for shareable links & edits)
   React.useEffect(() => {
-    if (!initialData) {
+    if (!initialData && !isInvite) {
       const subscription = form.watch((value) => {
         if (hasMeaningfulContent(value)) {
           const payload = {
@@ -343,7 +343,7 @@ export function MemberForm({
       })
       return () => subscription.unsubscribe()
     }
-  }, [initialData, form.watch])
+  }, [initialData, isInvite, form.watch])
 
   const handleDiscardDraft = () => {
     localStorage.removeItem("cbt_new_member_draft")
@@ -2304,7 +2304,7 @@ export function MemberForm({
             >
               Back
             </Button>
-            {!initialData && (
+            {!initialData && !isInvite && (
               <Button
                 type="button"
                 variant="ghost"
