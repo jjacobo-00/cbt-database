@@ -276,8 +276,23 @@ export function MemberForm({
     }
   })
 
-  const [pendingDraft, setPendingDraft] = React.useState<any | null>(null)
+  const [restoredDraftInfo, setRestoredDraftInfo] = React.useState<string | null>(null)
   const DRAFT_MAX_AGE_MS = 30 * 60 * 1000 // 30 minutes
+
+  const hasMeaningfulContent = (val: any) => {
+    if (!val) return false
+    return Boolean(
+      val.first_name?.trim() ||
+      val.last_name?.trim() ||
+      val.contact_number?.trim() ||
+      val.email?.trim() ||
+      val.street?.trim() ||
+      val.father_name?.trim() ||
+      val.mother_name?.trim() ||
+      val.student_school?.trim() ||
+      (val.ministries && val.ministries.length > 0)
+    )
+  }
 
   // Draft Recovery Check (On Mount)
   React.useEffect(() => {
@@ -290,12 +305,15 @@ export function MemberForm({
           const timestamp = parsed.timestamp || 0
 
           const isExpired = timestamp > 0 && (Date.now() - timestamp > DRAFT_MAX_AGE_MS)
-          const hasValidNames = Boolean(draftValues?.first_name?.trim() && draftValues?.last_name?.trim())
+          const isValidContent = hasMeaningfulContent(draftValues)
 
-          if (!isExpired && hasValidNames) {
-            setPendingDraft(draftValues)
+          if (!isExpired && isValidContent) {
+            form.reset(draftValues)
+            const draftName = [draftValues.first_name, draftValues.last_name].filter(Boolean).join(" ")
+            setRestoredDraftInfo(draftName || "Unsaved Entry")
+            setTimeout(() => toast.info("Unsaved draft restored automatically.", { icon: "📝" }), 500)
           } else {
-            // Silently purge expired or incomplete ghost draft
+            // Silently purge expired or empty draft
             localStorage.removeItem("cbt_new_member_draft")
           }
         } catch (e) {
@@ -309,37 +327,27 @@ export function MemberForm({
     }
   }, [initialData])
 
-  // Auto-Save Draft (NEVER save if form is empty; requires both first_name and last_name)
+  // Auto-Save Draft (Saves whenever any meaningful content is present, purges when completely empty)
   React.useEffect(() => {
-    if (!initialData && !pendingDraft) {
+    if (!initialData) {
       const subscription = form.watch((value) => {
-        const isFormEmpty = !value.first_name?.trim() || !value.last_name?.trim()
-        if (!isFormEmpty) {
+        if (hasMeaningfulContent(value)) {
           const payload = {
             timestamp: Date.now(),
             values: value
           }
           localStorage.setItem("cbt_new_member_draft", JSON.stringify(payload))
         } else {
-          // Immediately delete any draft if form is empty
           localStorage.removeItem("cbt_new_member_draft")
         }
       })
       return () => subscription.unsubscribe()
     }
-  }, [initialData, pendingDraft, form.watch])
-
-  const handleRestoreDraft = () => {
-    if (pendingDraft) {
-      form.reset(pendingDraft)
-      setPendingDraft(null)
-      toast.success("Draft recovered successfully! You can review or edit your details.", { icon: "📝" })
-    }
-  }
+  }, [initialData, form.watch])
 
   const handleDiscardDraft = () => {
     localStorage.removeItem("cbt_new_member_draft")
-    setPendingDraft(null)
+    setRestoredDraftInfo(null)
     form.reset({
       first_name: "",
       middle_name: "",
@@ -927,17 +935,17 @@ export function MemberForm({
         }}
         className="space-y-6"
       >
-        {/* DRAFT RECOVERY BANNER */}
-        {pendingDraft && (
-          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+        {/* DRAFT RESTORED BANNER */}
+        {restoredDraftInfo && (
+          <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/10 flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg shrink-0">
+              <div className="h-10 w-10 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-lg shrink-0">
                 📝
               </div>
               <div>
-                <h4 className="font-semibold text-sm text-foreground">Unsaved Draft Found</h4>
+                <h4 className="font-semibold text-sm text-foreground">Unsaved Draft Restored</h4>
                 <p className="text-xs text-muted-foreground">
-                  An unsaved draft from a previous session was detected ({pendingDraft.first_name || pendingDraft.last_name ? `${pendingDraft.first_name || ""} ${pendingDraft.last_name || ""}`.trim() : "Unsubmitted form"}).
+                  Restored your recent unsaved progress ({restoredDraftInfo}). You can continue editing or clear it anytime.
                 </p>
               </div>
             </div>
@@ -947,17 +955,9 @@ export function MemberForm({
                 variant="outline"
                 size="sm"
                 onClick={handleDiscardDraft}
-                className="text-xs border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                className="text-xs border-blue-500/40 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20"
               >
-                Discard & Start Fresh
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleRestoreDraft}
-                className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-xs"
-              >
-                Restore Draft
+                Discard & Clear Form
               </Button>
             </div>
           </div>
