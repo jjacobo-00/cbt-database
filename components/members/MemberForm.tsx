@@ -277,6 +277,7 @@ export function MemberForm({
   })
 
   const [pendingDraft, setPendingDraft] = React.useState<any | null>(null)
+  const DRAFT_MAX_AGE_MS = 30 * 60 * 1000 // 30 minutes
 
   // Draft Recovery Check (On Mount)
   React.useEffect(() => {
@@ -285,18 +286,16 @@ export function MemberForm({
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft)
-          const hasMeaningfulContent = Boolean(
-            parsed.first_name || 
-            parsed.last_name || 
-            parsed.contact_number || 
-            parsed.email ||
-            parsed.father_name || 
-            parsed.mother_name || 
-            (parsed.ministries && parsed.ministries.length > 0)
-          )
-          if (hasMeaningfulContent) {
-            setPendingDraft(parsed)
+          const draftValues = parsed.values || parsed
+          const timestamp = parsed.timestamp || 0
+
+          const isExpired = timestamp > 0 && (Date.now() - timestamp > DRAFT_MAX_AGE_MS)
+          const hasValidNames = Boolean(draftValues?.first_name?.trim() && draftValues?.last_name?.trim())
+
+          if (!isExpired && hasValidNames) {
+            setPendingDraft(draftValues)
           } else {
+            // Silently purge expired or incomplete ghost draft
             localStorage.removeItem("cbt_new_member_draft")
           }
         } catch (e) {
@@ -310,21 +309,17 @@ export function MemberForm({
     }
   }, [initialData])
 
-  // Auto-Save Draft (Only save when user types meaningful content and no pending draft prompt)
+  // Auto-Save Draft (Only save when user types both first_name and last_name and no pending draft prompt)
   React.useEffect(() => {
     if (!initialData && !pendingDraft) {
       const subscription = form.watch((value) => {
-        const hasMeaningfulContent = Boolean(
-          value.first_name || 
-          value.last_name || 
-          value.contact_number || 
-          value.email ||
-          value.father_name || 
-          value.mother_name || 
-          (value.ministries && value.ministries.length > 0)
-        )
-        if (hasMeaningfulContent) {
-          localStorage.setItem("cbt_new_member_draft", JSON.stringify(value))
+        const hasValidNames = Boolean(value.first_name?.trim() && value.last_name?.trim())
+        if (hasValidNames) {
+          const payload = {
+            timestamp: Date.now(),
+            values: value
+          }
+          localStorage.setItem("cbt_new_member_draft", JSON.stringify(payload))
         } else {
           localStorage.removeItem("cbt_new_member_draft")
         }
