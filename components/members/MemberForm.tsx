@@ -309,18 +309,19 @@ export function MemberForm({
     }
   }, [initialData])
 
-  // Auto-Save Draft (Only save when user types both first_name and last_name and no pending draft prompt)
+  // Auto-Save Draft (NEVER save if form is empty; requires both first_name and last_name)
   React.useEffect(() => {
     if (!initialData && !pendingDraft) {
       const subscription = form.watch((value) => {
-        const hasValidNames = Boolean(value.first_name?.trim() && value.last_name?.trim())
-        if (hasValidNames) {
+        const isFormEmpty = !value.first_name?.trim() || !value.last_name?.trim()
+        if (!isFormEmpty) {
           const payload = {
             timestamp: Date.now(),
             values: value
           }
           localStorage.setItem("cbt_new_member_draft", JSON.stringify(payload))
         } else {
+          // Immediately delete any draft if form is empty
           localStorage.removeItem("cbt_new_member_draft")
         }
       })
