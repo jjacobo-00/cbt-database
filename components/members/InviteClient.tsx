@@ -28,6 +28,7 @@ export function InviteClient({
   const [dobInput, setDobInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [formStep, setFormStep] = useState(1)
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,6 +146,8 @@ export function InviteClient({
           onSubmitOverride={handleSubmit}
           hideBackButton={true}
           isInvite={true}
+          externalStep={formStep}
+          onExternalStepChange={setFormStep}
         />
       </div>
     </div>

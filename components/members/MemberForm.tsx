@@ -172,7 +172,9 @@ export function MemberForm({
   allMembers = [],
   onSubmitOverride,
   hideBackButton = false,
-  isInvite = false
+  isInvite = false,
+  externalStep,
+  onExternalStepChange
 }: { 
   initialData?: any; 
   ministries?: Ministry[]; 
@@ -181,8 +183,12 @@ export function MemberForm({
   onSubmitOverride?: (payload: string) => Promise<void>;
   hideBackButton?: boolean;
   isInvite?: boolean;
+  externalStep?: number;
+  onExternalStepChange?: (step: number) => void;
 }) {
-  const [step, setStep] = useState(1)
+  const [internalStep, setInternalStep] = useState(1)
+  const step = externalStep !== undefined ? externalStep : internalStep
+  const setStep = onExternalStepChange ? onExternalStepChange : setInternalStep
   
   const form = useForm({
     resolver: zodResolver(memberSchema),
