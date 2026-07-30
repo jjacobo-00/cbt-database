@@ -165,6 +165,98 @@ type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: 
 type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
 type BaseMember = { id: string; first_name: string; last_name: string; suffix?: string | null; contact_number?: string | null }
 
+const DRAFT_STORAGE_KEY = "cbt_new_member_draft"
+const DRAFT_MAX_AGE_MS = 30 * 60 * 1000 // 30 minutes
+// Fields excluded from the persisted draft so sensitive PII never lands in web storage.
+const SENSITIVE_DRAFT_KEYS = ["blood_type", "allergies", "medical_conditions"] as const
+
+// Session-scoped so an in-progress draft cannot leak to another user on a shared machine.
+const getDraftStorage = (): Storage | null =>
+  typeof window === "undefined" ? null : window.sessionStorage
+
+const clearDraft = () => getDraftStorage()?.removeItem(DRAFT_STORAGE_KEY)
+
+const stripSensitiveDraftFields = (values: Record<string, unknown>) => {
+  const sanitized: Record<string, unknown> = { ...values }
+  for (const key of SENSITIVE_DRAFT_KEYS) delete sanitized[key]
+  return sanitized
+}
+
+// Single source of truth for a blank member form; keeps discard-reset in sync with defaults.
+const getEmptyMemberValues = (): z.infer<typeof memberSchema> => ({
+  first_name: "",
+  middle_name: "",
+  last_name: "",
+  suffix: "",
+  birth_date: "",
+  birth_place: "",
+  gender: "",
+  contact_number: "",
+  email: "",
+  house_number: "",
+  unit_number: "",
+  street: "",
+  barangay: "",
+  city: "",
+  province: "",
+  zip_code: "",
+  country: "Philippines",
+  is_perm_same_as_current: true,
+  perm_house_number: "",
+  perm_unit_number: "",
+  perm_street: "",
+  perm_barangay: "",
+  perm_city: "",
+  perm_province: "",
+  perm_zip_code: "",
+  perm_country: "Philippines",
+  blood_type: "",
+  allergies: "",
+  medical_conditions: "",
+  employment_status: "None",
+  student_school: "",
+  student_level: "College",
+  student_year_level: "",
+  student_course: "",
+  company: "",
+  position: "",
+  father_name: "",
+  father_is_member: false,
+  father_member_id: "",
+  father_occupation: "",
+  father_contact_number: "",
+  mother_name: "",
+  mother_is_member: false,
+  mother_member_id: "",
+  mother_occupation: "",
+  mother_contact_number: "",
+  parents_civil_status: "",
+  siblings: [{ name: "", birth_date: "", sibling_is_member: false, sibling_member_id: "" }],
+  children: [],
+  emergency_contact_name: "",
+  emergency_contact_relationship: "",
+  emergency_contact_number: "",
+  highest_educational_attainment: "",
+  education_details: [],
+  awards_honors: "",
+  ministries: [],
+  marital_status: "Single",
+  widowed_date: "",
+  is_spouse_cbt_member: false,
+  spouse_name: "",
+  spouse_member_id: "",
+  spouse_occupation: "",
+  anniversary_date: "",
+  church_role: "Member",
+  offerings: [],
+  date_saved: "",
+  membership_date: new Date().toISOString().split("T")[0],
+  baptism_date: "",
+  baptized_by: "",
+  witness_by: "",
+  place_of_baptism: "",
+})
+
 export function MemberForm({ 
   initialData, 
   ministries = [], 
@@ -277,7 +369,6 @@ export function MemberForm({
   })
 
   const [restoredDraftInfo, setRestoredDraftInfo] = React.useState<string | null>(null)
-  const DRAFT_MAX_AGE_MS = 30 * 60 * 1000 // 30 minutes
 
   const hasMeaningfulContent = (val: any) => {
     if (!val) return false
@@ -296,122 +387,76 @@ export function MemberForm({
 
   // Draft Recovery Check (On Mount) - DISABLED for shareable invite links & member edits
   React.useEffect(() => {
-    if (!initialData && !isInvite) {
-      const savedDraft = localStorage.getItem("cbt_new_member_draft")
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft)
-          const draftValues = parsed.values || parsed
-          const timestamp = parsed.timestamp || 0
+    if (initialData) {
+      // Editing an existing member: never restore, and clear any stale draft.
+      clearDraft()
+      return
+    }
+    // Shareable invite links never touch the draft (don't wipe an admin's in-progress draft).
+    if (isInvite) return
 
-          const isExpired = timestamp > 0 && (Date.now() - timestamp > DRAFT_MAX_AGE_MS)
-          const isValidContent = hasMeaningfulContent(draftValues)
+    const storage = getDraftStorage()
+    const savedDraft = storage?.getItem(DRAFT_STORAGE_KEY)
+    if (!savedDraft) return
 
-          if (!isExpired && isValidContent) {
-            form.reset(draftValues)
-            const draftName = [draftValues.first_name, draftValues.last_name].filter(Boolean).join(" ")
-            setRestoredDraftInfo(draftName || "Unsaved Entry")
-            setTimeout(() => toast.info("Unsaved draft restored automatically.", { icon: "📝" }), 500)
-          } else {
-            // Silently purge expired or empty draft
-            localStorage.removeItem("cbt_new_member_draft")
-          }
-        } catch (e) {
-          console.error("Failed to parse draft", e)
-          localStorage.removeItem("cbt_new_member_draft")
-        }
+    let restoreTimer: ReturnType<typeof setTimeout> | undefined
+    try {
+      const parsed = JSON.parse(savedDraft)
+      const draftValues = parsed.values || parsed
+      const timestamp = parsed.timestamp || 0
+
+      // Missing timestamp (legacy/unknown format) is treated as expired.
+      const isExpired = !timestamp || (Date.now() - timestamp > DRAFT_MAX_AGE_MS)
+      const isValidContent = hasMeaningfulContent(draftValues)
+
+      if (!isExpired && isValidContent) {
+        form.reset({ ...form.getValues(), ...draftValues })
+        const draftName = [draftValues.first_name, draftValues.last_name].filter(Boolean).join(" ")
+        setRestoredDraftInfo(draftName || "Unsaved Entry")
+        restoreTimer = setTimeout(() => toast.info("Unsaved draft restored automatically.", { icon: "📝" }), 500)
+      } else {
+        // Silently purge expired or empty draft
+        clearDraft()
       }
-    } else {
-      // Clean up any stale draft when on a shareable link or editing an existing member
-      localStorage.removeItem("cbt_new_member_draft")
+    } catch (e) {
+      console.error("Failed to parse draft", e)
+      clearDraft()
+    }
+    return () => {
+      if (restoreTimer) clearTimeout(restoreTimer)
     }
   }, [initialData, isInvite])
 
   // Auto-Save Draft (Only for normal admin add member; DISABLED for shareable links & edits)
   React.useEffect(() => {
-    if (!initialData && !isInvite) {
-      const subscription = form.watch((value) => {
+    if (initialData || isInvite) return
+
+    let saveTimer: ReturnType<typeof setTimeout> | undefined
+    const subscription = form.watch((value) => {
+      // Debounce writes so we don't hit storage on every keystroke.
+      if (saveTimer) clearTimeout(saveTimer)
+      saveTimer = setTimeout(() => {
         if (hasMeaningfulContent(value)) {
           const payload = {
             timestamp: Date.now(),
-            values: value
+            values: stripSensitiveDraftFields(value),
           }
-          localStorage.setItem("cbt_new_member_draft", JSON.stringify(payload))
+          getDraftStorage()?.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload))
         } else {
-          localStorage.removeItem("cbt_new_member_draft")
+          clearDraft()
         }
-      })
-      return () => subscription.unsubscribe()
+      }, 400)
+    })
+    return () => {
+      if (saveTimer) clearTimeout(saveTimer)
+      subscription.unsubscribe()
     }
   }, [initialData, isInvite, form.watch])
 
   const handleDiscardDraft = () => {
-    localStorage.removeItem("cbt_new_member_draft")
+    clearDraft()
     setRestoredDraftInfo(null)
-    form.reset({
-      first_name: "",
-      middle_name: "",
-      last_name: "",
-      suffix: "",
-      birth_date: "",
-      birth_place: "",
-      contact_number: "",
-      email: "",
-      marital_status: "Single",
-      widowed_date: "",
-      spouse_name: "",
-      spouse_occupation: "",
-      anniversary_date: "",
-      house_number: "",
-      unit_number: "",
-      street: "",
-      barangay: "",
-      city: "",
-      province: "",
-      zip_code: "",
-      country: "Philippines",
-      is_perm_same_as_current: true,
-      perm_house_number: "",
-      perm_unit_number: "",
-      perm_street: "",
-      perm_barangay: "",
-      perm_city: "",
-      perm_province: "",
-      perm_zip_code: "",
-      perm_country: "Philippines",
-      blood_type: "Unknown",
-      allergies: "",
-      medical_conditions: "",
-      employment_status: "Employed",
-      student_school: "",
-      student_level: "",
-      student_year_level: "",
-      student_course: "",
-      company: "",
-      position: "",
-      father_name: "",
-      father_occupation: "",
-      father_contact_number: "",
-      mother_name: "",
-      mother_occupation: "",
-      mother_contact_number: "",
-      parents_civil_status: "Married",
-      emergency_contact_name: "",
-      emergency_contact_relationship: "",
-      emergency_contact_number: "",
-      highest_educational_attainment: "High School",
-      education_details: [],
-      siblings: [],
-      children: [],
-      ministries: [],
-      church_role: "Member",
-      date_saved: "",
-      membership_date: new Date().toISOString().split("T")[0],
-      baptism_date: "",
-      baptized_by: "",
-      witness_by: "",
-      place_of_baptism: "",
-    })
+    form.reset(getEmptyMemberValues())
     toast.info("Draft discarded. Form reset to blank.")
   }
 
@@ -462,7 +507,7 @@ export function MemberForm({
       
       if (onSubmitOverride) {
         await onSubmitOverride(payload)
-        if (!initialData) localStorage.removeItem("cbt_new_member_draft")
+        if (!initialData) clearDraft()
       } else {
         if (initialData) {
           await updateMember(payload)
@@ -474,7 +519,7 @@ export function MemberForm({
       if (isRedirectError(e)) {
         if (!initialData) {
           toast.success("New member record created successfully!")
-          localStorage.removeItem("cbt_new_member_draft")
+          clearDraft()
         } else {
           toast.success("Member profile updated successfully!")
         }
