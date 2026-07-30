@@ -65,7 +65,7 @@ export default async function ReportsPage() {
       membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
       created_at: members.created_at
     }).from(members)
-      .leftJoin(missions, eq((members as any).mission_id, missions.id)),
+      .leftJoin(missions, eq(members.mission_id, missions.id)),
     db.select({
       member_id: member_ministries.member_id,
       ministry_id: member_ministries.ministry_id,
