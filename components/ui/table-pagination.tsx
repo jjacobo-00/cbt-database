@@ -85,7 +85,7 @@ export function TablePagination<TData>({ table, entityLabel = "records" }: Table
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        <div className="flex items-center gap-1 hidden sm:flex">
+        <div className="hidden sm:flex items-center gap-1">
           {getPageNumbers().map((pageI) => (
             <Button
               key={pageI}
