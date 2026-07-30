@@ -1,11 +1,14 @@
 "use server"
 
+import { requireAuth } from "@/lib/auth-guard"
+
 import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { ministries, members, member_ministries, commitments, commitment_ministries } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
 
 export async function getMinistries() {
+  await requireAuth()
   try {
     const data = await db.select({
       id: ministries.id,
@@ -23,6 +26,7 @@ export async function getMinistries() {
 }
 
 export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null) {
+  await requireAuth()
   try {
     const [inserted] = await db.insert(ministries).values({
       name: name.trim(),
@@ -45,6 +49,7 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
 }
 
 export async function updateMinistry(id: string, name: string, forEveryone?: boolean) {
+  await requireAuth()
   try {
     await db.update(ministries).set({
       name: name.trim(),
@@ -65,6 +70,7 @@ export async function updateMinistry(id: string, name: string, forEveryone?: boo
 }
 
 export async function deleteMinistry(id: string) {
+  await requireAuth()
   try {
     await db.delete(ministries).where(eq(ministries.parent_id, id))
     await db.delete(ministries).where(eq(ministries.id, id))

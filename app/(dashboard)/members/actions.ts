@@ -1,5 +1,7 @@
 "use server"
 
+import { requireAuth } from "@/lib/auth-guard"
+
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/db"
@@ -225,6 +227,7 @@ export async function coreCreateMember(payloadStr: string) {
 }
 
 export async function createMember(payloadStr: string) {
+  await requireAuth()
   const memberId = await coreCreateMember(payloadStr)
   revalidatePath("/members")
   revalidatePath("/commitments")
@@ -496,6 +499,7 @@ export async function coreUpdateMember(payloadStr: string) {
 }
 
 export async function updateMember(payloadStr: string) {
+  await requireAuth()
   const memberId = await coreUpdateMember(payloadStr)
   revalidatePath("/members")
   revalidatePath(`/members/${memberId}`)
@@ -503,6 +507,7 @@ export async function updateMember(payloadStr: string) {
 }
 
 export async function deleteMember(id: string) {
+  await requireAuth()
   await db.delete(members).where(eq(members.id, id))
   revalidatePath("/members")
   redirect("/members")
@@ -513,6 +518,7 @@ export async function deleteMember(id: string) {
 // --------------------------------------------------------------------------------------
 
 export async function checkMainPastorExists() {
+  await requireAuth()
   const existing = await db
     .select({ id: members.id, first_name: members.first_name, last_name: members.last_name })
     .from(members)
@@ -528,6 +534,7 @@ export async function generateInviteLink(arg?: string | {
   presetMissionId?: string | null
   expirationMinutes?: number
 }) {
+  await requireAuth()
   const options = typeof arg === "string" ? { memberId: arg } : arg
 
   const token = crypto.randomBytes(32).toString("hex")
@@ -562,11 +569,13 @@ export async function generateInviteLink(arg?: string | {
 }
 
 export async function revokeInviteLink(token: string) {
+  await requireAuth()
   await db.update(invitation_links).set({ is_disabled: true }).where(eq(invitation_links.token, token))
   revalidatePath("/members")
 }
 
 export async function getActiveInvitationLinks(memberId?: string) {
+  await requireAuth()
   const now = new Date()
   const links = await db
     .select({
@@ -645,7 +654,36 @@ export async function getInviteDetails(token: string) {
   }
 }
 
+const MAX_DOB_ATTEMPTS = 5
+const DOB_ATTEMPT_WINDOW_MS = 15 * 60 * 1000
+const dobAttempts = new Map<string, { count: number; firstAttempt: number }>()
+
+function registerDobAttempt(token: string) {
+  const now = Date.now()
+  const entry = dobAttempts.get(token)
+  if (!entry || now - entry.firstAttempt > DOB_ATTEMPT_WINDOW_MS) {
+    dobAttempts.set(token, { count: 1, firstAttempt: now })
+    return 1
+  }
+  entry.count += 1
+  return entry.count
+}
+
+function isDobLocked(token: string) {
+  const entry = dobAttempts.get(token)
+  if (!entry) return false
+  if (Date.now() - entry.firstAttempt > DOB_ATTEMPT_WINDOW_MS) {
+    dobAttempts.delete(token)
+    return false
+  }
+  return entry.count >= MAX_DOB_ATTEMPTS
+}
+
 export async function verifyDobAndGetMember(token: string, dobString: string) {
+  if (isDobLocked(token)) {
+    return { error: "Too many failed attempts. Please try again later." }
+  }
+
   const [invite] = await db
     .select()
     .from(invitation_links)
@@ -662,8 +700,11 @@ export async function verifyDobAndGetMember(token: string, dobString: string) {
   if (!member) return { error: "Member not found" }
   
   if (member.birth_date !== dobString) {
+    registerDobAttempt(token)
     return { error: "Incorrect Date of Birth" }
   }
+
+  dobAttempts.delete(token)
 
   const minRows = await db
     .select({ id: member_ministries.ministry_id })
@@ -733,6 +774,7 @@ export async function submitInviteForm(token: string, payloadStr: string) {
 }
 
 export async function getMembersList() {
+  await requireAuth()
   const result = await db.select({
     id: members.id,
     first_name: members.first_name,

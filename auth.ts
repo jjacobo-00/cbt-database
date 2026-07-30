@@ -5,8 +5,19 @@ import { db } from "@/db"
 import { eq } from "drizzle-orm"
 import { whitelisted_users, users, accounts, sessions, verificationTokens } from "@/db/schema"
 
+const authSecret = process.env.AUTH_SECRET || process.env.SESSION_SECRET
+if (!authSecret) {
+  throw new Error("AUTH_SECRET is not set. Generate one with `openssl rand -base64 32`.")
+}
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+if (!googleClientId || !googleClientSecret) {
+  throw new Error("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set.")
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET || process.env.SESSION_SECRET || "default_cbt_directory_secret_change_me_in_prod",
+  secret: authSecret,
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
@@ -15,8 +26,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   }),
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
     })
   ],
   session: {

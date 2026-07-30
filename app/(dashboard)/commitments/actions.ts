@@ -1,11 +1,14 @@
 "use server"
 
+import { requireAuth } from "@/lib/auth-guard"
+
 import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { commitments, commitment_ministries, commitment_offerings, members, ministries, offering_categories } from "@/db/schema"
 import { eq, and, asc, desc, inArray } from "drizzle-orm"
 
 export async function getCommitmentsByYear(year: number) {
+  await requireAuth()
   try {
     // Fetch ALL members in the directory
     const allMembers = await db.select({
@@ -76,6 +79,7 @@ export async function getCommitmentsByYear(year: number) {
 }
 
 export async function getRecommitmentTrackerData(targetYear: number) {
+  await requireAuth()
   try {
     const prevYear = targetYear - 1
 
@@ -164,6 +168,7 @@ export async function getRecommitmentTrackerData(targetYear: number) {
 }
 
 export async function upsertCommitment(memberId: string, year: number, ministryIds: string[], offeringCategoryIds: string[]) {
+  await requireAuth()
   try {
     // Upsert commitment record
     let [commitment] = await db.select().from(commitments)
@@ -200,6 +205,7 @@ export async function upsertCommitment(memberId: string, year: number, ministryI
 }
 
 export async function getAvailableYears() {
+  await requireAuth()
   try {
     const years = await db.selectDistinct({ year: commitments.year }).from(commitments).orderBy(desc(commitments.year))
     const currentYear = new Date().getFullYear()
