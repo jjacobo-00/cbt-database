@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { MemberForm } from "@/components/members/MemberForm"
 import { submitInviteForm, verifyDobAndGetMember } from "@/app/(dashboard)/members/actions"
 import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/utils/errors"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -41,7 +42,8 @@ export function InviteClient({
         setIsVerified(true)
       }
     } catch (e) {
-      toast.error("An error occurred")
+      console.error("Error verifying date of birth:", e)
+      toast.error(getErrorMessage(e, "Could not verify the date of birth. Please try again."))
     } finally {
       setIsLoading(false)
     }

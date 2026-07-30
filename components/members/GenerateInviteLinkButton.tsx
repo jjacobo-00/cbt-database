@@ -7,6 +7,7 @@ import { generateInviteLink, getActiveInvitationLinks, checkMainPastorExists, re
 import { getMissions } from "@/app/(dashboard)/missions/actions"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils/utils"
+import { getErrorMessage } from "@/lib/utils/errors"
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,16 @@ interface InvitationLink {
 interface Mission {
   id: string
   name: string
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch (e) {
+    console.error("Clipboard write failed:", e)
+    return false
+  }
 }
 
 export function GenerateInviteLinkButton({ 
@@ -80,8 +91,8 @@ export function GenerateInviteLinkButton({
         setExistingMainPastor(pastor)
       }
     } catch (e) {
-      console.error(e)
-      toast.error("Failed to load invitation link settings")
+      console.error("Error loading invitation link settings:", e)
+      toast.error(getErrorMessage(e, "Failed to load invitation link settings"))
     } finally {
       setIsLoading(false)
     }
@@ -114,9 +125,11 @@ export function GenerateInviteLinkButton({
       })
 
       const url = `${window.location.origin}/invite/${token}`
-      await navigator.clipboard.writeText(url)
-      
-      toast.success("New shareable link created & copied to clipboard!")
+      const copied = await copyToClipboard(url)
+
+      toast.success(copied
+        ? "New shareable link created & copied to clipboard!"
+        : "New shareable link created. Copying to the clipboard failed — use the copy button below.")
       
       // Reset form options
       setTitle("")
@@ -127,24 +140,23 @@ export function GenerateInviteLinkButton({
       
       setCopiedToken(token)
       setTimeout(() => setCopiedToken(null), 3000)
-    } catch (e: any) {
-      toast.error(e.message || "Failed to generate link")
-      console.error(e)
+    } catch (e) {
+      console.error("Error generating invite link:", e)
+      toast.error(getErrorMessage(e, "Failed to generate link"))
     } finally {
       setIsGenerating(false)
     }
   }
 
   const handleCopy = async (token: string) => {
-    try {
-      const url = `${window.location.origin}/invite/${token}`
-      await navigator.clipboard.writeText(url)
-      setCopiedToken(token)
-      toast.success("Link copied to clipboard!")
-      setTimeout(() => setCopiedToken(null), 2000)
-    } catch (e) {
+    const url = `${window.location.origin}/invite/${token}`
+    if (!(await copyToClipboard(url))) {
       toast.error("Failed to copy link")
+      return
     }
+    setCopiedToken(token)
+    toast.success("Link copied to clipboard!")
+    setTimeout(() => setCopiedToken(null), 2000)
   }
 
   const handleRevoke = async (token: string) => {
@@ -153,7 +165,8 @@ export function GenerateInviteLinkButton({
       setLinks(links.filter(l => l.token !== token))
       toast.success("Link disabled")
     } catch (e) {
-      toast.error("Failed to disable link")
+      console.error("Error revoking invite link:", e)
+      toast.error(getErrorMessage(e, "Failed to disable link"))
     }
   }
 

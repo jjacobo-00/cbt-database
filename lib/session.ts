@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from "jose"
+import { SignJWT, jwtVerify, errors as joseErrors } from "jose"
 import { cookies } from "next/headers"
 
 const secretKey = process.env.SESSION_SECRET || "default_secret_key_for_cbt_directory_change_me_in_prod"
@@ -40,7 +40,12 @@ export async function getSession() {
   try {
     return await decrypt(session)
   } catch (error) {
-    return null
+    // Expired or tampered cookies simply mean "no session"; anything else
+    // (e.g. a misconfigured SESSION_SECRET) must not be hidden.
+    if (error instanceof joseErrors.JOSEError) {
+      return null
+    }
+    throw error
   }
 }
 

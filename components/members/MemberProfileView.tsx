@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { cn } from "@/lib/utils/utils"
 import { deleteMember } from "@/app/(dashboard)/members/actions"
+import { isRedirectError } from "next/dist/client/components/redirect-error"
+import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/utils/errors"
 import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 import {
   DropdownMenu,
@@ -118,7 +121,10 @@ export function MemberProfileView({
     try {
       await deleteMember(member.id)
     } catch (e) {
-      console.error(e)
+      // deleteMember redirects on success, which surfaces as a thrown redirect error
+      if (isRedirectError(e)) throw e
+      console.error("Error deleting member:", e)
+      toast.error(getErrorMessage(e, "Failed to delete this member."))
       setIsDeleting(false)
       setShowDeleteConfirm(false)
     }

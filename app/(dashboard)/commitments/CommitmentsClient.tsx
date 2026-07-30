@@ -4,8 +4,10 @@ import React, { useState, useTransition } from "react"
 import { Search, Loader2, Pencil, X, Check, Plus, AlertCircle, ChevronRight, User2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
 import { upsertCommitment } from "./actions"
 import { cn } from "@/lib/utils/utils"
+import { getErrorMessage } from "@/lib/utils/errors"
 
 type CommitmentRow = {
   id: string
@@ -87,7 +89,10 @@ export function CommitmentsClient({
           }),
         } : c))
         setEditingMember(null)
-      } catch { /* error handling */ }
+      } catch (error) {
+        console.error("Error saving commitment:", error)
+        toast.error(getErrorMessage(error, "Failed to save commitment."))
+      }
     })
   }
 

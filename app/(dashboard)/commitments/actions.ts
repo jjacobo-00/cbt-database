@@ -71,7 +71,7 @@ export async function getCommitmentsByYear(year: number) {
     })
   } catch (error) {
     console.error("Error fetching commitments by year:", error)
-    return []
+    throw new Error("Failed to load commitments.", { cause: error })
   }
 }
 
@@ -159,7 +159,7 @@ export async function getRecommitmentTrackerData(targetYear: number) {
     })
   } catch (error) {
     console.error("Error fetching recommitment tracker data:", error)
-    return []
+    throw new Error("Failed to load recommitment tracker data.", { cause: error })
   }
 }
 
@@ -171,6 +171,10 @@ export async function upsertCommitment(memberId: string, year: number, ministryI
 
     if (!commitment) {
       [commitment] = await db.insert(commitments).values({ member_id: memberId, year }).returning()
+    }
+
+    if (!commitment) {
+      throw new Error(`Failed to create commitment record for member ${memberId} (${year}).`)
     }
 
     // Replace ministries: delete old, insert new
@@ -195,7 +199,7 @@ export async function upsertCommitment(memberId: string, year: number, ministryI
     return commitment
   } catch (error) {
     console.error("Error upserting commitment:", error)
-    throw new Error("Failed to save commitment.")
+    throw new Error("Failed to save commitment.", { cause: error })
   }
 }
 
@@ -205,7 +209,8 @@ export async function getAvailableYears() {
     const currentYear = new Date().getFullYear()
     const result = [...new Set([currentYear, ...years.map(y => y.year)])].sort((a, b) => b - a)
     return result
-  } catch {
+  } catch (error) {
+    console.error("Error fetching available commitment years:", error)
     return [new Date().getFullYear()]
   }
 }

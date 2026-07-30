@@ -30,9 +30,13 @@ async function test() {
     console.log("✅ Connection successful!");
   } else if (error) {
     console.error("❌ Connection failed with a different error:", error.message);
+    process.exitCode = 1;
   } else {
     console.log("✅ Connection successful!");
   }
 }
 
-test();
+test().catch((e) => {
+  console.error("❌ Connection test threw an error:", e);
+  process.exit(1);
+});
