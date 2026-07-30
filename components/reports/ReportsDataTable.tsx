@@ -197,7 +197,7 @@ export function ReportsDataTable<TData extends ReportMember, TValue>({
               const lastName = row.original.last_name || ""
               const name = `${firstName} ${lastName}`.trim() || "Unknown"
               const gender = row.original.gender || row.original.sex || "-"
-              const city = row.original.mission_location || row.original.city || "-"
+              const city = (row.original as any).mission_location || row.original.city || "-"
               
               const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
 

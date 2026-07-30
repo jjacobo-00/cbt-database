@@ -76,21 +76,21 @@ export const invitation_links = pgTable('invitation_links', {
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
-export const missions = pgTable('missions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  location: text('location'),
-  pastor_name: text('pastor_name'),
-  established_date: date('established_date'),
-  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
-})
-
 export const ministries = pgTable('ministries', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   description: text('description'),
   for_everyone: boolean('for_everyone').default(false).notNull(),
   parent_id: uuid('parent_id'),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+export const missions = pgTable('missions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  location: text('location'),
+  pastor_name: text('pastor_name'),
+  established_date: date('established_date'),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -171,7 +171,6 @@ export const members = pgTable('members', {
   // Church / Spiritual Info
   church_role: text('church_role').default('Member'),
   current_church: text('current_church').default('Current Church'),
-  mission_id: uuid('mission_id').references(() => missions.id, { onDelete: 'set null' }),
   date_saved: date('date_saved'),
   membership_date: date('membership_date'),
   witnessed_by: text('witnessed_by'),

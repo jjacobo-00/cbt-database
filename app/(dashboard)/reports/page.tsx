@@ -1,6 +1,6 @@
 import { db } from "@/db"
-import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories, missions } from "@/db/schema"
-import { eq, sql } from "drizzle-orm"
+import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories } from "@/db/schema"
+import { sql } from "drizzle-orm"
 import { ReportsClient } from "./ReportsClient"
 
 export type ReportMember = {
@@ -12,7 +12,6 @@ export type ReportMember = {
   age: number | null
   birth_date: string | null
   city: string | null
-  mission_location?: string | null
   marital_status: string | null
   occupation: string | null
   employment_status: string | null
@@ -56,7 +55,6 @@ export default async function ReportsPage() {
       age: members.age,
       birth_date: members.birth_date,
       city: members.city,
-      mission_location: missions.location,
       marital_status: members.marital_status,
       occupation: members.occupation,
       employment_status: members.employment_status,
@@ -64,8 +62,7 @@ export default async function ReportsPage() {
       date_baptized: members.date_baptized,
       membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
       created_at: members.created_at
-    }).from(members)
-      .leftJoin(missions, eq((members as any).mission_id, missions.id)),
+    }).from(members),
     db.select({
       member_id: member_ministries.member_id,
       ministry_id: member_ministries.ministry_id,
