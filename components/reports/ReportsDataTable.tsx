@@ -24,7 +24,6 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TablePagination } from "@/components/ui/table-pagination"
 import { Download, SlidersHorizontal, User2 } from "lucide-react"
-import type { ReportMember } from "@/app/(dashboard)/reports/page"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -32,7 +31,7 @@ interface DataTableProps<TData, TValue> {
   filename?: string
 }
 
-export function ReportsDataTable<TData extends ReportMember, TValue>({
+export function ReportsDataTable<TData, TValue>({
   columns,
   data,
   filename = "reports-export.csv",
@@ -82,10 +81,7 @@ export function ReportsDataTable<TData extends ReportMember, TValue>({
       ...rows.map(row => {
         return visibleColumns.map(col => {
           let cellValue = row.getValue(col.id)
-          // Handle special case for city column to show mission_location first
-          if (col.id === "city") {
-            cellValue = (row.original as any).mission_location || cellValue
-          }
+
           // Escape quotes and wrap in quotes if there's a comma
           if (cellValue === null || cellValue === undefined) cellValue = ""
           const stringValue = String(cellValue).replace(/"/g, '""')
@@ -193,11 +189,9 @@ export function ReportsDataTable<TData extends ReportMember, TValue>({
         <div className="flex flex-col md:hidden divide-y divide-border">
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => {
-              const firstName = row.original.first_name || ""
-              const lastName = row.original.last_name || ""
-              const name = `${firstName} ${lastName}`.trim() || "Unknown"
-              const gender = row.original.gender || row.original.sex || "-"
-              const city = (row.original as any).mission_location || row.original.city || "-"
+              const name = row.getValue("name") as string || "Unknown"
+              const gender = (row.original as any).gender || (row.original as any).sex || "-"
+              const city = (row.original as any).city || "-"
               
               const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
 

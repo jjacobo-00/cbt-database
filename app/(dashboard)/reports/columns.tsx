@@ -42,7 +42,7 @@ export const columns: ColumnDef<ReportMember>[] = [
   {
     accessorKey: "city",
     header: "City",
-    cell: ({ row }) => (row.original as any).mission_location || row.original.city || "-",
+    cell: ({ row }) => row.original.city || "-",
   },
   {
     accessorKey: "marital_status",
