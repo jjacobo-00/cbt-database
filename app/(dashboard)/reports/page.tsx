@@ -1,6 +1,6 @@
 import { db } from "@/db"
 import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories } from "@/db/schema"
-import { eq, coalesce } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import { ReportsClient } from "./ReportsClient"
 
 export type ReportMember = {
@@ -43,7 +43,7 @@ export default async function ReportsPage() {
       employment_status: members.employment_status,
       highest_educational_attainment: members.highest_educational_attainment,
       date_baptized: members.date_baptized,
-      membership_date: coalesce(members.membership_date, members.created_at)
+      membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`
     }).from(members),
     db.select({
       member_id: member_ministries.member_id,
