@@ -60,7 +60,7 @@ export function ReportsClient({
   const baptizedMembers = filteredData.filter(m => m.date_baptized).length
   const maleCount = filteredData.filter(m => (m.gender || m.sex) === "Male").length
   const femaleCount = filteredData.filter(m => (m.gender || m.sex) === "Female").length
-  const uniqueCities = new Set(filteredData.map(m => m.city).filter(Boolean)).size
+  const uniqueCities = new Set(filteredData.map(m => (m as any).mission_location || m.city).filter(Boolean)).size
 
   // Gender Data for Chart
   const genderData = [
@@ -121,7 +121,7 @@ export function ReportsClient({
   const cityData = useMemo(() => {
     const counts: Record<string, number> = {}
     filteredData.forEach(m => {
-      const city = m.mission_location || m.city || "Unknown"
+      const city = (m as any).mission_location || m.city || "Unknown"
       counts[city] = (counts[city] || 0) + 1
     })
     return Object.entries(counts)
