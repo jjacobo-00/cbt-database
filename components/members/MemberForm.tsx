@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import type { Dispatch, SetStateAction } from "react"
 import { toast } from "sonner"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -184,7 +185,7 @@ export function MemberForm({
   hideBackButton?: boolean;
   isInvite?: boolean;
   externalStep?: number;
-  onExternalStepChange?: (step: number) => void;
+  onExternalStepChange?: Dispatch<SetStateAction<number>>;
 }) {
   const [internalStep, setInternalStep] = useState(1)
   const step = externalStep !== undefined ? externalStep : internalStep
@@ -692,7 +693,7 @@ export function MemberForm({
     if (fieldsToValidate.length > 0) {
       const isValid = await form.trigger(fieldsToValidate as any)
       if (isValid) {
-        setStep((s: number) => Math.min(STEPS.length, s + 1))
+        setStep(s => Math.min(STEPS.length, s + 1))
       } else {
         toast.error("Please fill in all required fields correctly.")
         setTimeout(() => {
@@ -706,7 +707,7 @@ export function MemberForm({
         }, 150)
       }
     } else {
-      setStep((s: number) => Math.min(STEPS.length, s + 1))
+      setStep(s => Math.min(STEPS.length, s + 1))
     }
   }
 
@@ -2304,7 +2305,7 @@ export function MemberForm({
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => setStep((s: number) => Math.max(1, s - 1))}
+              onClick={() => setStep(s => Math.max(1, s - 1))}
               disabled={step === 1}
               className="h-11 px-6"
             >

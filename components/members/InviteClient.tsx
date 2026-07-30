@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import type { Dispatch, SetStateAction } from "react"
 import { MemberForm } from "@/components/members/MemberForm"
 import { submitInviteForm, verifyDobAndGetMember } from "@/app/(dashboard)/members/actions"
 import { toast } from "sonner"
@@ -28,7 +29,7 @@ export function InviteClient({
   const [dobInput, setDobInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [formStep, setFormStep] = useState(1)
+  const [formStep, setFormStep] = React.useState(1)
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
