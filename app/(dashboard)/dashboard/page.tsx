@@ -43,7 +43,7 @@ export default async function DashboardPage() {
     db.select({ membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})` })
       .from(members)
       .where(gte(sql`COALESCE(${members.membership_date}, ${members.created_at})`, sixMonthsAgo)),
-    db.select({ age: members.age }).from(members).where(isNotNull(members.age)),
+    db.select({ birth_date: members.birth_date }).from(members).where(isNotNull(members.birth_date)),
     db.select({ count: sql<number>`cast(count(distinct member_id) as int)` })
       .from(member_ministries),
     db.select({ membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})` })
@@ -59,16 +59,27 @@ export default async function DashboardPage() {
   const ministryEngagedMembers = ministryEngagementResult[0]?.count || 0
   const newBaptismsThisYear = newBaptismsResult[0]?.count || 0
 
-  // Calculate Age Demographics
+  // Calculate Age Demographics from birth_date
   let kids = 0, youth = 0, youngAdults = 0, adults = 0, seniors = 0;
   ageDataQuery.forEach(member => {
-    const age = member.age
-    if (age !== null && age !== undefined) {
-      if (age <= 12) kids++
-      else if (age <= 17) youth++
-      else if (age <= 35) youngAdults++
-      else if (age <= 55) adults++
-      else seniors++
+    if (member.birth_date) {
+      const birthDate = new Date(member.birth_date)
+      const today = new Date()
+      if (!isNaN(birthDate.getTime())) {
+        let age = today.getFullYear() - birthDate.getFullYear()
+        const monthDiff = today.getMonth() - birthDate.getMonth()
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--
+        }
+        
+        if (age >= 0) {
+          if (age <= 12) kids++
+          else if (age <= 17) youth++
+          else if (age <= 35) youngAdults++
+          else if (age <= 55) adults++
+          else seniors++
+        }
+      }
     }
   })
 
