@@ -22,7 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, SlidersHorizontal, ChevronRight, User2 } from "lucide-react"
+import { TablePagination } from "@/components/ui/table-pagination"
+import { Download, SlidersHorizontal, User2 } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -39,6 +40,7 @@ export function ReportsDataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
 
   const table = useReactTable({
     data,
@@ -51,12 +53,14 @@ export function ReportsDataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
     globalFilterFn: "includesString",
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       globalFilter,
+      pagination,
     },
   })
 
@@ -214,31 +218,7 @@ export function ReportsDataTable<TData, TValue>({
         </div>
       </div>
 
-      <div className="flex items-center justify-between py-2">
-        <div className="text-sm text-muted-foreground">
-          Showing {table.getFilteredRowModel().rows.length} record(s)
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="bg-background shadow-sm"
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="bg-background shadow-sm"
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <TablePagination table={table} entityLabel="records" />
     </div>
   )
 }

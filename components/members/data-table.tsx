@@ -13,9 +13,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronRight, User2 } from "lucide-react"
+import { TablePagination } from "@/components/ui/table-pagination"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -29,6 +29,7 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
 
   const table = useReactTable({
     data,
@@ -40,11 +41,13 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
     globalFilterFn: "includesString",
     state: {
       sorting,
       columnFilters,
       globalFilter,
+      pagination,
     },
   })
 
@@ -158,32 +161,7 @@ export function DataTable<TData, TValue>({
           </div>
         )}
       </div>
-      {/* Refined Pagination */}
-      <div className="flex items-center justify-between py-4">
-        <div className="text-sm text-muted-foreground hidden sm:block">
-          Showing page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
-        </div>
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="flex-1 sm:flex-none h-10"
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="flex-1 sm:flex-none h-10"
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <TablePagination table={table} entityLabel="members" />
     </div>
   )
 }
