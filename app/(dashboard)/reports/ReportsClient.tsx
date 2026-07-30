@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Cell, 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend 
 } from "recharts"
-import { Users, Droplets, MapPin, Activity } from "lucide-react"
+import { Users, Droplets, MapPin, Activity, Target } from "lucide-react"
 
 export type ReportMember = {
   id: string
@@ -26,10 +26,34 @@ export type ReportMember = {
   created_at: string | null
 }
 
+export type MinistryParticipation = {
+  member_id: string
+  ministry_id: string
+  ministry_name: string | null
+}
+
+export type FaithPromiseData = {
+  member_id: string
+  year: number
+  offering_category_id: string | null
+  category_name: string | null
+  is_monthly: boolean | null
+}
+
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
-export function ReportsClient({ initialData }: { initialData: ReportMember[] }) {
+export function ReportsClient({ 
+  initialData, 
+  ministryData = [], 
+  faithPromiseData = [] 
+}: { 
+  initialData: ReportMember[] 
+  ministryData?: MinistryParticipation[]
+  faithPromiseData?: FaithPromiseData[]
+}) {
   const [data] = useState<ReportMember[]>(initialData)
+  const [ministryParticipation] = useState<MinistryParticipation[]>(ministryData)
+  const [faithPromises] = useState<FaithPromiseData[]>(faithPromiseData)
   
   // Date Filtering State
   const [dateFilter, setDateFilter] = useState("all") // all, this_year, last_year
@@ -119,6 +143,53 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       .slice(0, 8)
   }, [filteredData])
 
+  // Ministry Participation Analysis
+  const ministryStats = useMemo(() => {
+    const filteredMinistryData = ministryParticipation.filter(mp => 
+      filteredData.some(m => m.id === mp.member_id)
+    )
+    
+    const ministryCounts: Record<string, number> = {}
+    filteredMinistryData.forEach(mp => {
+      const name = mp.ministry_name || "Unknown Ministry"
+      ministryCounts[name] = (ministryCounts[name] || 0) + 1
+    })
+    
+    return Object.entries(ministryCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+  }, [filteredData, ministryParticipation])
+
+  // Faith Promise Analytics
+  const faithPromiseStats = useMemo(() => {
+    const currentYear = new Date().getFullYear()
+    const currentYearPromises = faithPromises.filter(fp => fp.year === currentYear)
+    
+    const filteredPromises = currentYearPromises.filter(fp =>
+      filteredData.some(m => m.id === fp.member_id)
+    )
+    
+    const categoryCounts: Record<string, number> = {}
+    const monthlyCount = filteredPromises.filter(fp => fp.is_monthly).length
+    const oneTimeCount = filteredPromises.filter(fp => !fp.is_monthly).length
+    
+    filteredPromises.forEach(fp => {
+      const category = fp.category_name || "Unknown Category"
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1
+    })
+    
+    return {
+      totalCommitments: filteredPromises.length,
+      monthly: monthlyCount,
+      oneTime: oneTimeCount,
+      categories: Object.entries(categoryCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8)
+    }
+  }, [filteredData, faithPromises])
+
   return (
     <div className="space-y-6">
       {/* Header & Global Filters */}
@@ -139,7 +210,7 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
       </div>
 
       {/* KPI Cards */}
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <Card className="border-t-4 border-t-blue-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
@@ -188,10 +259,36 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
             <div className="text-3xl font-bold">{uniqueCities}</div>
           </CardContent>
         </Card>
+
+        <Card className="border-t-4 border-t-cyan-500 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ministry Engaged</CardTitle>
+            <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center">
+              <Target className="h-4 w-4 text-cyan-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{totalMembers ? Math.round((ministryStats.reduce((sum, m) => sum + m.count, 0) / totalMembers) * 100) : 0}%</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">{ministryStats.reduce((sum, m) => sum + m.count, 0)} ministry sign-ups</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-t-4 border-t-rose-500 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Faith Promises</CardTitle>
+            <div className="h-8 w-8 bg-rose-500/10 rounded-full flex items-center justify-center">
+              <Droplets className="h-4 w-4 text-rose-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{faithPromiseStats.totalCommitments}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">{faithPromiseStats.monthly} monthly / {faithPromiseStats.oneTime} one-time</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts Grid */}
-      <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {/* Gender Distribution */}
         <Card className="col-span-1 min-w-0 shadow-sm">
           <CardHeader>
@@ -274,6 +371,44 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
           </CardContent>
         </Card>
       </div>
+
+      {/* Ministry Participation Chart */}
+      <Card className="min-w-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">Ministry Participation</CardTitle>
+          <CardDescription>Top ministries by member engagement</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[250px] min-w-0 overflow-hidden">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={ministryStats} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" height={50} />
+              <YAxis allowDecimals={false} />
+              <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px' }} />
+              <Bar dataKey="count" fill="#0891b2" radius={[4, 4, 0, 0]} name="Members" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Faith Promise Analytics */}
+      <Card className="min-w-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">Faith Promise Categories</CardTitle>
+          <CardDescription>Commitment categories for giving this year</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[250px] min-w-0 overflow-hidden">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={faithPromiseStats.categories} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" height={50} />
+              <YAxis allowDecimals={false} />
+              <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px' }} />
+              <Bar dataKey="count" fill="#e11d48" radius={[4, 4, 0, 0]} name="Commitments" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Educational Attainment (Full Width) */}
       <Card className="min-w-0 shadow-sm">

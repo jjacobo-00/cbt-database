@@ -13,13 +13,15 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend
+  Legend,
+  Line,
+  LineChart
 } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTheme } from "next-themes"
 
 interface DashboardChartsProps {
-  monthlyData: { month: string; members: number }[]
+  monthlyData: { month: string; currentYear: number; previousYear: number; monthNum: number }[]
   baptismData: { name: string; value: number }[]
   ageData: { name: string; value: number }[]
 }
@@ -44,23 +46,27 @@ export function DashboardCharts({ monthlyData, baptismData, ageData }: Dashboard
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-      {/* Member Growth Area Chart */}
+      {/* Member Growth Line Chart with Year-over-Year Comparison */}
       <Card className="lg:col-span-3 xl:col-span-2 transition-all duration-300 hover:shadow-md">
         <CardHeader>
           <CardTitle>Member Growth</CardTitle>
-          <CardDescription>New members joined over the last 6 months.</CardDescription>
+          <CardDescription>New members joined this year vs previous year (last 6 months).</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
+              <LineChart
                 data={monthlyData}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
                 <defs>
-                  <linearGradient id="colorMembers" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorCurrentYear" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorPreviousYear" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="#9ca3af" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
@@ -80,15 +86,25 @@ export function DashboardCharts({ monthlyData, baptismData, ageData }: Dashboard
                   tickFormatter={(value) => `${value}`}
                 />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Area 
+                <Legend />
+                <Line 
                   type="monotone" 
-                  dataKey="members" 
+                  dataKey="currentYear" 
                   stroke="#3b82f6" 
                   strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorMembers)" 
+                  name="This Year"
+                  dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
                 />
-              </AreaChart>
+                <Line 
+                  type="monotone" 
+                  dataKey="previousYear" 
+                  stroke="#9ca3af" 
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  name="Previous Year"
+                  dot={{ fill: "#9ca3af", strokeWidth: 2, r: 3 }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

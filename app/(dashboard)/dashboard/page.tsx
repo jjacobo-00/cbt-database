@@ -1,9 +1,9 @@
 import { db } from "@/db"
-import { members, ministries, commitments } from "@/db/schema"
-import { eq, isNotNull, desc, sql, gte } from "drizzle-orm"
+import { members, ministries, commitments, member_ministries } from "@/db/schema"
+import { eq, isNotNull, desc, sql, gte, count } from "drizzle-orm"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, UserPlus, FileText, Activity, Droplets, HeartHandshake, CheckCircle } from "lucide-react"
+import { Users, UserPlus, FileText, Activity, Droplets, HeartHandshake, CheckCircle, TrendingUp, Target } from "lucide-react"
 import Link from "next/link"
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts"
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable"
@@ -15,6 +15,7 @@ export default async function DashboardPage() {
   sixMonthsAgo.setHours(0, 0, 0, 0)
 
   const currentYear = new Date().getFullYear()
+  const previousYear = currentYear - 1
 
   // Fetch counts and data in parallel
   const [
@@ -24,7 +25,9 @@ export default async function DashboardPage() {
     currentYearCommitmentsResult,
     recentMembers,
     growthDataQuery,
-    ageDataQuery
+    ageDataQuery,
+    ministryEngagementResult,
+    previousYearGrowthQuery
   ] = await Promise.all([
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(isNotNull(members.date_baptized)),
@@ -41,13 +44,19 @@ export default async function DashboardPage() {
     db.select({ created_at: members.created_at })
       .from(members)
       .where(gte(members.created_at, sixMonthsAgo)),
-    db.select({ age: members.age }).from(members)
+    db.select({ age: members.age }).from(members),
+    db.select({ count: sql<number>`cast(count(distinct member_id) as int)` })
+      .from(member_ministries),
+    db.select({ created_at: members.created_at })
+      .from(members)
+      .where(sql`${members.created_at} >= (date_trunc('month', current_date - interval '12 months')) AND ${members.created_at} < (date_trunc('month', current_date - interval '6 months'))`)
   ])
 
   const totalMembers = totalMembersResult[0]?.count || 0
   const totalBaptized = totalBaptizedResult[0]?.count || 0
   const totalMinistries = totalMinistriesResult[0]?.count || 0
   const totalCommitments = currentYearCommitmentsResult[0]?.count || 0
+  const ministryEngagedMembers = ministryEngagementResult[0]?.count || 0
 
   // Baptism Status Data
   const baptismData = [
@@ -76,29 +85,43 @@ export default async function DashboardPage() {
     { name: 'Seniors (55+)', value: seniors },
   ]
 
-  // Format Monthly Growth Data for Area Chart
+  // Format Monthly Growth Data for Area Chart with Year-over-Year Comparison
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-  const monthlyData: { month: string, members: number, year: number, monthNum: number }[] = []
+  const monthlyData: { month: string, currentYear: number, previousYear: number, monthNum: number }[] = []
   
   for (let i = 5; i >= 0; i--) {
     const d = new Date()
     d.setMonth(d.getMonth() - i)
     monthlyData.push({ 
       month: months[d.getMonth()], 
-      members: 0, 
-      year: d.getFullYear(), 
+      currentYear: 0, 
+      previousYear: 0,
       monthNum: d.getMonth() 
     })
   }
 
+  // Current year data
   growthDataQuery.forEach(member => {
     if (member.created_at) {
       const mDate = new Date(member.created_at)
       const m = mDate.getMonth()
       const y = mDate.getFullYear()
-      const bucket = monthlyData.find(b => b.monthNum === m && b.year === y)
+      const bucket = monthlyData.find(b => b.monthNum === m && y === currentYear)
       if (bucket) {
-        bucket.members++
+        bucket.currentYear++
+      }
+    }
+  })
+
+  // Previous year data
+  previousYearGrowthQuery.forEach(member => {
+    if (member.created_at) {
+      const mDate = new Date(member.created_at)
+      const m = mDate.getMonth()
+      const y = mDate.getFullYear()
+      const bucket = monthlyData.find(b => b.monthNum === m && y === previousYear)
+      if (bucket) {
+        bucket.previousYear++
       }
     }
   })
@@ -136,7 +159,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
@@ -196,6 +219,32 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-3xl font-bold">{totalMinistries}</div>
             <p className="text-xs text-muted-foreground mt-1 font-medium">Available to join</p>
+          </CardContent>
+        </Card>
+
+        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-cyan-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ministry Engagement</CardTitle>
+            <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center">
+              <Target className="h-4 w-4 text-cyan-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{totalMembers ? Math.round((ministryEngagedMembers / totalMembers) * 100) : 0}%</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">{ministryEngagedMembers} members serving</p>
+          </CardContent>
+        </Card>
+
+        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-rose-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Giving Participation</CardTitle>
+            <div className="h-8 w-8 bg-rose-500/10 rounded-full flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-rose-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{totalMembers ? Math.round((totalCommitments / totalMembers) * 100) : 0}%</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Faith promise commitment</p>
           </CardContent>
         </Card>
       </div>
