@@ -75,8 +75,8 @@ export function ReportsDataTable<TData extends ReportMember, TValue>({
     const headers = visibleColumns.map(c => {
       // Use column header if it's a string, else fallback to id
       return typeof c.columnDef.header === 'string' ? c.columnDef.header : c.id
+    })
 
-    
     const csvContent = [
       headers.join(","),
       ...rows.map(row => {

@@ -569,7 +569,7 @@ export function MemberForm({
       let updated = false
       const nextFields = currentFields.map(field => {
         if (field.level === currentTargetLevel) {
-          const newSchool = studentSchool || field.school_name
+          const newSchool = studentSchool !== undefined ? studentSchool : field.school_name
           if (field.school_name !== newSchool || !field.is_currently_enrolled) {
             updated = true
             return {
@@ -590,14 +590,16 @@ export function MemberForm({
   }, [employmentStatus, studentSchool, studentLevel, highestAttainment, form, step])
 
   // Reverse sync: Step 6 -> Step 4 student_school if currently enrolled
-  const eduDetailsWatched = form.watch("education_details")
+  // Only sync from Step 6 to Step 4 when actively on Step 6 to prevent feedback loop while typing on Step 4
   React.useEffect(() => {
-    if (employmentStatus !== "Student" || !eduDetailsWatched || !Array.isArray(eduDetailsWatched)) return
-    const enrolledCard = eduDetailsWatched.find(f => f.is_currently_enrolled)
-    if (enrolledCard && enrolledCard.school_name && enrolledCard.school_name !== studentSchool) {
+    if (step !== 6 || employmentStatus !== "Student") return
+    const currentFields = form.getValues("education_details")
+    if (!currentFields || !Array.isArray(currentFields)) return
+    const enrolledCard = currentFields.find(f => f.is_currently_enrolled)
+    if (enrolledCard && enrolledCard.school_name !== undefined && enrolledCard.school_name !== studentSchool) {
       form.setValue("student_school", enrolledCard.school_name)
     }
-  }, [eduDetailsWatched, employmentStatus, studentSchool, form])
+  }, [step, employmentStatus, studentSchool, form])
 
   React.useEffect(() => {
     if (!ministries || ministries.length === 0) return
@@ -619,6 +621,9 @@ export function MemberForm({
   React.useEffect(() => {
     const timer = setTimeout(() => {
       if (!formRef.current) return
+      // If user is already focused on an element inside this form (e.g. typing), don't forcibly move focus
+      if (formRef.current.contains(document.activeElement)) return
+
       const firstInput = formRef.current.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
         "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])"
       )
