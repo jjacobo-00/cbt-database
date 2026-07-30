@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "../actions"
 import { cn } from "@/lib/utils/utils"
+import { getFullName } from "@/lib/utils/format"
 
 type TrackerMember = {
   member_id: string
@@ -101,7 +102,7 @@ export function RecommitmentClient({
   }
 
   const filtered = list.filter(m => {
-    const matchesSearch = `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())
+    const matchesSearch = getFullName(m).toLowerCase().includes(search.toLowerCase())
     if (filterStatus === "all") return matchesSearch
     return matchesSearch && m.status === filterStatus
   })

@@ -5,6 +5,7 @@ import { Trash2, Plus, Loader2, ChurchIcon, Pencil, Check, X, Users, ChevronDown
 import { createMinistry, deleteMinistry, updateMinistry } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { formatShortDate } from "@/lib/utils/format"
 
 type Ministry = { id: string; name: string; for_everyone: boolean; parent_id: string | null; created_at: string }
 
@@ -170,7 +171,7 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Added {new Date(m.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })}
+                    Added {formatShortDate(m.created_at, { locale: "en-PH" })}
                   </p>
                 </div>
               </div>

@@ -2,13 +2,14 @@ import { getOfferingCategories } from "./actions"
 import { getCommitmentsByYear } from "../actions"
 import { OfferingsClient } from "./OfferingsClient"
 import { Gift } from "lucide-react"
+import { getCurrentYear } from "@/lib/utils/format"
 
 export const revalidate = 0
 
 export const metadata = { title: "Offering Commitments | CBT Database" }
 
 export default async function OfferingsPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
-  const currentYear = new Date().getFullYear()
+  const currentYear = getCurrentYear()
   const resolvedSearchParams = await searchParams
   const year = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year) : currentYear
 

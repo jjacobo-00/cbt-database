@@ -7,6 +7,7 @@ import { Users, UserPlus, FileText, Activity, Droplets, HeartHandshake, CheckCir
 import Link from "next/link"
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts"
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable"
+import { formatDate, getCurrentYear } from "@/lib/utils/format"
 
 export default async function DashboardPage() {
   const sixMonthsAgo = new Date()
@@ -14,7 +15,7 @@ export default async function DashboardPage() {
   sixMonthsAgo.setDate(1)
   sixMonthsAgo.setHours(0, 0, 0, 0)
 
-  const currentYear = new Date().getFullYear()
+  const currentYear = getCurrentYear()
 
   // Fetch counts and data in parallel
   const [
@@ -104,12 +105,7 @@ export default async function DashboardPage() {
   })
 
   // Format Current Date for Hero Section
-  const currentDate = new Date().toLocaleDateString(undefined, { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  })
+  const currentDate = formatDate(new Date(), { options: { weekday: "long", year: "numeric", month: "long", day: "numeric" } })
 
   return (
     <div className="space-y-6 pb-8">

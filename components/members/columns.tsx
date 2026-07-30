@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, MoreHorizontal, Pencil, Eye } from "lucide-react"
 import Link from "next/link"
+import { formatDate } from "@/lib/utils/format"
 
 export type MemberType = {
   id: string
@@ -101,9 +102,6 @@ export const columns: ColumnDef<MemberType>[] = [
   {
     accessorKey: "created_at",
     header: "Date Added",
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("created_at"))
-      return <div>{date.toLocaleDateString()}</div>
-    },
+    cell: ({ row }) => <div>{formatDate(row.getValue("created_at"))}</div>,
   },
 ]

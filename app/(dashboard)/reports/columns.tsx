@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ReportMember } from "./ReportsClient"
+import { formatDate } from "@/lib/utils/format"
 
 export const columns: ColumnDef<ReportMember>[] = [
   {
@@ -70,6 +71,6 @@ export const columns: ColumnDef<ReportMember>[] = [
   {
     accessorKey: "created_at",
     header: "Date Registered",
-    cell: ({ row }) => row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "-",
+    cell: ({ row }) => formatDate(row.original.created_at),
   },
 ]

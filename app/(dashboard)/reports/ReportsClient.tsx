@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ReportsDataTable } from "@/components/reports/ReportsDataTable"
 import { columns } from "./columns"
+import { getCurrentYear } from "@/lib/utils/format"
 import { 
   PieChart, Pie, Cell, 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend 
@@ -36,7 +37,7 @@ export function ReportsClient({ initialData }: { initialData: ReportMember[] }) 
 
   const filteredData = useMemo(() => {
     if (dateFilter === "all") return data
-    const currentYear = new Date().getFullYear()
+    const currentYear = getCurrentYear()
     return data.filter(m => {
       if (!m.created_at) return false
       const mYear = new Date(m.created_at).getFullYear()

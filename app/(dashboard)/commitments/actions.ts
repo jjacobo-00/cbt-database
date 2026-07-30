@@ -1,20 +1,21 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { db } from "@/db"
-import { commitments, commitment_ministries, commitment_offerings, members, ministries, offering_categories } from "@/db/schema"
-import { eq, and, asc, desc, inArray } from "drizzle-orm"
+import { commitments } from "@/db/schema"
+import { eq, and, desc } from "drizzle-orm"
+import {
+  getMembersForCommitments,
+  getMinistryAssignments,
+  getOfferingAssignments,
+  replaceCommitmentAssignments,
+} from "@/lib/db/commitments"
+import { REVALIDATE_GROUPS, revalidatePaths, runAction, safeQuery } from "@/lib/utils/actions"
+import { getCurrentYear } from "@/lib/utils/format"
 
 export async function getCommitmentsByYear(year: number) {
-  try {
+  return safeQuery("fetching commitments by year", async () => {
     // Fetch ALL members in the directory
-    const allMembers = await db.select({
-      member_id: members.id,
-      first_name: members.first_name,
-      last_name: members.last_name,
-      contact_number: members.contact_number,
-    }).from(members).orderBy(asc(members.last_name), asc(members.first_name))
-
+    const allMembers = await getMembersForCommitments()
     if (allMembers.length === 0) return []
 
     // Fetch existing commitments for this specific year
@@ -25,38 +26,15 @@ export async function getCommitmentsByYear(year: number) {
     }).from(commitments).where(eq(commitments.year, year))
 
     const commIds = yearComms.map(c => c.id)
-
-    // Fetch ministry assignments if any commitments exist
-    const ministryAssignments = commIds.length > 0
-      ? await db.select({
-          commitment_id: commitment_ministries.commitment_id,
-          ministry_id: commitment_ministries.ministry_id,
-          ministry_name: ministries.name,
-          parent_id: ministries.parent_id,
-        })
-        .from(commitment_ministries)
-        .innerJoin(ministries, eq(commitment_ministries.ministry_id, ministries.id))
-        .where(inArray(commitment_ministries.commitment_id, commIds))
-      : []
-
-    // Fetch offering assignments if any commitments exist
-    const offeringAssignments = commIds.length > 0
-      ? await db.select({
-          commitment_id: commitment_offerings.commitment_id,
-          offering_category_id: commitment_offerings.offering_category_id,
-          offering_name: offering_categories.name,
-        })
-        .from(commitment_offerings)
-        .innerJoin(offering_categories, eq(commitment_offerings.offering_category_id, offering_categories.id))
-        .where(inArray(commitment_offerings.commitment_id, commIds))
-      : []
+    const ministryAssignments = await getMinistryAssignments(commIds)
+    const offeringAssignments = await getOfferingAssignments(commIds)
 
     // Combine all members with their commitment data (if present)
     return allMembers.map(m => {
       const comm = yearComms.find(c => c.member_id === m.member_id)
       const memberMins = comm ? ministryAssignments.filter(ma => ma.commitment_id === comm.id) : []
       const memberOffs = comm ? offeringAssignments.filter(oa => oa.commitment_id === comm.id) : []
-      
+
       return {
         id: comm?.id || `temp-${m.member_id}`,
         member_id: m.member_id,
@@ -69,24 +47,15 @@ export async function getCommitmentsByYear(year: number) {
         offerings: memberOffs,
       }
     })
-  } catch (error) {
-    console.error("Error fetching commitments by year:", error)
-    return []
-  }
+  }, [])
 }
 
 export async function getRecommitmentTrackerData(targetYear: number) {
-  try {
+  return safeQuery("fetching recommitment tracker data", async () => {
     const prevYear = targetYear - 1
 
     // Fetch ALL members
-    const allMembers = await db.select({
-      member_id: members.id,
-      first_name: members.first_name,
-      last_name: members.last_name,
-      contact_number: members.contact_number,
-    }).from(members).orderBy(asc(members.last_name), asc(members.first_name))
-
+    const allMembers = await getMembersForCommitments()
     if (allMembers.length === 0) return []
 
     // Fetch commitments for target year and prev year
@@ -97,28 +66,8 @@ export async function getRecommitmentTrackerData(targetYear: number) {
     }).from(commitments)
 
     const commIds = allComms.map(c => c.id)
-
-    const ministryAssignments = commIds.length > 0
-      ? await db.select({
-          commitment_id: commitment_ministries.commitment_id,
-          ministry_id: commitment_ministries.ministry_id,
-          ministry_name: ministries.name,
-        })
-        .from(commitment_ministries)
-        .innerJoin(ministries, eq(commitment_ministries.ministry_id, ministries.id))
-        .where(inArray(commitment_ministries.commitment_id, commIds))
-      : []
-
-    const offeringAssignments = commIds.length > 0
-      ? await db.select({
-          commitment_id: commitment_offerings.commitment_id,
-          offering_category_id: commitment_offerings.offering_category_id,
-          offering_name: offering_categories.name,
-        })
-        .from(commitment_offerings)
-        .innerJoin(offering_categories, eq(commitment_offerings.offering_category_id, offering_categories.id))
-        .where(inArray(commitment_offerings.commitment_id, commIds))
-      : []
+    const ministryAssignments = await getMinistryAssignments(commIds)
+    const offeringAssignments = await getOfferingAssignments(commIds)
 
     return allMembers.map(m => {
       const targetComm = allComms.find(c => c.member_id === m.member_id && c.year === targetYear)
@@ -157,55 +106,29 @@ export async function getRecommitmentTrackerData(targetYear: number) {
         referenceOfferings: refOffs,
       }
     })
-  } catch (error) {
-    console.error("Error fetching recommitment tracker data:", error)
-    return []
-  }
+  }, [])
 }
 
 export async function upsertCommitment(memberId: string, year: number, ministryIds: string[], offeringCategoryIds: string[]) {
-  try {
-    // Upsert commitment record
-    let [commitment] = await db.select().from(commitments)
+  const commitment = await runAction("upserting commitment", "Failed to save commitment.", async () => {
+    let [existing] = await db.select().from(commitments)
       .where(and(eq(commitments.member_id, memberId), eq(commitments.year, year)))
 
-    if (!commitment) {
-      [commitment] = await db.insert(commitments).values({ member_id: memberId, year }).returning()
+    if (!existing) {
+      [existing] = await db.insert(commitments).values({ member_id: memberId, year }).returning()
     }
 
-    // Replace ministries: delete old, insert new
-    await db.delete(commitment_ministries).where(eq(commitment_ministries.commitment_id, commitment.id))
-    if (ministryIds.length > 0) {
-      await db.insert(commitment_ministries).values(
-        ministryIds.map(mid => ({ commitment_id: commitment.id, ministry_id: mid }))
-      )
-    }
+    await replaceCommitmentAssignments(existing.id, ministryIds, offeringCategoryIds)
+    return existing
+  })
 
-    // Replace offerings: delete old, insert new
-    await db.delete(commitment_offerings).where(eq(commitment_offerings.commitment_id, commitment.id))
-    if (offeringCategoryIds.length > 0) {
-      await db.insert(commitment_offerings).values(
-        offeringCategoryIds.map(oid => ({ commitment_id: commitment.id, offering_category_id: oid }))
-      )
-    }
-
-    revalidatePath("/commitments")
-    revalidatePath("/commitments/recommitment")
-    revalidatePath("/commitments/offerings")
-    return commitment
-  } catch (error) {
-    console.error("Error upserting commitment:", error)
-    throw new Error("Failed to save commitment.")
-  }
+  revalidatePaths(REVALIDATE_GROUPS.commitments)
+  return commitment
 }
 
 export async function getAvailableYears() {
-  try {
+  return safeQuery("fetching available commitment years", async () => {
     const years = await db.selectDistinct({ year: commitments.year }).from(commitments).orderBy(desc(commitments.year))
-    const currentYear = new Date().getFullYear()
-    const result = [...new Set([currentYear, ...years.map(y => y.year)])].sort((a, b) => b - a)
-    return result
-  } catch {
-    return [new Date().getFullYear()]
-  }
+    return [...new Set([getCurrentYear(), ...years.map(y => y.year)])].sort((a, b) => b - a)
+  }, [getCurrentYear()])
 }
