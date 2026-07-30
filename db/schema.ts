@@ -76,21 +76,21 @@ export const invitation_links = pgTable('invitation_links', {
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
-export const ministries = pgTable('ministries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  description: text('description'),
-  for_everyone: boolean('for_everyone').default(false).notNull(),
-  parent_id: uuid('parent_id'),
-  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
-})
-
 export const missions = pgTable('missions', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   location: text('location'),
   pastor_name: text('pastor_name'),
   established_date: date('established_date'),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+export const ministries = pgTable('ministries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  description: text('description'),
+  for_everyone: boolean('for_everyone').default(false).notNull(),
+  parent_id: uuid('parent_id'),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
