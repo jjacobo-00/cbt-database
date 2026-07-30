@@ -17,6 +17,7 @@ export type ReportMember = {
   highest_educational_attainment: string | null
   date_baptized: string | null
   membership_date: string | null
+  created_at: string | null
 }
 
 export const revalidate = 0 // Disable cache for fresh reports
@@ -43,7 +44,8 @@ export default async function ReportsPage() {
       employment_status: members.employment_status,
       highest_educational_attainment: members.highest_educational_attainment,
       date_baptized: members.date_baptized,
-      membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`
+      membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
+      created_at: members.created_at
     }).from(members),
     db.select({
       member_id: member_ministries.member_id,
@@ -64,8 +66,9 @@ export default async function ReportsPage() {
 
   const formattedData: ReportMember[] = membersData.map(m => ({
     ...m,
-    date_baptized: m.date_baptized?.toISOString() || null,
-    membership_date: m.membership_date?.toISOString() || null,
+    date_baptized: m.date_baptized ? (typeof m.date_baptized === 'object' ? (m.date_baptized as Date).toISOString() : m.date_baptized as string) : null,
+    membership_date: m.membership_date ? (typeof m.membership_date === 'object' ? (m.membership_date as Date).toISOString() : m.membership_date as string) : null,
+    created_at: m.created_at ? (typeof m.created_at === 'object' ? (m.created_at as Date).toISOString() : m.created_at as string) : null,
   }))
 
   return <ReportsClient 

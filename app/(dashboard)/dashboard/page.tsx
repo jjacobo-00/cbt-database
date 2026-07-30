@@ -39,17 +39,17 @@ export default async function DashboardPage() {
       last_name: members.last_name,
       contact_number: members.contact_number,
       city: members.city,
-      created_at: members.created_at
-    }).from(members).orderBy(desc(members.created_at)).limit(5),
-    db.select({ created_at: members.created_at })
+      membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`
+    }).from(members).orderBy(desc(sql`COALESCE(${members.membership_date}, ${members.created_at})`)).limit(5),
+    db.select({ membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})` })
       .from(members)
-      .where(gte(members.created_at, sixMonthsAgo)),
+      .where(gte(sql`COALESCE(${members.membership_date}, ${members.created_at})`, sixMonthsAgo)),
     db.select({ age: members.age }).from(members),
     db.select({ count: sql<number>`cast(count(distinct member_id) as int)` })
       .from(member_ministries),
-    db.select({ created_at: members.created_at })
+    db.select({ membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})` })
       .from(members)
-      .where(sql`${members.created_at} >= (date_trunc('month', current_date - interval '12 months')) AND ${members.created_at} < (date_trunc('month', current_date - interval '6 months'))`)
+      .where(sql`${sql`COALESCE(${members.membership_date}, ${members.created_at})`} >= (date_trunc('month', current_date - interval '12 months')) AND ${sql`COALESCE(${members.membership_date}, ${members.created_at})`} < (date_trunc('month', current_date - interval '6 months'))`)
   ])
 
   const totalMembers = totalMembersResult[0]?.count || 0
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
   // Current year data
   growthDataQuery.forEach(member => {
     if (member.membership_date) {
-      const mDate = new Date(member.membership_date)
+      const mDate = new Date(member.membership_date as any)
       const m = mDate.getMonth()
       const y = mDate.getFullYear()
       const bucket = monthlyData.find(b => b.monthNum === m && y === currentYear)
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
   // Previous year data
   previousYearGrowthQuery.forEach(member => {
     if (member.membership_date) {
-      const mDate = new Date(member.membership_date)
+      const mDate = new Date(member.membership_date as any)
       const m = mDate.getMonth()
       const y = mDate.getFullYear()
       const bucket = monthlyData.find(b => b.monthNum === m && y === previousYear)
@@ -159,7 +159,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
@@ -252,12 +252,12 @@ export default async function DashboardPage() {
       {/* Charts Section */}
       <DashboardCharts 
         monthlyData={monthlyData} 
-        churchRoleData={churchRoleDistribution} 
+        baptismData={baptismData} 
         ageData={ageDemographicsData} 
       />
 
       {/* Recent Members Table */}
-      <RecentMembersTable recentMembers={recentMembers.map(m => ({...m, membership_date: m.membership_date}))} />
+      <RecentMembersTable recentMembers={recentMembers.map(m => ({...m, membership_date: m.membership_date ? new Date(m.membership_date as any) : null}))} />
     </div>
   )
 }

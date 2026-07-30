@@ -22,11 +22,11 @@ import { useTheme } from "next-themes"
 
 interface DashboardChartsProps {
   monthlyData: { month: string; currentYear: number; previousYear: number; monthNum: number }[]
-  churchRoleData: { name: string; value: number }[]
+  baptismData: { name: string; value: number }[]
   ageData: { name: string; value: number }[]
 }
 
-export function DashboardCharts({ monthlyData, churchRoleData, ageData }: DashboardChartsProps) {
+export function DashboardCharts({ monthlyData, baptismData, ageData }: DashboardChartsProps) {
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
@@ -34,7 +34,7 @@ export function DashboardCharts({ monthlyData, churchRoleData, ageData }: Dashbo
   const textColor = isDark ? "#888" : "#6b7280"
   
   // Custom colors for different charts
-  const ROLE_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
+  const BAPTISM_COLORS = ['#10b981', '#9ca3af'] // Green (Baptized), Gray (Unbaptized)
   const AGE_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6']
 
   const tooltipStyle = { 
@@ -110,18 +110,18 @@ export function DashboardCharts({ monthlyData, churchRoleData, ageData }: Dashbo
         </CardContent>
       </Card>
 
-      {/* Church Role Distribution Pie Chart */}
+      {/* Baptism Status Pie Chart */}
       <Card className="lg:col-span-1 xl:col-span-1 transition-all duration-300 hover:shadow-md">
         <CardHeader>
-          <CardTitle>Church Roles</CardTitle>
-          <CardDescription>Distribution of church roles among members.</CardDescription>
+          <CardTitle>Baptism Status</CardTitle>
+          <CardDescription>Ratio of baptized vs unbaptized members.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={churchRoleData}
+                  data={baptismData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -130,8 +130,8 @@ export function DashboardCharts({ monthlyData, churchRoleData, ageData }: Dashbo
                   dataKey="value"
                   stroke="none"
                 >
-                  {churchRoleData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={ROLE_COLORS[index % ROLE_COLORS.length]} />
+                  {baptismData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={BAPTISM_COLORS[index % BAPTISM_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />

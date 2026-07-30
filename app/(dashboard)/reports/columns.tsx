@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ReportMember } from "./ReportsClient"
+import { ReportMember } from "./page"
 
 export const columns: ColumnDef<ReportMember>[] = [
   {
@@ -68,8 +68,8 @@ export const columns: ColumnDef<ReportMember>[] = [
     accessorFn: (row) => row.date_baptized ? "Baptized" : "Unbaptized",
   },
   {
-    accessorKey: "created_at",
+    accessorKey: "membership_date",
     header: "Date Registered",
-    cell: ({ row }) => row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "-",
+    cell: ({ row }) => row.original.membership_date ? new Date(row.original.membership_date).toLocaleDateString() : "-",
   },
 ]
