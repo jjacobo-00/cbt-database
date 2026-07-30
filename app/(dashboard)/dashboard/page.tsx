@@ -38,8 +38,8 @@ export default async function DashboardPage() {
       last_name: members.last_name,
       contact_number: members.contact_number,
       city: members.city,
-      membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`
-    }).from(members).orderBy(desc(sql`COALESCE(${members.membership_date}, ${members.created_at})`)).limit(5),
+      membership_date: members.created_at
+    }).from(members).orderBy(desc(members.created_at)).limit(5),
     db.select({ membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})` })
       .from(members)
       .where(gte(sql`COALESCE(${members.membership_date}, ${members.created_at})`, sixMonthsAgo)),

@@ -32,11 +32,11 @@ export function ReportsClient({
   ministryData = [], 
   faithPromiseData = [] 
 }: { 
-  initialData: ReportMember[] 
+  initialData: ExtendedReportMember[] 
   ministryData?: MinistryParticipation[]
   faithPromiseData?: FaithPromiseData[]
 }) {
-  const [data] = useState<ReportMember[]>(initialData)
+  const [data] = useState<ExtendedReportMember[]>(initialData as ExtendedReportMember[])
   const [ministryParticipation] = useState<MinistryParticipation[]>(ministryData)
   const [faithPromises] = useState<FaithPromiseData[]>(faithPromiseData)
   
@@ -60,7 +60,7 @@ export function ReportsClient({
   const baptizedMembers = filteredData.filter(m => m.date_baptized).length
   const maleCount = filteredData.filter(m => (m.gender || m.sex) === "Male").length
   const femaleCount = filteredData.filter(m => (m.gender || m.sex) === "Female").length
-  const uniqueCities = new Set(filteredData.map(m => m.city).filter(Boolean)).size
+  const uniqueCities = new Set(filteredData.map(m => (m as any).mission_location || m.city).filter(Boolean)).size
 
   // Gender Data for Chart
   const genderData = [
@@ -78,17 +78,32 @@ export function ReportsClient({
     return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
   }, [filteredData])
 
+  // Helper function to calculate age from birth_date
+  const calculateAge = (birthDate: string | null): number | null => {
+    if (!birthDate) return null
+    const birth = new Date(birthDate)
+    const today = new Date()
+    if (isNaN(birth.getTime())) return null
+    let age = today.getFullYear() - birth.getFullYear()
+    const monthDiff = today.getMonth() - birth.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--
+    }
+    return age >= 0 ? age : null
+  }
+
   // Age Groups Data
   const ageData = useMemo(() => {
     let kids = 0, youth = 0, youngAdults = 0, adults = 0, seniors = 0, unknown = 0;
     filteredData.forEach(m => {
-      if (m.age === null || m.age === undefined) {
+      const age = m.age || calculateAge((m as any).birth_date)
+      if (age === null || age === undefined) {
         unknown++
       } else {
-        if (m.age <= 12) kids++
-        else if (m.age <= 17) youth++
-        else if (m.age <= 35) youngAdults++
-        else if (m.age <= 55) adults++
+        if (age <= 12) kids++
+        else if (age <= 17) youth++
+        else if (age <= 35) youngAdults++
+        else if (age <= 55) adults++
         else seniors++
       }
     })
@@ -102,11 +117,11 @@ export function ReportsClient({
     ].filter(d => d.count > 0)
   }, [filteredData])
 
-  // City Geographic Spread
+  // City Geographic Spread (using mission location first, then residence city)
   const cityData = useMemo(() => {
     const counts: Record<string, number> = {}
     filteredData.forEach(m => {
-      const city = m.city || "Unknown"
+      const city = (m as any).mission_location || m.city || "Unknown"
       counts[city] = (counts[city] || 0) + 1
     })
     return Object.entries(counts)
@@ -144,6 +159,16 @@ export function ReportsClient({
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
+  }, [filteredData, ministryParticipation])
+
+  // Calculate unique members engaged in ministries
+  const membersEngagedInMinistries = useMemo(() => {
+    const engagedMemberIds = new Set(
+      ministryParticipation
+        .filter(mp => filteredData.some(m => m.id === mp.member_id))
+        .map(mp => mp.member_id)
+    )
+    return engagedMemberIds.size
   }, [filteredData, ministryParticipation])
 
   // Faith Promise Analytics
@@ -253,8 +278,8 @@ export function ReportsClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalMembers ? Math.round((ministryStats.reduce((sum, m) => sum + m.count, 0) / totalMembers) * 100) : 0}%</div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">{ministryStats.reduce((sum, m) => sum + m.count, 0)} ministry sign-ups</p>
+            <div className="text-3xl font-bold">{totalMembers ? Math.round((membersEngagedInMinistries / totalMembers) * 100) : 0}%</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">{membersEngagedInMinistries} members engaged</p>
           </CardContent>
         </Card>
 

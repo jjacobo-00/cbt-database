@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories } from "@/db/schema"
+import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories, missions } from "@/db/schema"
 import { eq, sql } from "drizzle-orm"
 import { ReportsClient } from "./ReportsClient"
 
@@ -10,7 +10,9 @@ export type ReportMember = {
   gender: string | null
   sex: string | null
   age: number | null
+  birth_date: string | null
   city: string | null
+  mission_location?: string | null
   marital_status: string | null
   occupation: string | null
   employment_status: string | null
@@ -20,9 +22,26 @@ export type ReportMember = {
   created_at: string | null
 }
 
+// Extend ReportMember to include birth_date for client-side age calculation
+export type ExtendedReportMember = ReportMember
+
 export const revalidate = 0 // Disable cache for fresh reports
 
 export const metadata = { title: "Reports & Analytics | CBT Database" }
+
+// Helper function to calculate age from birth_date
+function calculateAge(birthDate: string | null): number | null {
+  if (!birthDate) return null
+  const birth = new Date(birthDate)
+  const today = new Date()
+  if (isNaN(birth.getTime())) return null
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age >= 0 ? age : null
+}
 
 export default async function ReportsPage() {
   // Fetch comprehensive data for reports and export
@@ -38,7 +57,9 @@ export default async function ReportsPage() {
       gender: members.gender,
       sex: members.sex,
       age: members.age,
+      birth_date: members.birth_date,
       city: members.city,
+      mission_location: missions.location,
       marital_status: members.marital_status,
       occupation: members.occupation,
       employment_status: members.employment_status,
@@ -46,7 +67,8 @@ export default async function ReportsPage() {
       date_baptized: members.date_baptized,
       membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
       created_at: members.created_at
-    }).from(members),
+    }).from(members)
+      .leftJoin(missions, eq((members as any).mission_id, missions.id)),
     db.select({
       member_id: member_ministries.member_id,
       ministry_id: member_ministries.ministry_id,
@@ -66,6 +88,7 @@ export default async function ReportsPage() {
 
   const formattedData: ReportMember[] = membersData.map(m => ({
     ...m,
+    age: m.age || calculateAge(m.birth_date),
     date_baptized: m.date_baptized ? (typeof m.date_baptized === 'object' ? (m.date_baptized as Date).toISOString() : m.date_baptized as string) : null,
     membership_date: m.membership_date ? (typeof m.membership_date === 'object' ? (m.membership_date as Date).toISOString() : m.membership_date as string) : null,
     created_at: m.created_at ? (typeof m.created_at === 'object' ? (m.created_at as Date).toISOString() : m.created_at as string) : null,
