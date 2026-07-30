@@ -20,17 +20,16 @@ export default async function DashboardPage() {
   // Fetch counts and data in parallel
   const [
     totalMembersResult,
-    totalBaptizedResult,
     totalMinistriesResult,
     currentYearCommitmentsResult,
     recentMembers,
     growthDataQuery,
     ageDataQuery,
     ministryEngagementResult,
-    previousYearGrowthQuery
+    previousYearGrowthQuery,
+    newBaptismsResult
   ] = await Promise.all([
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
-    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members).where(isNotNull(members.date_baptized)),
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(ministries),
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(commitments).where(eq(commitments.year, currentYear)),
     db.select({
@@ -44,25 +43,21 @@ export default async function DashboardPage() {
     db.select({ membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})` })
       .from(members)
       .where(gte(sql`COALESCE(${members.membership_date}, ${members.created_at})`, sixMonthsAgo)),
-    db.select({ age: members.age }).from(members),
+    db.select({ age: members.age }).from(members).where(isNotNull(members.age)),
     db.select({ count: sql<number>`cast(count(distinct member_id) as int)` })
       .from(member_ministries),
     db.select({ membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})` })
       .from(members)
-      .where(sql`${sql`COALESCE(${members.membership_date}, ${members.created_at})`} >= (date_trunc('month', current_date - interval '12 months')) AND ${sql`COALESCE(${members.membership_date}, ${members.created_at})`} < (date_trunc('month', current_date - interval '6 months'))`)
+      .where(sql`${sql`COALESCE(${members.membership_date}, ${members.created_at})`} >= (date_trunc('month', current_date - interval '12 months')) AND ${sql`COALESCE(${members.membership_date}, ${members.created_at})`} < (date_trunc('month', current_date - interval '6 months'))`),
+    db.select({ count: sql<number>`cast(count(*) as int)` }).from(members)
+      .where(sql`EXTRACT(YEAR FROM ${members.date_baptized}) = ${currentYear}`)
   ])
 
   const totalMembers = totalMembersResult[0]?.count || 0
-  const totalBaptized = totalBaptizedResult[0]?.count || 0
   const totalMinistries = totalMinistriesResult[0]?.count || 0
   const totalCommitments = currentYearCommitmentsResult[0]?.count || 0
   const ministryEngagedMembers = ministryEngagementResult[0]?.count || 0
-
-  // Baptism Status Data
-  const baptismData = [
-    { name: 'Baptized', value: totalBaptized },
-    { name: 'Unbaptized', value: totalMembers - totalBaptized },
-  ]
+  const newBaptismsThisYear = newBaptismsResult[0]?.count || 0
 
   // Calculate Age Demographics
   let kids = 0, youth = 0, youngAdults = 0, adults = 0, seniors = 0;
@@ -83,6 +78,12 @@ export default async function DashboardPage() {
     { name: 'Young Adults (18-35)', value: youngAdults },
     { name: 'Adults (36-55)', value: adults },
     { name: 'Seniors (55+)', value: seniors },
+  ]
+
+  // Membership Status Data (more meaningful than baptism status)
+  const membershipStatusData = [
+    { name: 'This Year Commitments', value: totalCommitments },
+    { name: 'Without Commitments', value: totalMembers - totalCommitments },
   ]
 
   // Format Monthly Growth Data for Area Chart with Year-over-Year Comparison
@@ -196,16 +197,14 @@ export default async function DashboardPage() {
 
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Baptized Members</CardTitle>
+            <CardTitle className="text-sm font-medium">New Baptisms</CardTitle>
             <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
               <Droplets className="h-4 w-4 text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalBaptized}</div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              <span className="text-green-500 font-semibold">{totalMembers ? Math.round((totalBaptized / totalMembers) * 100) : 0}%</span> of total members
-            </p>
+            <div className="text-3xl font-bold">{newBaptismsThisYear}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Baptized this year</p>
           </CardContent>
         </Card>
 
@@ -252,7 +251,7 @@ export default async function DashboardPage() {
       {/* Charts Section */}
       <DashboardCharts 
         monthlyData={monthlyData} 
-        baptismData={baptismData} 
+        membershipStatusData={membershipStatusData} 
         ageData={ageDemographicsData} 
       />
 

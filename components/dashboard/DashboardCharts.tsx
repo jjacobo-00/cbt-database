@@ -22,11 +22,11 @@ import { useTheme } from "next-themes"
 
 interface DashboardChartsProps {
   monthlyData: { month: string; currentYear: number; previousYear: number; monthNum: number }[]
-  baptismData: { name: string; value: number }[]
+  membershipStatusData: { name: string; value: number }[]
   ageData: { name: string; value: number }[]
 }
 
-export function DashboardCharts({ monthlyData, baptismData, ageData }: DashboardChartsProps) {
+export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: DashboardChartsProps) {
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
@@ -34,7 +34,7 @@ export function DashboardCharts({ monthlyData, baptismData, ageData }: Dashboard
   const textColor = isDark ? "#888" : "#6b7280"
   
   // Custom colors for different charts
-  const BAPTISM_COLORS = ['#10b981', '#9ca3af'] // Green (Baptized), Gray (Unbaptized)
+  const COMMITMENT_COLORS = ['#8b5cf6', '#9ca3af'] // Purple (Committed), Gray (Not Committed)
   const AGE_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6']
 
   const tooltipStyle = { 
@@ -110,18 +110,18 @@ export function DashboardCharts({ monthlyData, baptismData, ageData }: Dashboard
         </CardContent>
       </Card>
 
-      {/* Baptism Status Pie Chart */}
+      {/* Membership Status Pie Chart */}
       <Card className="lg:col-span-1 xl:col-span-1 transition-all duration-300 hover:shadow-md">
         <CardHeader>
-          <CardTitle>Baptism Status</CardTitle>
-          <CardDescription>Ratio of baptized vs unbaptized members.</CardDescription>
+          <CardTitle>Commitment Status</CardTitle>
+          <CardDescription>Members with vs without faith promise commitments.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={baptismData}
+                  data={membershipStatusData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -130,8 +130,8 @@ export function DashboardCharts({ monthlyData, baptismData, ageData }: Dashboard
                   dataKey="value"
                   stroke="none"
                 >
-                  {baptismData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={BAPTISM_COLORS[index % BAPTISM_COLORS.length]} />
+                  {membershipStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COMMITMENT_COLORS[index % COMMITMENT_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
@@ -149,36 +149,42 @@ export function DashboardCharts({ monthlyData, baptismData, ageData }: Dashboard
           <CardDescription>Breakdown of our congregation by age groups.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={ageData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-                <XAxis 
-                  dataKey="name" 
-                  stroke={textColor} 
-                  fontSize={12} 
-                  tickLine={false} 
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis 
-                  stroke={textColor} 
-                  fontSize={12} 
-                  tickLine={false} 
-                  axisLine={false}
-                />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: isDark ? '#333' : '#f3f4f6' }} />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {ageData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {ageData.length > 0 ? (
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={ageData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke={textColor} 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis 
+                    stroke={textColor} 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false}
+                  />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: isDark ? '#333' : '#f3f4f6' }} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {ageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[300px] w-full flex items-center justify-center">
+              <p className="text-muted-foreground">No age data available</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
