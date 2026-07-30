@@ -10,7 +10,7 @@ export type ReportMember = {
   gender: string | null
   sex: string | null
   age: number | null
-  birth_date: string | null
+  birth_date?: string | null
   city: string | null
   marital_status: string | null
   occupation: string | null
@@ -55,6 +55,7 @@ export default async function ReportsPage() {
       age: members.age,
       birth_date: members.birth_date,
       city: members.city,
+      mission_location: sql`NULL::text`, // Will be populated after migration
       marital_status: members.marital_status,
       occupation: members.occupation,
       employment_status: members.employment_status,

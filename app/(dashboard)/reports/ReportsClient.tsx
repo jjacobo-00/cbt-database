@@ -60,7 +60,7 @@ export function ReportsClient({
   const baptizedMembers = filteredData.filter(m => m.date_baptized).length
   const maleCount = filteredData.filter(m => (m.gender || m.sex) === "Male").length
   const femaleCount = filteredData.filter(m => (m.gender || m.sex) === "Female").length
-  const uniqueCities = new Set(filteredData.map(m => (m as any).mission_location || m.city).filter(Boolean)).size
+  const uniqueCities = new Set(filteredData.map(m => m.city).filter(Boolean)).size
 
   // Gender Data for Chart
   const genderData = [
@@ -96,7 +96,7 @@ export function ReportsClient({
   const ageData = useMemo(() => {
     let kids = 0, youth = 0, youngAdults = 0, adults = 0, seniors = 0, unknown = 0;
     filteredData.forEach(m => {
-      const age = m.age || calculateAge((m as any).birth_date)
+      const age = m.age || calculateAge((m as any).birth_date || null)
       if (age === null || age === undefined) {
         unknown++
       } else {

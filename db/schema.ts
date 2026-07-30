@@ -171,6 +171,7 @@ export const members = pgTable('members', {
   // Church / Spiritual Info
   church_role: text('church_role').default('Member'),
   current_church: text('current_church').default('Current Church'),
+  // mission_id: uuid('mission_id').references(() => missions.id, { onDelete: 'set null' }), // Uncomment after running migration
   date_saved: date('date_saved'),
   membership_date: date('membership_date'),
   witnessed_by: text('witnessed_by'),
