@@ -1,12 +1,20 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { ministries, members, member_ministries, commitments, commitment_ministries } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
+import { REVALIDATE_GROUPS, revalidatePaths, runAction, safeQuery } from "@/lib/utils/actions"
+import { getCurrentYear } from "@/lib/utils/format"
+
+const DUPLICATE_NAME_ERROR = "23505"
+
+function duplicateNameMessage(error: unknown) {
+  const code = (error as { code?: string } | null)?.code
+  return code === DUPLICATE_NAME_ERROR ? "A ministry with that name already exists." : undefined
+}
 
 export async function getMinistries() {
-  try {
+  return safeQuery("fetching ministries", async () => {
     const data = await db.select({
       id: ministries.id,
       name: ministries.name,
@@ -14,16 +22,13 @@ export async function getMinistries() {
       parent_id: ministries.parent_id,
       created_at: ministries.created_at,
     }).from(ministries).orderBy(asc(ministries.name))
-    
+
     return data.map(m => ({ ...m, created_at: m.created_at?.toISOString() || "" }))
-  } catch (error) {
-    console.error("Error fetching ministries:", error)
-    return []
-  }
+  }, [])
 }
 
 export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null) {
-  try {
+  await runAction("creating ministry", "Failed to create ministry.", async () => {
     const [inserted] = await db.insert(ministries).values({
       name: name.trim(),
       for_everyone: forEveryone,
@@ -34,18 +39,12 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
     if (forEveryone && inserted) {
       await autoEnrollAllMembersInMinistry(inserted.id)
     }
-  } catch (error: any) {
-    if (error.code === "23505") throw new Error("A ministry with that name already exists.")
-    console.error("Error creating ministry:", error)
-    throw new Error("Failed to create ministry.")
-  }
-  revalidatePath("/ministries")
-  revalidatePath("/members/new")
-  revalidatePath("/commitments")
+  }, duplicateNameMessage)
+  revalidatePaths(REVALIDATE_GROUPS.ministries)
 }
 
 export async function updateMinistry(id: string, name: string, forEveryone?: boolean) {
-  try {
+  await runAction("updating ministry", "Failed to update ministry.", async () => {
     await db.update(ministries).set({
       name: name.trim(),
       ...(forEveryone !== undefined && { for_everyone: forEveryone }),
@@ -54,31 +53,20 @@ export async function updateMinistry(id: string, name: string, forEveryone?: boo
     if (forEveryone) {
       await autoEnrollAllMembersInMinistry(id)
     }
-  } catch (error: any) {
-    if (error.code === "23505") throw new Error("A ministry with that name already exists.")
-    console.error("Error updating ministry:", error)
-    throw new Error("Failed to update ministry.")
-  }
-  revalidatePath("/ministries")
-  revalidatePath("/members/new")
-  revalidatePath("/commitments")
+  }, duplicateNameMessage)
+  revalidatePaths(REVALIDATE_GROUPS.ministries)
 }
 
 export async function deleteMinistry(id: string) {
-  try {
+  await runAction("deleting ministry", "Failed to delete ministry.", async () => {
     await db.delete(ministries).where(eq(ministries.parent_id, id))
     await db.delete(ministries).where(eq(ministries.id, id))
-  } catch (error) {
-    console.error("Error deleting ministry:", error)
-    throw new Error("Failed to delete ministry.")
-  }
-  revalidatePath("/ministries")
-  revalidatePath("/members/new")
-  revalidatePath("/commitments")
+  })
+  revalidatePaths(REVALIDATE_GROUPS.ministries)
 }
 
 async function autoEnrollAllMembersInMinistry(ministryId: string) {
-  try {
+  await safeQuery("in autoEnrollAllMembersInMinistry", async () => {
     const allMembers = await db.select({ id: members.id }).from(members)
     if (allMembers.length === 0) return
 
@@ -88,14 +76,11 @@ async function autoEnrollAllMembersInMinistry(ministryId: string) {
     ).onConflictDoNothing()
 
     // 2. Enroll into current year commitments
-    const currentYear = new Date().getFullYear()
-    const yearComms = await db.select({ id: commitments.id }).from(commitments).where(eq(commitments.year, currentYear))
+    const yearComms = await db.select({ id: commitments.id }).from(commitments).where(eq(commitments.year, getCurrentYear()))
     if (yearComms.length > 0) {
       await db.insert(commitment_ministries).values(
         yearComms.map(c => ({ commitment_id: c.id, ministry_id: ministryId }))
       ).onConflictDoNothing()
     }
-  } catch (error) {
-    console.error("Error in autoEnrollAllMembersInMinistry:", error)
-  }
+  }, undefined)
 }

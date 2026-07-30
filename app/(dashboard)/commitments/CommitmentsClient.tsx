@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "./actions"
 import { cn } from "@/lib/utils/utils"
+import { getFullName, getInitials } from "@/lib/utils/format"
 
 type CommitmentRow = {
   id: string
@@ -46,7 +47,7 @@ export function CommitmentsClient({
   const [editOfferings, setEditOfferings] = useState<string[]>([])
 
   const filtered = commitmentsList.filter(c => {
-    const name = `${c.first_name} ${c.last_name}`.toLowerCase()
+    const name = getFullName(c).toLowerCase()
     return name.includes(search.toLowerCase())
   })
 
@@ -216,7 +217,7 @@ export function CommitmentsClient({
       {/* Mobile Card View (Compact List Tiles) */}
       <div className="flex flex-col md:hidden border rounded-xl bg-card shadow-sm overflow-hidden divide-y mt-4">
         {filtered.map(c => {
-          const initials = `${c.first_name.charAt(0)}${c.last_name.charAt(0)}`.toUpperCase();
+          const initials = getInitials(c.first_name, c.last_name);
           return (
             <button
               key={c.member_id}

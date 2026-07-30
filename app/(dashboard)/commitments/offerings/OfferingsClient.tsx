@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils/utils"
+import { getFullName } from "@/lib/utils/format"
 
 const MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -57,7 +58,7 @@ export function OfferingsClient({
   const [editError, setEditError] = useState("")
 
   const filteredPledges = memberPledges.filter(m => {
-    const name = `${m.first_name} ${m.last_name}`.toLowerCase()
+    const name = getFullName(m).toLowerCase()
     return name.includes(search.toLowerCase())
   })
 

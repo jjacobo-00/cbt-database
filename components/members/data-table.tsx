@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { ChevronRight, User2 } from "lucide-react"
 import { TablePagination } from "@/components/ui/table-pagination"
+import { getInitials } from "@/lib/utils/format"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -122,7 +123,7 @@ export function DataTable<TData, TValue>({
             const contact = (row.original as any).contact_number || "No contact info";
             const role = (row.original as any).occupation || "Member";
             
-            const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+            const initials = getInitials(firstName, lastName);
 
             return (
               <Link 

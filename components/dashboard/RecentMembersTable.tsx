@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Users, ChevronRight, User2 } from "lucide-react"
+import { formatShortDate, getInitials } from "@/lib/utils/format"
 
 interface RecentMember {
   id: string
@@ -17,11 +18,6 @@ interface RecentMembersTableProps {
 }
 
 export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
-  // Helper to get initials
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
-
   // Helper to determine if member is new (last 7 days)
   const isNewMember = (date: Date | null) => {
     if (!date) return false
@@ -78,7 +74,7 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.contact_number || "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.city || "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {member.created_at ? new Date(member.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "-"}
+                      {formatShortDate(member.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10 hover:text-primary">

@@ -9,6 +9,7 @@ import { Check, ChevronDown, UserPlus, Users, User, Loader2 } from "lucide-react
 import { cn } from "@/lib/utils/utils"
 import { addWhitelistedUser } from "@/app/(dashboard)/users/actions"
 import { toast } from "sonner"
+import { getFullLegalName } from "@/lib/utils/format"
 
 export function AddUserClient({ members }: { members: any[] }) {
   const [mode, setMode] = useState<"member" | "manual">("member")
@@ -48,8 +49,7 @@ export function AddUserClient({ members }: { members: any[] }) {
     setSelectedMemberId(memberId)
     const m = members.find(m => m.id === memberId)
     if (m) {
-      const fullName = `${m.first_name} ${m.middle_name ? m.middle_name + " " : ""}${m.last_name}${m.suffix ? " " + m.suffix : ""}`
-      setName(fullName)
+      setName(getFullLegalName(m))
       setEmail(m.email || "")
     }
     setComboboxOpen(false)

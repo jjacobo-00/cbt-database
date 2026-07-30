@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Trash2, UserPlus } from "lucide-react"
+import { formatDate } from "@/lib/utils/format"
 
 export default async function UsersPage() {
   const users = await getWhitelistedUsers()
@@ -50,7 +51,7 @@ export default async function UsersPage() {
                         <TableCell className="font-medium">{user.email}</TableCell>
                         <TableCell>{user.name || "-"}</TableCell>
                         <TableCell>
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
+                          {formatDate(user.created_at)}
                         </TableCell>
                         <TableCell>
                           <form action={async () => {

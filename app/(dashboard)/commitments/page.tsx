@@ -3,13 +3,14 @@ import { getMinistries } from "@/app/(dashboard)/ministries/actions"
 import { getOfferingCategories } from "./offerings/actions"
 import { CommitmentsClient } from "./CommitmentsClient"
 import { HandHeart } from "lucide-react"
+import { getCurrentYear } from "@/lib/utils/format"
 
 export const revalidate = 0
 
 export const metadata = { title: "Commitments | CBT Database" }
 
 export default async function CommitmentsPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
-  const currentYear = new Date().getFullYear()
+  const currentYear = getCurrentYear()
   const resolvedSearchParams = await searchParams
   const year = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year) : currentYear
 

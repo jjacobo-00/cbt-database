@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { cn } from "@/lib/utils/utils"
+import { calendarYearsSince, formatLongDate, formatShortDate, getInitials } from "@/lib/utils/format"
 import { deleteMember } from "@/app/(dashboard)/members/actions"
 import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 import {
@@ -98,16 +99,14 @@ export function MemberProfileView({
   const fullPermAddress = permAddressParts.join(", ")
 
   // Initials for avatar
-  const initials = `${member.first_name?.[0] || ""}${member.last_name?.[0] || ""}`.toUpperCase()
+  const initials = getInitials(member.first_name, member.last_name)
 
   // Calculate age if not explicitly set
-  let computedAge = member.age
-  if (!computedAge && member.birth_date) {
-    const birthYear = new Date(member.birth_date).getFullYear()
-    if (!isNaN(birthYear)) {
-      computedAge = new Date().getFullYear() - birthYear
-    }
-  }
+  const computedAge = member.age || calendarYearsSince(member.birth_date) || undefined
+
+  const yearsMarried = calendarYearsSince(member.anniversary_date)
+
+  const printDate = (value: string | Date | null | undefined) => formatShortDate(value, { locale: "en-US", fallback: "—" })
 
   // Parse JSONB arrays safely
   const educationDetails: EducationDetail[] = Array.isArray(member.education_details) ? member.education_details : []
@@ -513,12 +512,7 @@ export function MemberProfileView({
                   <p className="text-xs text-muted-foreground">Civil / Marital Status</p>
                   <p className="font-medium">
                     {member.marital_status === "Married" ? (
-                      `Married to ${member.spouse_name || "Unknown"} (${
-                        member.anniversary_date ? (
-                          !isNaN(new Date(member.anniversary_date).getFullYear()) ? 
-                            `${new Date().getFullYear() - new Date(member.anniversary_date).getFullYear()} years` : "Unknown"
-                        ) : "Unknown"
-                      })`
+                      `Married to ${member.spouse_name || "Unknown"} (${yearsMarried !== null ? `${yearsMarried} years` : "Unknown"})`
                     ) : member.marital_status === "Widowed" && member.widowed_date ? (
                       `Widowed (Since ${member.widowed_date})`
                     ) : (
@@ -875,10 +869,7 @@ export function MemberProfileView({
                 <div className="bg-muted/10 p-4 rounded-xl border border-border/50">
                   <span className="text-muted-foreground text-xs block mb-1">Years Married</span>
                   <span className="font-medium">
-                    {member.anniversary_date ? (
-                      !isNaN(new Date(member.anniversary_date).getFullYear()) ? 
-                        `${new Date().getFullYear() - new Date(member.anniversary_date).getFullYear()} years` : <span className="text-muted-foreground/50">—</span>
-                    ) : <span className="text-muted-foreground/50">—</span>}
+                    {yearsMarried !== null ? `${yearsMarried} years` : <span className="text-muted-foreground/50">—</span>}
                   </span>
                 </div>
               </div>
@@ -1201,7 +1192,7 @@ export function MemberProfileView({
         {/* Document Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold uppercase tracking-wider text-black">MEMBER PROFILE</h1>
-          <p className="text-sm text-slate-500 mt-1">{new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+          <p className="text-sm text-slate-500 mt-1">{formatLongDate(new Date(), { locale: "en-US" })}</p>
         </div>
 
         {/* Outer Bordered Container */}
@@ -1238,7 +1229,7 @@ export function MemberProfileView({
             <div className="p-2">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Date of Birth</span>
               <span className="font-semibold text-black">
-                {member.birth_date ? new Date(member.birth_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                {printDate(member.birth_date)}
               </span>
             </div>
             <div className="p-2">
@@ -1264,7 +1255,7 @@ export function MemberProfileView({
               <div className="p-2">
                 <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Wedding Anniversary</span>
                 <span className="font-semibold text-black">
-                  {member.anniversary_date ? new Date(member.anniversary_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                  {printDate(member.anniversary_date)}
                 </span>
               </div>
               <div className="p-2">
@@ -1288,7 +1279,7 @@ export function MemberProfileView({
             <div className="p-2 border-b border-slate-300 bg-slate-50/50">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Widowed Date</span>
               <span className="font-semibold text-black">
-                {member.widowed_date ? new Date(member.widowed_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                {printDate(member.widowed_date)}
               </span>
             </div>
           )}
@@ -1379,20 +1370,19 @@ export function MemberProfileView({
             <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Date Saved</span>
               <span className="font-semibold text-black break-words">
-                {member.date_saved ? new Date(member.date_saved).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                {printDate(member.date_saved)}
               </span>
             </div>
             <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Date Baptized</span>
               <span className="font-semibold text-black break-words">
-                {member.date_baptized || member.baptism_date ? new Date(member.date_baptized || member.baptism_date || "").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                {printDate(member.date_baptized || member.baptism_date)}
               </span>
             </div>
             <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">Membership Date</span>
               <span className="font-semibold text-black break-words">
-                {member.membership_date ? new Date(member.membership_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : 
-                 (member.created_at ? new Date(member.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—")}
+                {printDate(member.membership_date || member.created_at)}
               </span>
             </div>
           </div>
