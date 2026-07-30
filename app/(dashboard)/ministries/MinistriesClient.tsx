@@ -5,6 +5,7 @@ import { Trash2, Plus, Loader2, ChurchIcon, Pencil, Check, X, Users, ChevronDown
 import { createMinistry, deleteMinistry, updateMinistry } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getErrorMessage } from "@/lib/utils/errors"
 
 type Ministry = { id: string; name: string; for_everyone: boolean; parent_id: string | null; created_at: string }
 
@@ -49,8 +50,9 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
         setMinistries(prev => [...prev, { id: crypto.randomUUID(), name: name.trim(), for_everyone: forEveryone, parent_id: null, created_at: new Date().toISOString() }].sort((a, b) => a.name.localeCompare(b.name)))
         setName("")
         setForEveryone(false)
-      } catch (e: any) {
-        setError(e.message || "Something went wrong.")
+      } catch (e) {
+        console.error("Error creating ministry:", e)
+        setError(getErrorMessage(e, "Failed to create ministry."))
       }
     })
   }
@@ -65,8 +67,9 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
         setSubName("")
         setAddingSubTo(null)
         setExpanded(prev => new Set(prev).add(parentId))
-      } catch (e: any) {
-        setSubError(e.message || "Something went wrong.")
+      } catch (e) {
+        console.error("Error creating sub-ministry:", e)
+        setSubError(getErrorMessage(e, "Failed to create sub-ministry."))
       }
     })
   }
@@ -76,8 +79,9 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
       try {
         await deleteMinistry(id)
         setMinistries(prev => prev.filter(m => m.id !== id && m.parent_id !== id))
-      } catch {
-        setError("Failed to delete ministry.")
+      } catch (e) {
+        console.error("Error deleting ministry:", e)
+        setError(getErrorMessage(e, "Failed to delete ministry."))
       }
     })
   }
@@ -107,8 +111,9 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
             .sort((a, b) => a.name.localeCompare(b.name))
         )
         setEditingId(null)
-      } catch (e: any) {
-        setEditError(e.message || "Something went wrong.")
+      } catch (e) {
+        console.error("Error updating ministry:", e)
+        setEditError(getErrorMessage(e, "Failed to update ministry."))
       }
     })
   }

@@ -8,13 +8,16 @@ async function main() {
   try {
     await sql`ALTER TABLE members ADD COLUMN email text`;
     console.log("Successfully added email column");
-  } catch (e: any) {
-    if (e.message.includes("already exists")) {
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("already exists")) {
       console.log("Email column already exists");
-    } else {
-      console.error("Error adding email:", e);
+      return;
     }
+    throw e;
   }
 }
 
-main();
+main().catch((e) => {
+  console.error("Error adding email column:", e);
+  process.exit(1);
+});

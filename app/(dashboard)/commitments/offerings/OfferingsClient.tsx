@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils/utils"
+import { getErrorMessage } from "@/lib/utils/errors"
 
 const MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -72,7 +73,10 @@ export function OfferingsClient({
           is_monthly: isMonthly, month, created_at: new Date().toISOString()
         }].sort((a, b) => a.name.localeCompare(b.name)))
         setName(""); setDescription(""); setIsMonthly(false); setMonth(null)
-      } catch (e: any) { setError(e.message) }
+      } catch (e) {
+        console.error("Error creating offering category:", e)
+        setError(getErrorMessage(e, "Failed to create offering category."))
+      }
     })
   }
 
@@ -81,7 +85,10 @@ export function OfferingsClient({
       try {
         await deleteOfferingCategory(id)
         setCategories(prev => prev.filter(c => c.id !== id))
-      } catch { setError("Failed to delete.") }
+      } catch (e) {
+        console.error("Error deleting offering category:", e)
+        setError(getErrorMessage(e, "Failed to delete offering category."))
+      }
     })
   }
 
@@ -100,7 +107,10 @@ export function OfferingsClient({
           is_monthly: editIsMonthly, month: editMonth
         } : c).sort((a, b) => a.name.localeCompare(b.name)))
         setEditingId(null)
-      } catch (e: any) { setEditError(e.message) }
+      } catch (e) {
+        console.error("Error updating offering category:", e)
+        setEditError(getErrorMessage(e, "Failed to update offering category."))
+      }
     })
   }
 

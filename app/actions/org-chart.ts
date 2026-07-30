@@ -15,10 +15,10 @@ export async function addOrgNode(data: { role_title: string; member_id: string |
     })
     
     revalidatePath("/org-chart")
-    return { success: true }
-  } catch (error: any) {
+    return { success: true as const }
+  } catch (error) {
     console.error("Error adding org node:", error)
-    return { success: false, error: error.message }
+    return { success: false as const, error: "Could not add the role. Please try again." }
   }
 }
 
@@ -33,10 +33,10 @@ export async function updateOrgNode(id: string, data: { role_title: string; memb
       .where(eq(org_chart_nodes.id, id))
       
     revalidatePath("/org-chart")
-    return { success: true }
-  } catch (error: any) {
+    return { success: true as const }
+  } catch (error) {
     console.error("Error updating org node:", error)
-    return { success: false, error: error.message }
+    return { success: false as const, error: "Could not update the role. Please try again." }
   }
 }
 
@@ -47,9 +47,9 @@ export async function deleteOrgNode(id: string) {
     await db.delete(org_chart_nodes).where(eq(org_chart_nodes.id, id))
     
     revalidatePath("/org-chart")
-    return { success: true }
-  } catch (error: any) {
+    return { success: true as const }
+  } catch (error) {
     console.error("Error deleting org node:", error)
-    return { success: false, error: error.message }
+    return { success: false as const, error: "Could not delete the role. Please try again." }
   }
 }

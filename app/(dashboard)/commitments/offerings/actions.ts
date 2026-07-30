@@ -11,7 +11,7 @@ export async function getOfferingCategories() {
     return data.map(o => ({ ...o, created_at: o.created_at?.toISOString() || "" }))
   } catch (error) {
     console.error("Error fetching offering categories:", error)
-    return []
+    throw new Error("Failed to load offering categories.", { cause: error })
   }
 }
 
@@ -25,7 +25,7 @@ export async function createOfferingCategory(name: string, description: string, 
     })
   } catch (error) {
     console.error("Error creating offering category:", error)
-    throw new Error("Failed to create offering category.")
+    throw new Error("Failed to create offering category.", { cause: error })
   }
   revalidatePath("/commitments/offerings")
 }
@@ -40,7 +40,7 @@ export async function updateOfferingCategory(id: string, name: string, descripti
     }).where(eq(offering_categories.id, id))
   } catch (error) {
     console.error("Error updating offering category:", error)
-    throw new Error("Failed to update offering category.")
+    throw new Error("Failed to update offering category.", { cause: error })
   }
   revalidatePath("/commitments/offerings")
 }
@@ -50,7 +50,7 @@ export async function deleteOfferingCategory(id: string) {
     await db.delete(offering_categories).where(eq(offering_categories.id, id))
   } catch (error) {
     console.error("Error deleting offering category:", error)
-    throw new Error("Failed to delete offering category.")
+    throw new Error("Failed to delete offering category.", { cause: error })
   }
   revalidatePath("/commitments/offerings")
 }

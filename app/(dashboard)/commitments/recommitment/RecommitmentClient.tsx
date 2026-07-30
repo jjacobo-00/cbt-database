@@ -4,8 +4,10 @@ import React, { useState, useTransition } from "react"
 import { Search, Loader2, Check, X, ArrowRight, History, CheckCircle2, Clock, HelpCircle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
 import { upsertCommitment } from "../actions"
 import { cn } from "@/lib/utils/utils"
+import { getErrorMessage } from "@/lib/utils/errors"
 
 type TrackerMember = {
   member_id: string
@@ -96,7 +98,10 @@ export function RecommitmentClient({
           }
         }))
         setSelectedMember(null)
-      } catch { /* error */ }
+      } catch (error) {
+        console.error("Error saving recommitment:", error)
+        toast.error(getErrorMessage(error, "Failed to save recommitment."))
+      }
     })
   }
 

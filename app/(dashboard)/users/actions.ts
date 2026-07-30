@@ -15,12 +15,18 @@ export async function addWhitelistedUser(formData: FormData) {
   const email = formData.get("email") as string;
   const name = formData.get("name") as string;
 
-  if (!email) return;
+  if (!email) {
+    throw new Error("An email address is required.")
+  }
 
-  await db.insert(whitelisted_users).values({
+  const [inserted] = await db.insert(whitelisted_users).values({
     email,
     name: name || null,
-  }).onConflictDoNothing();
+  }).onConflictDoNothing().returning();
+
+  if (!inserted) {
+    throw new Error(`${email} is already whitelisted.`)
+  }
 
   revalidatePath("/users")
 }

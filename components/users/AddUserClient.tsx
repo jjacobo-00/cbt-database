@@ -9,6 +9,7 @@ import { Check, ChevronDown, UserPlus, Users, User, Loader2 } from "lucide-react
 import { cn } from "@/lib/utils/utils"
 import { addWhitelistedUser } from "@/app/(dashboard)/users/actions"
 import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/utils/errors"
 
 export function AddUserClient({ members }: { members: any[] }) {
   const [mode, setMode] = useState<"member" | "manual">("member")
@@ -37,8 +38,8 @@ export function AddUserClient({ members }: { members: any[] }) {
       setName("")
       setSelectedMemberId("")
     } catch (error) {
-      toast.error("Failed to add user.")
-      console.error(error)
+      console.error("Error adding whitelisted user:", error)
+      toast.error(getErrorMessage(error, "Failed to add user."))
     } finally {
       setIsSubmitting(false)
     }

@@ -18,7 +18,7 @@ export async function getMinistries() {
     return data.map(m => ({ ...m, created_at: m.created_at?.toISOString() || "" }))
   } catch (error) {
     console.error("Error fetching ministries:", error)
-    return []
+    throw new Error("Failed to load ministries.", { cause: error })
   }
 }
 
@@ -30,14 +30,18 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
       parent_id: parentId || null,
     }).returning()
 
+    if (!inserted) {
+      throw new Error("Failed to create ministry: the database returned no row.")
+    }
+
     // If marked "For Everyone", auto-enroll all existing members & commitments
-    if (forEveryone && inserted) {
+    if (forEveryone) {
       await autoEnrollAllMembersInMinistry(inserted.id)
     }
-  } catch (error: any) {
-    if (error.code === "23505") throw new Error("A ministry with that name already exists.")
+  } catch (error) {
+    if (isUniqueViolation(error)) throw new Error("A ministry with that name already exists.")
     console.error("Error creating ministry:", error)
-    throw new Error("Failed to create ministry.")
+    throw new Error("Failed to create ministry.", { cause: error })
   }
   revalidatePath("/ministries")
   revalidatePath("/members/new")
@@ -54,10 +58,10 @@ export async function updateMinistry(id: string, name: string, forEveryone?: boo
     if (forEveryone) {
       await autoEnrollAllMembersInMinistry(id)
     }
-  } catch (error: any) {
-    if (error.code === "23505") throw new Error("A ministry with that name already exists.")
+  } catch (error) {
+    if (isUniqueViolation(error)) throw new Error("A ministry with that name already exists.")
     console.error("Error updating ministry:", error)
-    throw new Error("Failed to update ministry.")
+    throw new Error("Failed to update ministry.", { cause: error })
   }
   revalidatePath("/ministries")
   revalidatePath("/members/new")
@@ -70,32 +74,33 @@ export async function deleteMinistry(id: string) {
     await db.delete(ministries).where(eq(ministries.id, id))
   } catch (error) {
     console.error("Error deleting ministry:", error)
-    throw new Error("Failed to delete ministry.")
+    throw new Error("Failed to delete ministry.", { cause: error })
   }
   revalidatePath("/ministries")
   revalidatePath("/members/new")
   revalidatePath("/commitments")
 }
 
+// Postgres unique_violation
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505"
+}
+
 async function autoEnrollAllMembersInMinistry(ministryId: string) {
-  try {
-    const allMembers = await db.select({ id: members.id }).from(members)
-    if (allMembers.length === 0) return
+  const allMembers = await db.select({ id: members.id }).from(members)
+  if (allMembers.length === 0) return
 
-    // 1. Enroll into member_ministries
-    await db.insert(member_ministries).values(
-      allMembers.map(m => ({ member_id: m.id, ministry_id: ministryId }))
+  // 1. Enroll into member_ministries
+  await db.insert(member_ministries).values(
+    allMembers.map(m => ({ member_id: m.id, ministry_id: ministryId }))
+  ).onConflictDoNothing()
+
+  // 2. Enroll into current year commitments
+  const currentYear = new Date().getFullYear()
+  const yearComms = await db.select({ id: commitments.id }).from(commitments).where(eq(commitments.year, currentYear))
+  if (yearComms.length > 0) {
+    await db.insert(commitment_ministries).values(
+      yearComms.map(c => ({ commitment_id: c.id, ministry_id: ministryId }))
     ).onConflictDoNothing()
-
-    // 2. Enroll into current year commitments
-    const currentYear = new Date().getFullYear()
-    const yearComms = await db.select({ id: commitments.id }).from(commitments).where(eq(commitments.year, currentYear))
-    if (yearComms.length > 0) {
-      await db.insert(commitment_ministries).values(
-        yearComms.map(c => ({ commitment_id: c.id, ministry_id: ministryId }))
-      ).onConflictDoNothing()
-    }
-  } catch (error) {
-    console.error("Error in autoEnrollAllMembersInMinistry:", error)
   }
 }

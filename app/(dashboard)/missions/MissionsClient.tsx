@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { createMission, updateMission, deleteMission } from "./actions"
+import { getErrorMessage } from "@/lib/utils/errors"
 
 type Mission = {
   id: string
@@ -69,25 +70,26 @@ export function MissionsClient({
     try {
       if (formData.id) {
         const res = await updateMission(formData.id, formData)
-        if (res.success && res.data) {
-          setMissions(missions.map(m => m.id === formData.id ? res.data as Mission : m))
-          toast.success("Mission updated successfully")
-          setIsModalOpen(false)
-        } else {
-          toast.error(res.error || "Failed to update mission")
+        if (!res.success) {
+          toast.error(res.error)
+          return
         }
+        setMissions(missions.map(m => m.id === formData.id ? res.data : m))
+        toast.success("Mission updated successfully")
+        setIsModalOpen(false)
       } else {
         const res = await createMission(formData)
-        if (res.success && res.data) {
-          setMissions([...missions, res.data as Mission].sort((a, b) => a.name.localeCompare(b.name)))
-          toast.success("Mission added successfully")
-          setIsModalOpen(false)
-        } else {
-          toast.error(res.error || "Failed to add mission")
+        if (!res.success) {
+          toast.error(res.error)
+          return
         }
+        setMissions([...missions, res.data].sort((a, b) => a.name.localeCompare(b.name)))
+        toast.success("Mission added successfully")
+        setIsModalOpen(false)
       }
     } catch (err) {
-      toast.error("An error occurred")
+      console.error("Error saving mission:", err)
+      toast.error(getErrorMessage(err, "Failed to save mission."))
     } finally {
       setIsSubmitting(false)
     }
@@ -101,7 +103,7 @@ export function MissionsClient({
       setMissions(missions.filter(m => m.id !== isDeletingId))
       toast.success("Mission deleted successfully")
     } else {
-      toast.error(res.error || "Failed to delete mission")
+      toast.error(res.error)
     }
     setIsDeletingId(null)
   }
