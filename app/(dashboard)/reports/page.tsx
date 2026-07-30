@@ -1,7 +1,23 @@
 import { db } from "@/db"
 import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories } from "@/db/schema"
-import { eq } from "drizzle-orm"
-import { ReportsClient, ReportMember } from "./ReportsClient"
+import { eq, coalesce } from "drizzle-orm"
+import { ReportsClient } from "./ReportsClient"
+
+export type ReportMember = {
+  id: string
+  first_name: string
+  last_name: string
+  gender: string | null
+  sex: string | null
+  age: number | null
+  city: string | null
+  marital_status: string | null
+  occupation: string | null
+  employment_status: string | null
+  highest_educational_attainment: string | null
+  date_baptized: string | null
+  membership_date: string | null
+}
 
 export const revalidate = 0 // Disable cache for fresh reports
 
@@ -27,7 +43,7 @@ export default async function ReportsPage() {
       employment_status: members.employment_status,
       highest_educational_attainment: members.highest_educational_attainment,
       date_baptized: members.date_baptized,
-      created_at: members.created_at
+      membership_date: coalesce(members.membership_date, members.created_at)
     }).from(members),
     db.select({
       member_id: member_ministries.member_id,
@@ -48,8 +64,8 @@ export default async function ReportsPage() {
 
   const formattedData: ReportMember[] = membersData.map(m => ({
     ...m,
-    date_baptized: m.date_baptized || null,
-    created_at: m.created_at?.toISOString() || null,
+    date_baptized: m.date_baptized?.toISOString() || null,
+    membership_date: m.membership_date?.toISOString() || null,
   }))
 
   return <ReportsClient 

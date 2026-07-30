@@ -9,22 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend 
 } from "recharts"
 import { Users, Droplets, MapPin, Activity, Target } from "lucide-react"
-
-export type ReportMember = {
-  id: string
-  first_name: string
-  last_name: string
-  gender: string | null
-  sex: string | null
-  age: number | null
-  city: string | null
-  marital_status: string | null
-  occupation: string | null
-  employment_status: string | null
-  highest_educational_attainment: string | null
-  date_baptized: string | null
-  created_at: string | null
-}
+import type { ReportMember } from "./page"
 
 export type MinistryParticipation = {
   member_id: string
@@ -62,8 +47,8 @@ export function ReportsClient({
     if (dateFilter === "all") return data
     const currentYear = new Date().getFullYear()
     return data.filter(m => {
-      if (!m.created_at) return false
-      const mYear = new Date(m.created_at).getFullYear()
+      if (!m.membership_date) return false
+      const mYear = new Date(m.membership_date).getFullYear()
       if (dateFilter === "this_year") return mYear === currentYear
       if (dateFilter === "last_year") return mYear === currentYear - 1
       return true
@@ -204,8 +189,8 @@ export function ReportsClient({
           className="h-10 rounded-lg border border-input bg-card text-foreground px-4 shadow-sm w-full sm:w-auto"
         >
           <option value="all">All-Time Data</option>
-          <option value="this_year">Joined This Year</option>
-          <option value="last_year">Joined Last Year</option>
+          <option value="this_year">Members This Year</option>
+          <option value="last_year">Members Last Year</option>
         </select>
       </div>
 

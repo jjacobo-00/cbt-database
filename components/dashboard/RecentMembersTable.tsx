@@ -9,7 +9,7 @@ interface RecentMember {
   last_name: string
   contact_number: string | null
   city: string | null
-  created_at: Date | null
+  membership_date: Date | null
 }
 
 interface RecentMembersTableProps {
@@ -30,12 +30,18 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
     return new Date(date) >= sevenDaysAgo
   }
 
+  // Helper to format date
+  const formatDate = (date: Date | null) => {
+    if (!date) return "-"
+    return new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
   return (
     <Card className="mt-4 transition-all duration-300 hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
           <CardTitle>Recent Members</CardTitle>
-          <CardDescription>The 5 most recently added members.</CardDescription>
+          <CardDescription>The 5 most recently joined members.</CardDescription>
         </div>
         <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
           <Users className="h-5 w-5 text-primary" />
@@ -56,7 +62,7 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
             </thead>
             <tbody>
               {recentMembers.map((member) => {
-                const isNew = isNewMember(member.created_at)
+                const isNew = isNewMember(member.membership_date)
                 
                 return (
                   <tr key={member.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
@@ -78,7 +84,7 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.contact_number || "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{member.city || "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {member.created_at ? new Date(member.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "-"}
+                      {formatDate(member.membership_date)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10 hover:text-primary">
@@ -102,7 +108,7 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
         {/* Mobile Card View (Compact List Tiles) */}
         <div className="flex flex-col md:hidden border rounded-xl bg-card shadow-sm overflow-hidden divide-y mt-4">
           {recentMembers.map((member) => {
-            const isNew = isNewMember(member.created_at)
+            const isNew = isNewMember(member.membership_date)
             const initials = getInitials(member.first_name, member.last_name)
             return (
               <Link 

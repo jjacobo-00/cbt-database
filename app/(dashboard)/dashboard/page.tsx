@@ -102,8 +102,8 @@ export default async function DashboardPage() {
 
   // Current year data
   growthDataQuery.forEach(member => {
-    if (member.created_at) {
-      const mDate = new Date(member.created_at)
+    if (member.membership_date) {
+      const mDate = new Date(member.membership_date)
       const m = mDate.getMonth()
       const y = mDate.getFullYear()
       const bucket = monthlyData.find(b => b.monthNum === m && y === currentYear)
@@ -115,8 +115,8 @@ export default async function DashboardPage() {
 
   // Previous year data
   previousYearGrowthQuery.forEach(member => {
-    if (member.created_at) {
-      const mDate = new Date(member.created_at)
+    if (member.membership_date) {
+      const mDate = new Date(member.membership_date)
       const m = mDate.getMonth()
       const y = mDate.getFullYear()
       const bucket = monthlyData.find(b => b.monthNum === m && y === previousYear)
@@ -252,12 +252,12 @@ export default async function DashboardPage() {
       {/* Charts Section */}
       <DashboardCharts 
         monthlyData={monthlyData} 
-        baptismData={baptismData} 
+        churchRoleData={churchRoleDistribution} 
         ageData={ageDemographicsData} 
       />
 
       {/* Recent Members Table */}
-      <RecentMembersTable recentMembers={recentMembers} />
+      <RecentMembersTable recentMembers={recentMembers.map(m => ({...m, membership_date: m.membership_date}))} />
     </div>
   )
 }
