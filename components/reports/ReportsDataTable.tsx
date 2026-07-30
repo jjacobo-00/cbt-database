@@ -83,7 +83,7 @@ export function ReportsDataTable<TData, TValue>({
           let cellValue = row.getValue(col.id)
           // Handle special case for city column to show mission_location first
           if (col.id === "city") {
-            cellValue = (row.original as ReportMember).mission_location || cellValue
+            cellValue = (row.original as any).mission_location || cellValue
           }
           // Escape quotes and wrap in quotes if there's a comma
           if (cellValue === null || cellValue === undefined) cellValue = ""
@@ -192,11 +192,11 @@ export function ReportsDataTable<TData, TValue>({
         <div className="flex flex-col md:hidden divide-y divide-border">
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => {
-              const firstName = (row.original as any).first_name || ""
-              const lastName = (row.original as any).last_name || ""
+              const firstName = (row.original as ReportMember).first_name || ""
+              const lastName = (row.original as ReportMember).last_name || ""
               const name = `${firstName} ${lastName}`.trim() || "Unknown"
-              const gender = (row.original as any).gender || (row.original as any).sex || "-"
-              const city = (row.original as any).mission_location || (row.original as any).city || "-"
+              const gender = (row.original as ReportMember).gender || (row.original as ReportMember).sex || "-"
+              const city = (row.original as ReportMember).mission_location || (row.original as ReportMember).city || "-"
               
               const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
 

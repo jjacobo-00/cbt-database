@@ -32,11 +32,11 @@ export function ReportsClient({
   ministryData = [], 
   faithPromiseData = [] 
 }: { 
-  initialData: ExtendedReportMember[] 
+  initialData: ReportMember[] 
   ministryData?: MinistryParticipation[]
   faithPromiseData?: FaithPromiseData[]
 }) {
-  const [data] = useState<ExtendedReportMember[]>(initialData as ExtendedReportMember[])
+  const [data] = useState<ReportMember[]>(initialData)
   const [ministryParticipation] = useState<MinistryParticipation[]>(ministryData)
   const [faithPromises] = useState<FaithPromiseData[]>(faithPromiseData)
   
@@ -60,7 +60,7 @@ export function ReportsClient({
   const baptizedMembers = filteredData.filter(m => m.date_baptized).length
   const maleCount = filteredData.filter(m => (m.gender || m.sex) === "Male").length
   const femaleCount = filteredData.filter(m => (m.gender || m.sex) === "Female").length
-  const uniqueCities = new Set(filteredData.map(m => (m as any).mission_location || m.city).filter(Boolean)).size
+  const uniqueCities = new Set(filteredData.map(m => m.mission_location || m.city).filter(Boolean)).size
 
   // Gender Data for Chart
   const genderData = [
@@ -96,7 +96,7 @@ export function ReportsClient({
   const ageData = useMemo(() => {
     let kids = 0, youth = 0, youngAdults = 0, adults = 0, seniors = 0, unknown = 0;
     filteredData.forEach(m => {
-      const age = m.age || calculateAge((m as any).birth_date)
+      const age = m.age || calculateAge(m.birth_date)
       if (age === null || age === undefined) {
         unknown++
       } else {
@@ -121,7 +121,7 @@ export function ReportsClient({
   const cityData = useMemo(() => {
     const counts: Record<string, number> = {}
     filteredData.forEach(m => {
-      const city = (m as any).mission_location || m.city || "Unknown"
+      const city = m.mission_location || m.city || "Unknown"
       counts[city] = (counts[city] || 0) + 1
     })
     return Object.entries(counts)

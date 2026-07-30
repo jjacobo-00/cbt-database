@@ -22,9 +22,6 @@ export type ReportMember = {
   created_at: string | null
 }
 
-// Extend ReportMember to include birth_date for client-side age calculation
-export type ExtendedReportMember = ReportMember
-
 export const revalidate = 0 // Disable cache for fresh reports
 
 export const metadata = { title: "Reports & Analytics | CBT Database" }
