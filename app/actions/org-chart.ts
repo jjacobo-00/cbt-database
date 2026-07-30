@@ -1,11 +1,14 @@
 "use server"
 
+import { requireAuth } from "@/lib/auth-guard"
+
 import { db } from "@/db"
 import { org_chart_nodes } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 export async function addOrgNode(data: { role_title: string; member_id: string | null; parent_id: string | null; sort_order?: number }) {
+  await requireAuth()
   try {
     await db.insert(org_chart_nodes).values({
       role_title: data.role_title,
@@ -23,6 +26,7 @@ export async function addOrgNode(data: { role_title: string; member_id: string |
 }
 
 export async function updateOrgNode(id: string, data: { role_title: string; member_id: string | null; parent_id: string | null }) {
+  await requireAuth()
   try {
     await db.update(org_chart_nodes)
       .set({
@@ -41,6 +45,7 @@ export async function updateOrgNode(id: string, data: { role_title: string; memb
 }
 
 export async function deleteOrgNode(id: string) {
+  await requireAuth()
   try {
     // Note: Because parent_id has onDelete: 'set null', deleting a parent will just orphan children, 
     // rather than cascade deleting the whole branch, which is safer for a configurable tree.

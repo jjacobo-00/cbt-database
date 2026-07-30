@@ -1,11 +1,14 @@
 "use server"
 
+import { requireAuth } from "@/lib/auth-guard"
+
 import { db } from "@/db"
 import { missions } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 export async function getMissions() {
+  await requireAuth()
   try {
     const data = await db.select().from(missions).orderBy(missions.name)
     return data
@@ -21,6 +24,7 @@ export async function createMission(data: {
   pastor_name?: string
   established_date?: string
 }) {
+  await requireAuth()
   try {
     const newMission = await db.insert(missions).values({
       name: data.name,
@@ -46,6 +50,7 @@ export async function updateMission(
     established_date?: string
   }
 ) {
+  await requireAuth()
   try {
     const updatedMission = await db.update(missions).set({
       name: data.name,
@@ -63,6 +68,7 @@ export async function updateMission(
 }
 
 export async function deleteMission(id: string) {
+  await requireAuth()
   try {
     await db.delete(missions).where(eq(missions.id, id))
     revalidatePath("/missions")
