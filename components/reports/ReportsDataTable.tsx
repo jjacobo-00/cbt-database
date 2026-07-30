@@ -24,6 +24,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TablePagination } from "@/components/ui/table-pagination"
 import { Download, SlidersHorizontal, User2 } from "lucide-react"
+import type { ReportMember } from "@/app/(dashboard)/reports/page"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -31,7 +32,7 @@ interface DataTableProps<TData, TValue> {
   filename?: string
 }
 
-export function ReportsDataTable<TData, TValue>({
+export function ReportsDataTable<TData extends ReportMember, TValue>({
   columns,
   data,
   filename = "reports-export.csv",
@@ -192,11 +193,11 @@ export function ReportsDataTable<TData, TValue>({
         <div className="flex flex-col md:hidden divide-y divide-border">
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => {
-              const firstName = (row.original as ReportMember).first_name || ""
-              const lastName = (row.original as ReportMember).last_name || ""
+              const firstName = row.original.first_name || ""
+              const lastName = row.original.last_name || ""
               const name = `${firstName} ${lastName}`.trim() || "Unknown"
-              const gender = (row.original as ReportMember).gender || (row.original as ReportMember).sex || "-"
-              const city = (row.original as ReportMember).mission_location || (row.original as ReportMember).city || "-"
+              const gender = row.original.gender || row.original.sex || "-"
+              const city = row.original.mission_location || row.original.city || "-"
               
               const initials = name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
 
