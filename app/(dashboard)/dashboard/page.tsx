@@ -301,7 +301,7 @@ export default async function DashboardPage() {
 
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Baptisms</CardTitle>
+            <CardTitle className="text-sm font-medium">New Baptized</CardTitle>
             <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
               <Droplets className="h-4 w-4 text-green-500" />
             </div>
