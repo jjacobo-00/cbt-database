@@ -1038,7 +1038,7 @@ export function MemberForm({
             }
           }
         }}
-        className="space-y-6"
+        className="space-y-6 pb-28 sm:pb-6"
       >
         {/* DRAFT RESTORED BANNER */}
         {restoredDraftInfo && (
@@ -2547,7 +2547,7 @@ export function MemberForm({
         </div>
 
         {/* BOTTOM NAVIGATION BUTTONS */}
-        <div className="fixed bottom-16 sm:relative sm:bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 px-4 py-3 sm:p-0 sm:pt-6 border-t bg-background/95 backdrop-blur-xl sm:bg-transparent shadow-lg sm:shadow-none pb-safe">
+        <div className="fixed bottom-0 inset-x-0 sm:relative sm:bottom-auto z-50 flex items-center justify-between gap-3 px-4 py-3 sm:p-0 sm:pt-6 border-t bg-background/95 backdrop-blur-xl sm:bg-transparent shadow-2xl sm:shadow-none pb-safe">
           <div className="flex items-center gap-2">
             <Button 
               type="button" 
