@@ -217,17 +217,7 @@ export function MemberProfileView({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap min-w-0 w-full sm:w-auto mt-2 sm:mt-0">
-          {isReadOnly ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              className="gap-1.5 px-3 text-xs"
-            >
-              <Printer className="h-4 w-4" />
-              <span>Print My Record</span>
-            </Button>
-          ) : (
+          {!isReadOnly && (
             <>
               <Button size="sm" asChild className="gap-1.5 px-4 font-medium">
                 <Link href={`/members/${member.id}/edit`}>
