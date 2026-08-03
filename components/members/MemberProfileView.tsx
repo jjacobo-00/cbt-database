@@ -334,19 +334,14 @@ export function MemberProfileView({
                       {member.church_role}
                     </span>
                   )}
-                  {member.sex && (
+                  {(member.gender || member.sex) && (
                     <span className="px-2.5 py-0.5 rounded-full font-medium bg-secondary text-secondary-foreground border">
-                      {member.sex}
+                      {member.gender || member.sex}
                     </span>
                   )}
                   {computedAge !== null && computedAge !== undefined && (
                     <span className="px-2.5 py-0.5 rounded-full font-medium bg-secondary text-secondary-foreground border">
                       {computedAge} yrs old
-                    </span>
-                  )}
-                  {(member.gender || member.sex) && (
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                      {member.gender || member.sex}
                     </span>
                   )}
                   {member.marital_status && (
