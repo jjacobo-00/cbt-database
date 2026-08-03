@@ -108,7 +108,7 @@ export function InviteClient({
   }
 
   return (
-    <div className="max-w-4xl mx-auto w-full">
+    <div className="max-w-5xl mx-auto w-full">
       <div className="mb-8 text-center sm:text-left">
         <h1 className="text-3xl font-bold tracking-tight">
           {inviteDetails.type === "new" ? "Member Registration" : "Update Profile"}
@@ -138,7 +138,7 @@ export function InviteClient({
         </div>
       )}
 
-      <div className="bg-card border rounded-xl shadow-sm p-4 sm:p-8">
+      <div className="w-full">
         <MemberForm 
           initialData={memberData} 
           ministries={ministries}
@@ -147,6 +147,7 @@ export function InviteClient({
           onSubmitOverride={handleSubmit}
           hideBackButton={true}
           isInvite={true}
+          hideSidePanel={true}
           externalStep={formStep}
           onExternalStepChange={setFormStep}
         />

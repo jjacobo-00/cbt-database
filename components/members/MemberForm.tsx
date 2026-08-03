@@ -176,6 +176,7 @@ export function MemberForm({
   onSubmitOverride,
   hideBackButton = false,
   isInvite = false,
+  hideSidePanel = false,
   externalStep,
   onExternalStepChange
 }: { 
@@ -186,12 +187,14 @@ export function MemberForm({
   onSubmitOverride?: (payload: string) => Promise<void>;
   hideBackButton?: boolean;
   isInvite?: boolean;
+  hideSidePanel?: boolean;
   externalStep?: number;
   onExternalStepChange?: Dispatch<SetStateAction<number>>;
 }) {
   const [internalStep, setInternalStep] = useState(1)
   const step = externalStep !== undefined ? externalStep : internalStep
   const setStep = onExternalStepChange ? onExternalStepChange : setInternalStep
+  const showSidePanel = !hideSidePanel && !isInvite
   
   const form = useForm({
     resolver: zodResolver(memberSchema),
@@ -988,7 +991,7 @@ export function MemberForm({
       </div>
 
       {/* Desktop Stepper Header (hidden md:flex) */}
-      <div className="hidden md:flex sticky top-0 bg-card z-10 py-4 border-b border-border mb-8 items-center justify-between gap-4 md:gap-8 px-2">
+      <div className="hidden md:flex sticky top-0 bg-card z-10 py-4 border-b border-border mb-8 items-center justify-between gap-1 sm:gap-2 lg:gap-3 px-1 overflow-x-auto no-scrollbar">
         {STEPS.map((s) => {
           const isActive = step === s.id
           const isCompleted = step > s.id
@@ -999,20 +1002,20 @@ export function MemberForm({
               onClick={() => handleStepClick(s.id)}
               disabled={!initialData && s.id > step + 1}
               className={cn(
-                "flex items-center gap-2 group transition-all duration-200 outline-none text-left rounded-lg p-1",
+                "flex items-center gap-1.5 group transition-all duration-200 outline-none text-left rounded-lg p-1 shrink-0 xl:shrink",
                 (initialData || s.id <= step + 1) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
               )}
             >
               <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all group-hover:scale-105 duration-200",
+                "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-all group-hover:scale-105 duration-200 shrink-0",
                 isActive ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2" : 
                 isCompleted ? "bg-primary/80 text-primary-foreground group-hover:bg-primary" : 
                 "bg-muted-foreground/20 text-muted-foreground group-hover:bg-muted-foreground/30"
               )}>
-                {isCompleted ? <Check className="h-4 w-4" /> : s.id}
+                {isCompleted ? <Check className="h-3.5 w-3.5" /> : s.id}
               </div>
               <span className={cn(
-                "text-sm font-medium transition-colors duration-200",
+                "text-xs sm:text-sm font-medium transition-colors duration-200 whitespace-nowrap",
                 isActive ? "text-primary font-bold" : 
                 isCompleted ? "text-foreground group-hover:text-primary" : 
                 "text-muted-foreground group-hover:text-foreground"
@@ -1068,7 +1071,7 @@ export function MemberForm({
           </div>
         )}
         <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
-          <div className="lg:col-span-8 space-y-6 pb-28 sm:pb-6">
+          <div className={cn("space-y-6 pb-28 sm:pb-6", showSidePanel ? "lg:col-span-8" : "lg:col-span-12")}>
             {/* STEP 1: PERSONAL INFORMATION */}
             {step === 1 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
@@ -2455,95 +2458,97 @@ export function MemberForm({
       </div>
 
           {/* RIGHT 4 COLUMNS: Desktop Sticky Live Summary Side Panel */}
-          <div className="lg:col-span-4 hidden lg:block sticky top-20 space-y-5">
-            {/* Live Profile Summary Card */}
-            <div className="rounded-2xl border bg-card p-5 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between border-b pb-3 mb-4">
-                <h4 className="font-bold text-foreground text-sm tracking-tight flex items-center gap-2">
-                  <User2 className="h-4 w-4 text-primary" /> Live Profile Preview
-                </h4>
-                <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  Step {step} of {STEPS.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4 mb-4">
-                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xl shadow-inner shrink-0">
-                  {form.watch("first_name") || form.watch("last_name") ? `${(form.watch("first_name") || '').charAt(0)}${(form.watch("last_name") || '').charAt(0)}`.toUpperCase() : <User2 className="h-7 w-7 text-primary/70" />}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <h4 className="font-bold text-foreground text-base truncate">
-                    {form.watch("first_name") || form.watch("last_name") ? `${form.watch("first_name")} ${form.watch("last_name")}`.trim() : "Member Name"}
+          {showSidePanel && (
+            <div className="lg:col-span-4 hidden lg:block sticky top-20 space-y-5">
+              {/* Live Profile Summary Card */}
+              <div className="rounded-2xl border bg-card p-5 shadow-xs relative overflow-hidden">
+                <div className="flex items-center justify-between border-b pb-3 mb-4">
+                  <h4 className="font-bold text-foreground text-sm tracking-tight flex items-center gap-2">
+                    <User2 className="h-4 w-4 text-primary" /> Live Profile Preview
                   </h4>
-                  <span className="inline-flex items-center text-xs text-primary font-semibold bg-primary/10 px-2.5 py-0.5 rounded-full w-fit mt-1">
-                    {form.watch("church_role") || "Member"}
+                  <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    Step {step} of {STEPS.length}
                   </span>
+                </div>
+
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xl shadow-inner shrink-0">
+                    {form.watch("first_name") || form.watch("last_name") ? `${(form.watch("first_name") || '').charAt(0)}${(form.watch("last_name") || '').charAt(0)}`.toUpperCase() : <User2 className="h-7 w-7 text-primary/70" />}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <h4 className="font-bold text-foreground text-base truncate">
+                      {form.watch("first_name") || form.watch("last_name") ? `${form.watch("first_name")} ${form.watch("last_name")}`.trim() : "Member Name"}
+                    </h4>
+                    <span className="inline-flex items-center text-xs text-primary font-semibold bg-primary/10 px-2.5 py-0.5 rounded-full w-fit mt-1">
+                      {form.watch("church_role") || "Member"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 text-xs border-t pt-3 text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Date of Birth:</span>
+                    <span className="text-foreground font-semibold">
+                      {form.watch("birth_date") ? (() => { try { return format(parseISO(form.watch("birth_date")), "MMM d, yyyy") } catch { return form.watch("birth_date") } })() : "Not set"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Contact:</span>
+                    <span className="text-foreground font-semibold truncate max-w-[150px]">
+                      {form.watch("contact_number") || "Not set"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">City:</span>
+                    <span className="text-foreground font-semibold">
+                      {form.watch("city") || "Not set"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Status:</span>
+                    <span className="text-foreground font-semibold">
+                      {form.watch("employment_status") || "Not set"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2.5 text-xs border-t pt-3 text-muted-foreground">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Date of Birth:</span>
-                  <span className="text-foreground font-semibold">
-                    {form.watch("birth_date") ? (() => { try { return format(parseISO(form.watch("birth_date")), "MMM d, yyyy") } catch { return form.watch("birth_date") } })() : "Not set"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Contact:</span>
-                  <span className="text-foreground font-semibold truncate max-w-[150px]">
-                    {form.watch("contact_number") || "Not set"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">City:</span>
-                  <span className="text-foreground font-semibold">
-                    {form.watch("city") || "Not set"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Status:</span>
-                  <span className="text-foreground font-semibold">
-                    {form.watch("employment_status") || "Not set"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Progress Checklist */}
-            <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-3">
-              <h5 className="font-bold text-sm text-foreground">Form Progress Checklist</h5>
-              <div className="space-y-1 pt-1">
-                {STEPS.map((s) => {
-                  const isCurrent = step === s.id
-                  const isDone = step > s.id
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => handleStepClick(s.id)}
-                      className={cn(
-                        "flex items-center justify-between w-full p-2.5 rounded-xl text-xs font-medium transition-all text-left",
-                        isCurrent ? "bg-primary text-primary-foreground font-bold shadow-xs" :
-                        isDone ? "text-foreground hover:bg-muted/50" : "text-muted-foreground/60 hover:bg-muted/30"
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className={cn(
-                          "h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
-                          isCurrent ? "bg-primary-foreground text-primary" :
-                          isDone ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"
-                        )}>
-                          {isDone ? <Check className="h-3 w-3" /> : s.id}
+              {/* Form Progress Checklist */}
+              <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-3">
+                <h5 className="font-bold text-sm text-foreground">Form Progress Checklist</h5>
+                <div className="space-y-1 pt-1">
+                  {STEPS.map((s) => {
+                    const isCurrent = step === s.id
+                    const isDone = step > s.id
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => handleStepClick(s.id)}
+                        className={cn(
+                          "flex items-center justify-between w-full p-2.5 rounded-xl text-xs font-medium transition-all text-left",
+                          isCurrent ? "bg-primary text-primary-foreground font-bold shadow-xs" :
+                          isDone ? "text-foreground hover:bg-muted/50" : "text-muted-foreground/60 hover:bg-muted/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className={cn(
+                            "h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
+                            isCurrent ? "bg-primary-foreground text-primary" :
+                            isDone ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"
+                          )}>
+                            {isDone ? <Check className="h-3 w-3" /> : s.id}
+                          </div>
+                          <span>{s.title}</span>
                         </div>
-                        <span>{s.title}</span>
-                      </div>
-                      {isCurrent && <ChevronRight className="h-3.5 w-3.5" />}
-                    </button>
-                  )
-                })}
+                        {isCurrent && <ChevronRight className="h-3.5 w-3.5" />}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* BOTTOM NAVIGATION BUTTONS */}
