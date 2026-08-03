@@ -148,12 +148,15 @@ export function MemberProfileView({
     }
   }
 
-  // Parse JSONB arrays safely
-  const educationDetails: EducationDetail[] = Array.isArray(
-    member.education_details,
-  )
+  // Parse JSONB arrays safely and filter out unrecorded education levels
+  const rawEducation: EducationDetail[] = Array.isArray(member.education_details)
     ? member.education_details
     : [];
+  const educationDetails: EducationDetail[] = rawEducation.filter((edu) => {
+    const hasSchoolName = !!edu.school_name && edu.school_name.trim() !== "" && edu.school_name.trim() !== "School name not recorded";
+    const hasDates = !!edu.year_started || !!edu.year_graduated || !!edu.is_currently_enrolled;
+    return hasSchoolName || hasDates;
+  });
   const siblings: SiblingDetail[] = Array.isArray(member.siblings)
     ? member.siblings
     : [];
