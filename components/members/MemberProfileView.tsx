@@ -89,6 +89,7 @@ type MemberProfileProps = {
   childrenList: ChildDetail[];
   ministriesList: MinistryDetail[];
   commitmentsHistory: CommitmentHistoryItem[];
+  isReadOnly?: boolean;
 };
 
 export function MemberProfileView({
@@ -96,6 +97,7 @@ export function MemberProfileView({
   childrenList,
   ministriesList,
   commitmentsHistory,
+  isReadOnly = false,
 }: MemberProfileProps) {
   const [activeTab, setActiveTab] = useState<
     | "overview"
@@ -190,64 +192,82 @@ export function MemberProfileView({
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-4 print:hidden w-full min-w-0">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="rounded-full hover:bg-muted"
-          >
-            <Link href="/members">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
+          {!isReadOnly && (
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="rounded-full hover:bg-muted"
+            >
+              <Link href="/members">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+          )}
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Member Profile
+              {isReadOnly ? "My Member Details" : "Member Profile"}
             </h1>
             <p className="text-xs text-muted-foreground">
-              Detailed record and church commitments history
+              {isReadOnly
+                ? "Your personal record and church commitments history"
+                : "Detailed record and church commitments history"}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap min-w-0 w-full sm:w-auto mt-2 sm:mt-0">
-          <Button size="sm" asChild className="gap-1.5 px-4 font-medium">
-            <Link href={`/members/${member.id}/edit`}>
-              <Edit className="h-4 w-4" />
-              <span>Edit</span>
-            </Link>
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">More options</span>
+          {isReadOnly ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              className="gap-1.5 px-3 text-xs"
+            >
+              <Printer className="h-4 w-4" />
+              <span>Print My Record</span>
+            </Button>
+          ) : (
+            <>
+              <Button size="sm" asChild className="gap-1.5 px-4 font-medium">
+                <Link href={`/members/${member.id}/edit`}>
+                  <Edit className="h-4 w-4" />
+                  <span>Edit</span>
+                </Link>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <GenerateInviteLinkButton
-                memberId={member.id}
-                asDropdownItem={true}
-                className="cursor-pointer font-medium"
-              />
-              <DropdownMenuItem
-                onClick={handlePrint}
-                className="cursor-pointer font-medium"
-              >
-                <Printer className="h-4 w-4 mr-2" />
-                <span>Print Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setShowDeleteConfirm(true)}
-                className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-medium"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                <span>Delete Profile</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">More options</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <GenerateInviteLinkButton
+                    memberId={member.id}
+                    asDropdownItem={true}
+                    className="cursor-pointer font-medium"
+                  />
+                  <DropdownMenuItem
+                    onClick={handlePrint}
+                    className="cursor-pointer font-medium"
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    <span>Print Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-medium"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    <span>Delete Profile</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
         </div>
       </div>
 

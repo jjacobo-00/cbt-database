@@ -3,7 +3,7 @@ import { LogOut, Moon, Sun, UserCircle } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boolean) => void }) {
   const { theme, setTheme } = useTheme()
+  const { data: session } = useSession()
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-md px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 print:hidden">
@@ -46,9 +47,11 @@ export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boole
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Account</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  Manage your account
+                <p className="text-sm font-medium leading-none">
+                  {session?.user?.name || "User Account"}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground truncate">
+                  {session?.user?.email || (session?.user?.role === "member" ? "Member Portal" : "Admin Session")}
                 </p>
               </div>
             </DropdownMenuLabel>

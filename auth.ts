@@ -1,9 +1,10 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
+import Credentials from "next-auth/providers/credentials"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import { db } from "@/db"
-import { eq } from "drizzle-orm"
-import { whitelisted_users, users, accounts, sessions, verificationTokens } from "@/db/schema"
+import { eq, and, ilike } from "drizzle-orm"
+import { whitelisted_users, users, accounts, sessions, verificationTokens, members } from "@/db/schema"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.SESSION_SECRET || "default_cbt_directory_secret_change_me_in_prod",
@@ -17,46 +18,136 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    })
+    }),
+    Credentials({
+      id: "otp",
+      name: "Member OTP",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        code: { label: "Code", type: "text" },
+        memberId: { label: "Member ID", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.code) {
+          throw new Error("Email and OTP verification code are required.")
+        }
+
+        const email = (credentials.email as string).trim().toLowerCase()
+        const code = (credentials.code as string).trim()
+        const selectedMemberId = (credentials.memberId as string | undefined)?.trim()
+
+        // Find token record
+        const tokenRecords = await db
+          .select()
+          .from(verificationTokens)
+          .where(
+            and(
+              eq(verificationTokens.identifier, email),
+              eq(verificationTokens.token, code)
+            )
+          )
+          .limit(1)
+
+        if (!tokenRecords || tokenRecords.length === 0) {
+          throw new Error("Invalid verification code.")
+        }
+
+        const tokenRecord = tokenRecords[0]
+        if (new Date(tokenRecord.expires) < new Date()) {
+          // Cleanup expired token
+          await db
+            .delete(verificationTokens)
+            .where(
+              and(
+                eq(verificationTokens.identifier, email),
+                eq(verificationTokens.token, code)
+              )
+            )
+          throw new Error("Verification code has expired. Please request a new one.")
+        }
+
+        // Delete valid used token
+        await db
+          .delete(verificationTokens)
+          .where(
+            and(
+              eq(verificationTokens.identifier, email),
+              eq(verificationTokens.token, code)
+            )
+          )
+
+        // Find matching member
+        let member
+        if (selectedMemberId) {
+          member = await db.query.members.findFirst({
+            where: and(eq(members.id, selectedMemberId), ilike(members.email, email)),
+          })
+        } else {
+          member = await db.query.members.findFirst({
+            where: ilike(members.email, email),
+          })
+        }
+
+        if (!member) {
+          throw new Error("No active member profile found associated with this email.")
+        }
+
+        return {
+          id: member.id,
+          name: `${member.first_name} ${member.last_name}`,
+          email: member.email || email,
+          role: "member",
+          memberId: member.id,
+        }
+      },
+    }),
   ],
   session: {
     strategy: "jwt",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       if (account?.provider === "google") {
-        const email = user.email;
-        if (!email) return false;
-        
-        // Check if the user is whitelisted
+        const email = user.email
+        if (!email) return false
+
+        // Check if the user is whitelisted for admin access
         const whitelistedUser = await db.query.whitelisted_users.findFirst({
           where: eq(whitelisted_users.email, email),
-        });
+        })
 
         if (!whitelistedUser) {
-          // Returning false will redirect to the error page or we can throw an error
-          return "/login?error=Your Google account is not authorized to access this system.";
+          return "/login?error=Your Google account is not authorized to access administrative features."
         }
-        
-        return true;
+
+        user.role = "admin"
+        return true
       }
-      return true;
-    },
-    async session({ session, token }) {
-      if (token?.sub) {
-        session.user.id = token.sub;
-      }
-      return session;
+      return true
     },
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
+        token.sub = user.id
+        token.role = user.role || "member"
+        token.memberId = user.memberId
       }
-      return token;
-    }
+      return token
+    },
+    async session({ session, token }) {
+      if (token?.sub) {
+        session.user.id = token.sub
+      }
+      if (token?.role) {
+        session.user.role = token.role as "admin" | "member"
+      }
+      if (token?.memberId) {
+        session.user.memberId = token.memberId as string
+      }
+      return session
+    },
   },
   pages: {
     signIn: "/login",
-    error: "/login", // Error code passed in query string as ?error=
+    error: "/login",
   },
 })

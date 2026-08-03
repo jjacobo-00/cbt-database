@@ -13,7 +13,9 @@ type NavItem = {
   subItems?: { name: string; href: string; icon?: any }[]
 }
 
-const navItems: NavItem[] = [
+import { useSession } from "next-auth/react"
+
+const adminNavItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Members", href: "/members", icon: Users },
   { name: "Ministries", href: "/ministries", icon: Church },
@@ -36,6 +38,10 @@ const navItems: NavItem[] = [
   { name: "Users", href: "/users", icon: Shield },
 ]
 
+const memberNavItems: NavItem[] = [
+  { name: "My Member Details", href: "/my-profile", icon: Users },
+]
+
 export function Sidebar({ 
   isMobileMenuOpen, 
   setIsMobileMenuOpen 
@@ -44,7 +50,11 @@ export function Sidebar({
   setIsMobileMenuOpen: (v: boolean) => void 
 }) {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [openSubMenu, setOpenSubMenu] = useState<string | null>("Commitments")
+
+  const isMember = session?.user?.role === "member"
+  const navItems = isMember ? memberNavItems : adminNavItems
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {

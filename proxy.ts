@@ -1,27 +1,38 @@
 import { auth } from "@/auth"
 
 export const proxy = auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const isAuthPage = req.nextUrl.pathname.startsWith('/login');
-  const isApiAuthRoute = req.nextUrl.pathname.startsWith('/api/auth');
-  const isInviteRoute = req.nextUrl.pathname.startsWith('/invite'); // Don't protect invite routes
+  const isLoggedIn = !!req.auth
+  const path = req.nextUrl.pathname
+  const isAuthPage = path.startsWith('/login')
+  const isApiAuthRoute = path.startsWith('/api/auth')
+  const isInviteRoute = path.startsWith('/invite')
+  const isIcon = path === '/icon.svg'
+  const role = req.auth?.user?.role
 
-  if (isApiAuthRoute || isInviteRoute) {
-    return;
+  if (isApiAuthRoute || isInviteRoute || isIcon) {
+    return
   }
 
   if (isAuthPage) {
     if (isLoggedIn) {
-      return Response.redirect(new URL('/dashboard', req.nextUrl));
+      if (role === "member") {
+        return Response.redirect(new URL('/my-profile', req.nextUrl))
+      }
+      return Response.redirect(new URL('/dashboard', req.nextUrl))
     }
-    return;
+    return
   }
 
   if (!isLoggedIn) {
-    return Response.redirect(new URL('/login', req.nextUrl));
+    return Response.redirect(new URL('/login', req.nextUrl))
   }
 
-  return;
+  // Enforce member access restriction
+  if (role === "member" && path !== "/my-profile") {
+    return Response.redirect(new URL('/my-profile', req.nextUrl))
+  }
+
+  return
 })
 
 export const config = {
@@ -29,4 +40,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-
