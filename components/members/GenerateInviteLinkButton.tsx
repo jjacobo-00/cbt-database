@@ -90,7 +90,7 @@ export function GenerateInviteLinkButton({
   const [presetRole, setPresetRole] = useState<string>("Member");
   const [presetMissionId, setPresetMissionId] = useState<string>("none");
   const [maxUses, setMaxUses] = useState<string>("50"); // 50 default for batch
-  const [expirationMinutes, setExpirationMinutes] = useState<string>("30"); // 30 mins default
+  const [expirationMinutes, setExpirationMinutes] = useState<string>("60"); // 1 hour default
 
   const fetchInitialData = async () => {
     setIsLoading(true);
@@ -331,8 +331,8 @@ export function GenerateInviteLinkButton({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="30">30 Minutes (Default)</SelectItem>
-                        <SelectItem value="60">1 Hour</SelectItem>
+                        <SelectItem value="60">1 Hour (Default)</SelectItem>
+                        <SelectItem value="30">30 Minutes</SelectItem>
                         <SelectItem value="1440">24 Hours</SelectItem>
                         <SelectItem value="10080">7 Days</SelectItem>
                         <SelectItem value="43200">30 Days</SelectItem>

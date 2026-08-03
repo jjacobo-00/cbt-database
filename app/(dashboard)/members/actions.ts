@@ -531,7 +531,7 @@ export async function generateInviteLink(arg?: string | {
   const options = typeof arg === "string" ? { memberId: arg } : arg
 
   const token = crypto.randomBytes(32).toString("hex")
-  const expMinutes = options?.expirationMinutes || 30
+  const expMinutes = options?.expirationMinutes || 60
   const expiresAt = new Date(Date.now() + expMinutes * 60 * 1000)
 
   // Safeguard: If presetRole is "Main Pastor", check if a Main Pastor already exists
