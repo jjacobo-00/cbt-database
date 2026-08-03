@@ -603,45 +603,54 @@ export async function getActiveInvitationLinks(memberId?: string) {
 }
 
 export async function getInviteDetails(token: string) {
-  const [invite] = await db
-    .select({
-      token: invitation_links.token,
-      member_id: invitation_links.member_id,
-      title: invitation_links.title,
-      max_uses: invitation_links.max_uses,
-      use_count: invitation_links.use_count,
-      preset_role: invitation_links.preset_role,
-      preset_mission_id: invitation_links.preset_mission_id,
-      is_disabled: invitation_links.is_disabled,
-      expires_at: invitation_links.expires_at,
-      is_used: invitation_links.is_used,
-      mission_name: missions.name,
-    })
-    .from(invitation_links)
-    .leftJoin(missions, eq(invitation_links.preset_mission_id, missions.id))
-    .where(eq(invitation_links.token, token))
-
-  if (!invite || invite.is_disabled) return { error: "Invalid or revoked link" }
-  if (invite.is_used || (invite.max_uses && invite.use_count >= invite.max_uses)) return { error: "Link usage limit reached" }
-  if (new Date() > new Date(invite.expires_at)) return { error: "Link expired" }
-
-  if (invite.member_id) {
-    const [member] = await db.select().from(members).where(eq(members.id, invite.member_id))
-    if (!member) return { error: "Member not found" }
-    return { 
-      type: "edit", 
-      member_id: invite.member_id,
-      first_name: member.first_name,
-      last_name: member.last_name
+  try {
+    if (!token || typeof token !== "string") {
+      return { error: "Invalid registration link" }
     }
-  }
 
-  return { 
-    type: "new",
-    preset_role: invite.preset_role || null,
-    preset_mission_id: invite.preset_mission_id || null,
-    mission_name: invite.mission_name || null,
-    title: invite.title || null,
+    const [invite] = await db
+      .select({
+        token: invitation_links.token,
+        member_id: invitation_links.member_id,
+        title: invitation_links.title,
+        max_uses: invitation_links.max_uses,
+        use_count: invitation_links.use_count,
+        preset_role: invitation_links.preset_role,
+        preset_mission_id: invitation_links.preset_mission_id,
+        is_disabled: invitation_links.is_disabled,
+        expires_at: invitation_links.expires_at,
+        is_used: invitation_links.is_used,
+        mission_name: missions.name,
+      })
+      .from(invitation_links)
+      .leftJoin(missions, eq(invitation_links.preset_mission_id, missions.id))
+      .where(eq(invitation_links.token, token))
+
+    if (!invite || invite.is_disabled) return { error: "Invalid or revoked link" }
+    if (invite.is_used || (invite.max_uses && invite.use_count >= invite.max_uses)) return { error: "Link usage limit reached" }
+    if (invite.expires_at && new Date() > new Date(invite.expires_at)) return { error: "Link expired" }
+
+    if (invite.member_id) {
+      const [member] = await db.select().from(members).where(eq(members.id, invite.member_id))
+      if (!member) return { error: "Member not found" }
+      return { 
+        type: "edit", 
+        member_id: invite.member_id,
+        first_name: member.first_name,
+        last_name: member.last_name
+      }
+    }
+
+    return { 
+      type: "new",
+      preset_role: invite.preset_role || null,
+      preset_mission_id: invite.preset_mission_id || null,
+      mission_name: invite.mission_name || null,
+      title: invite.title || null,
+    }
+  } catch (error) {
+    console.error("Error in getInviteDetails:", error)
+    return { error: "Invalid or revoked link" }
   }
 }
 
