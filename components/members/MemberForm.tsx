@@ -110,6 +110,7 @@ const memberSchema = z.object({
   emergency_contact_name: z.string().default(""),
   emergency_contact_relationship: z.string().default(""),
   emergency_contact_number: z.string().default(""),
+  emergency_contact_member_id: z.string().nullable().optional(),
 
   // Step 5: Education
   highest_educational_attainment: z.string().min(1, "Highest attainment required"),
@@ -428,7 +429,7 @@ export function MemberForm({
   const { fields: eduFields, append: appendEdu, remove: removeEdu } = useFieldArray({ control: form.control, name: "education_details" })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isEmergencyMember, setIsEmergencyMember] = useState(false)
+  const [isEmergencyMember, setIsEmergencyMember] = useState(() => !!initialData?.emergency_contact_member_id)
   const [emergencyComboboxOpen, setEmergencyComboboxOpen] = useState(false)
 
   const isErrorScrollingRef = React.useRef(false)
@@ -482,23 +483,29 @@ export function MemberForm({
   const onSubmit = async (values: z.infer<typeof memberSchema>) => {
     setIsSubmitting(true)
     try {
+      // Filter out any blank appended sibling items before submitting
+      if (values.siblings && Array.isArray(values.siblings)) {
+        values.siblings = values.siblings.filter(s => s.name && s.name.trim() !== "")
+      }
+
       const payload = JSON.stringify({ id: initialData?.id, ...values })
       
       if (onSubmitOverride) {
         await onSubmitOverride(payload)
-        if (!initialData) localStorage.removeItem("cbt_new_member_draft")
+        localStorage.removeItem("cbt_new_member_draft")
       } else {
         if (initialData) {
           await updateMember(payload)
         } else {
           await createMember(payload)
         }
+        localStorage.removeItem("cbt_new_member_draft")
       }
     } catch (e: any) {
       if (isRedirectError(e)) {
+        localStorage.removeItem("cbt_new_member_draft")
         if (!initialData) {
           toast.success("New member record created successfully!")
-          localStorage.removeItem("cbt_new_member_draft")
         } else {
           toast.success("Member profile updated successfully!")
         }
@@ -672,6 +679,12 @@ export function MemberForm({
     }
 
     // If we are creating, validate current step first before going forward
+    if (step === 5) {
+      const currentSiblings = form.getValues("siblings") || []
+      const validSiblings = currentSiblings.filter(s => s.name && s.name.trim() !== "")
+      form.setValue("siblings", validSiblings)
+    }
+
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "email"]
     if (step === 2) fieldsToValidate = []
@@ -697,6 +710,12 @@ export function MemberForm({
   }
 
   const validateStep = async () => {
+    if (step === 5) {
+      const currentSiblings = form.getValues("siblings") || []
+      const validSiblings = currentSiblings.filter(s => s.name && s.name.trim() !== "")
+      form.setValue("siblings", validSiblings)
+    }
+
     let fieldsToValidate: any[] = []
     if (step === 1) fieldsToValidate = ["first_name", "last_name", "birth_date", "gender", "contact_number", "email"]
     if (step === 2) fieldsToValidate = [] // Address step
@@ -727,6 +746,22 @@ export function MemberForm({
     }
     window.scrollTo({ top: 0, behavior: "smooth" })
   }, [step])
+
+  // Sync education details when highest attainment changes
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "highest_educational_attainment") {
+        const highest = value.highest_educational_attainment
+        const eduDetails = form.getValues("education_details") || []
+        const updated = eduDetails.map(item => ({
+          ...item,
+          is_currently_enrolled: item.level === highest ? item.is_currently_enrolled : false
+        }))
+        form.setValue("education_details", updated)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
   const R = () => <span className="text-destructive ml-1">*</span>
 
@@ -1773,7 +1808,12 @@ export function MemberForm({
                 <div className="flex bg-muted p-1 rounded-lg w-full sm:w-auto self-start sm:self-auto">
                   <button
                     type="button"
-                    onClick={() => setIsEmergencyMember(true)}
+                    onClick={() => {
+                      setIsEmergencyMember(true)
+                      form.setValue("emergency_contact_name", "", { shouldDirty: true })
+                      form.setValue("emergency_contact_number", "", { shouldDirty: true })
+                      form.setValue("emergency_contact_relationship", "", { shouldDirty: true })
+                    }}
                     className={cn(
                       "flex-1 sm:flex-none text-xs font-medium px-4 py-1.5 rounded-md transition-colors",
                       isEmergencyMember ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
@@ -1783,7 +1823,10 @@ export function MemberForm({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsEmergencyMember(false)}
+                    onClick={() => {
+                      setIsEmergencyMember(false)
+                      form.setValue("emergency_contact_member_id", null, { shouldDirty: true })
+                    }}
                     className={cn(
                       "flex-1 sm:flex-none text-xs font-medium px-4 py-1.5 rounded-md transition-colors",
                       !isEmergencyMember ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
@@ -1963,10 +2006,12 @@ export function MemberForm({
                         <Label className="text-xs text-muted-foreground">Year Graduated</Label>
                         <Input {...form.register(`education_details.${index}.year_graduated`)} disabled={isEnrolled} placeholder={isEnrolled ? "Enrolled" : "e.g. 2019"} className="h-11 bg-transparent" />
                       </div>
-                      <div className="flex items-center gap-2 pt-6">
-                        <input type="checkbox" id={`enrolled-${index}`} {...form.register(`education_details.${index}.is_currently_enrolled`)} className="rounded" />
-                        <label htmlFor={`enrolled-${index}`} className="text-xs cursor-pointer select-none">Currently Enrolled</label>
-                      </div>
+                      {isHighest && (
+                        <div className="flex items-center gap-2 pt-6">
+                          <input type="checkbox" id={`enrolled-${index}`} {...form.register(`education_details.${index}.is_currently_enrolled`)} className="rounded" />
+                          <label htmlFor={`enrolled-${index}`} className="text-xs font-medium cursor-pointer select-none">Currently Enrolled</label>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
@@ -2274,23 +2319,46 @@ export function MemberForm({
                   </h4>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                     <div>
-                      <span className="text-muted-foreground block">Status</span>
-                      <span className="font-semibold">{empStatus || "—"}</span>
+                      <span className="text-muted-foreground block">Employment Status</span>
+                      <span className="font-semibold px-2 py-0.5 bg-primary/10 text-primary rounded-md inline-block mt-0.5">{empStatus || "—"}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block">Highest Attainment</span>
-                      <span className="font-semibold">{highestEdu || "—"}</span>
+                      <span className="font-semibold text-foreground">{highestEdu || "—"}</span>
                     </div>
                     {empStatus === "Student" && (
-                      <div className="col-span-2 space-y-1 pt-1 border-t">
-                        <p><span className="text-muted-foreground">School:</span> {studentSchool || "—"}</p>
-                        <p><span className="text-muted-foreground">Year / Course:</span> {studentYear} {studentCourse}</p>
+                      <div className="col-span-2 space-y-1 pt-2 border-t">
+                        <p><span className="text-muted-foreground">School:</span> <span className="font-medium text-foreground">{studentSchool || "—"}</span></p>
+                        <p><span className="text-muted-foreground">Year & Course:</span> <span className="font-medium text-foreground">{[studentYear, studentCourse].filter(Boolean).join(" - ") || "—"}</span></p>
                       </div>
                     )}
                     {empStatus === "Employed" && (
-                      <div className="col-span-2 space-y-1 pt-1 border-t">
-                        <p><span className="text-muted-foreground">Company:</span> {company || "—"}</p>
-                        <p><span className="text-muted-foreground">Position:</span> {position || "—"}</p>
+                      <div className="col-span-2 space-y-1 pt-2 border-t">
+                        <p><span className="text-muted-foreground">Company:</span> <span className="font-medium text-foreground">{company || "—"}</span></p>
+                        <p><span className="text-muted-foreground">Position:</span> <span className="font-medium text-foreground">{position || "—"}</span></p>
+                      </div>
+                    )}
+                    
+                    {/* Education Details List */}
+                    {v.education_details && v.education_details.some((e: any) => e.school_name) && (
+                      <div className="col-span-2 pt-2 border-t space-y-2">
+                        <span className="text-muted-foreground font-semibold block">Education History:</span>
+                        <div className="space-y-1.5">
+                          {v.education_details.filter((e: any) => e.school_name).map((edu: any, i: number) => (
+                            <div key={i} className="p-2 rounded-lg bg-muted/30 flex items-center justify-between text-xs">
+                              <div>
+                                <span className="font-semibold block">{edu.level}: {edu.school_name}</span>
+                                {edu.is_currently_enrolled ? (
+                                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Currently Enrolled</span>
+                                ) : (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {[edu.year_started, edu.year_graduated].filter(Boolean).join(" - ")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
