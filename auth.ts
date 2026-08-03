@@ -114,16 +114,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = user.email
         if (!email) return false
 
+        // 1. Check if user is in whitelisted_users (Admin / Staff access)
         const whitelistedUser = await db.query.whitelisted_users.findFirst({
           where: eq(whitelisted_users.email, email),
         })
 
-        if (!whitelistedUser) {
-          return "/login?error=Your Google account is not authorized to access administrative features."
+        if (whitelistedUser) {
+          user.role = "admin"
+          return true
         }
 
-        user.role = "admin"
-        return true
+        // 2. Check if user is in members table (Member self-service portal)
+        const memberRecord = await db.query.members.findFirst({
+          where: ilike(members.email, email),
+        })
+
+        if (memberRecord) {
+          user.role = "member"
+          user.memberId = memberRecord.id
+          return true
+        }
+
+        // 3. Unregistered account -> Deny sign in
+        return `/login?error=${encodeURIComponent(
+          `Your Google account (${email}) is not registered in our church member directory or authorized staff list.`
+        )}`
       }
       return true
     },

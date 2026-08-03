@@ -3,59 +3,54 @@
 import React, { useState } from "react"
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
 import { MemberLoginForm } from "@/components/auth/MemberLoginForm"
-import { UserCheck, ShieldCheck } from "lucide-react"
+import { Sparkles, Mail, ChevronDown, ChevronUp } from "lucide-react"
 
 export function LoginTabs() {
-  const [activeTab, setActiveTab] = useState<"member" | "admin">("member")
+  const [showOtp, setShowOtp] = useState(false)
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl border border-border/60">
-        <button
-          type="button"
-          onClick={() => setActiveTab("member")}
-          className={`py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-            activeTab === "member"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <UserCheck className="h-3.5 w-3.5" /> Member Login
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("admin")}
-          className={`py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-            activeTab === "admin"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <ShieldCheck className="h-3.5 w-3.5" /> Staff / Admin
-        </button>
+    <div className="space-y-5">
+      {/* Primary 1-Click Google Login */}
+      <div className="space-y-3">
+        <GoogleSignInButton />
+        <p className="text-[11px] text-center text-muted-foreground">
+          Members and Staff can sign in with 1-click using their registered Google email.
+        </p>
       </div>
 
-      {activeTab === "member" ? (
-        <div className="space-y-3 animate-in fade-in">
-          <div className="text-center space-y-1 pb-1">
-            <h3 className="text-sm font-semibold text-foreground">Member Self-Service</h3>
-            <p className="text-xs text-muted-foreground">
-              Log in with your registered email to view your membership details.
-            </p>
+      {/* Divider */}
+      <div className="relative flex items-center justify-center">
+        <div className="border-t border-border w-full" />
+        <span className="bg-card px-3 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+          or
+        </span>
+        <div className="border-t border-border w-full" />
+      </div>
+
+      {/* Secondary OTP Option */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowOtp(!showOtp)}
+          className="w-full py-2.5 px-4 rounded-xl border bg-muted/30 hover:bg-muted/60 transition-all flex items-center justify-between text-xs font-semibold text-foreground group"
+        >
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+            <span>Log in with Email Code (OTP)</span>
           </div>
-          <MemberLoginForm />
-        </div>
-      ) : (
-        <div className="space-y-4 animate-in fade-in pt-1">
-          <div className="text-center space-y-1 pb-1">
-            <h3 className="text-sm font-semibold text-foreground">Staff & Pastor Access</h3>
-            <p className="text-xs text-muted-foreground">
-              Sign in with your authorized Google account to manage the database.
-            </p>
+          {showOtp ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
+
+        {showOtp && (
+          <div className="pt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <MemberLoginForm />
           </div>
-          <GoogleSignInButton />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
