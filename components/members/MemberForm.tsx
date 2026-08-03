@@ -861,7 +861,7 @@ export function MemberForm({
   }
 
   return (
-    <div className="bg-card rounded-xl border shadow-sm p-4 md:p-10 w-full mx-auto">
+    <div className="sm:bg-card rounded-xl sm:border sm:shadow-sm p-3.5 sm:p-6 md:p-10 w-full mx-auto">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
@@ -895,8 +895,58 @@ export function MemberForm({
         )}
       </div>
 
-      {/* Sticky Top Stepper */}
-      <div className="sticky top-0 bg-card z-10 py-4 border-b border-border mb-8 flex flex-wrap items-center justify-between gap-4 md:gap-8 px-2">
+      {/* Mobile Stepper Header (md:hidden) */}
+      <div className="md:hidden sticky top-0 bg-background/95 backdrop-blur-md z-10 py-3 border-b mb-6 space-y-2.5 px-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+              Step {step}/{STEPS.length}
+            </span>
+            <span className="text-xs font-semibold text-foreground truncate max-w-[190px]">
+              {STEPS[step - 1]?.title}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-muted-foreground">
+            {Math.round((step / STEPS.length) * 100)}%
+          </span>
+        </div>
+
+        {/* Animated Progress Bar */}
+        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-primary transition-all duration-300 rounded-full"
+            style={{ width: `${(step / STEPS.length) * 100}%` }}
+          />
+        </div>
+
+        {/* Single-Row Horizontal Scrollable Step Dots */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-contain">
+          {STEPS.map((s) => {
+            const isActive = step === s.id
+            const isCompleted = step > s.id
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => handleStepClick(s.id)}
+                disabled={!initialData && s.id > step + 1}
+                className={cn(
+                  "h-7 px-2.5 rounded-full text-xs font-semibold shrink-0 transition-all flex items-center gap-1 border",
+                  isActive ? "bg-primary text-primary-foreground border-primary shadow-xs" :
+                  isCompleted ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" :
+                  "bg-muted/50 text-muted-foreground border-transparent"
+                )}
+              >
+                {isCompleted ? <Check className="h-3 w-3" /> : <span>{s.id}</span>}
+                <span className="text-[10px]">{s.title}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Desktop Stepper Header (hidden md:flex) */}
+      <div className="hidden md:flex sticky top-0 bg-card z-10 py-4 border-b border-border mb-8 items-center justify-between gap-4 md:gap-8 px-2">
         {STEPS.map((s) => {
           const isActive = step === s.id
           const isCompleted = step > s.id
@@ -920,7 +970,7 @@ export function MemberForm({
                 {isCompleted ? <Check className="h-4 w-4" /> : s.id}
               </div>
               <span className={cn(
-                "text-sm font-medium hidden sm:block transition-colors duration-200",
+                "text-sm font-medium transition-colors duration-200",
                 isActive ? "text-primary font-bold" : 
                 isCompleted ? "text-foreground group-hover:text-primary" : 
                 "text-muted-foreground group-hover:text-foreground"
@@ -976,7 +1026,7 @@ export function MemberForm({
           </div>
         )}
         <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-6 pb-28 sm:pb-6">
             {/* STEP 1: PERSONAL INFORMATION */}
             {step === 1 && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-8">
@@ -2401,7 +2451,7 @@ export function MemberForm({
         </div>
 
         {/* BOTTOM NAVIGATION BUTTONS */}
-        <div className="sticky bottom-16 sm:relative sm:bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 p-3 sm:p-0 pt-4 sm:pt-6 border-t bg-background/95 backdrop-blur-md mt-6 sm:mt-8 shadow-lg sm:shadow-none rounded-t-xl sm:rounded-none">
+        <div className="fixed bottom-16 sm:relative sm:bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 px-4 py-3 sm:p-0 sm:pt-6 border-t bg-background/95 backdrop-blur-xl sm:bg-transparent shadow-lg sm:shadow-none pb-safe">
           <div className="flex items-center gap-2">
             <Button 
               type="button" 
