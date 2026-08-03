@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useState } from "react"
 import {
   Area,
   AreaChart,
@@ -19,6 +20,10 @@ import {
 } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTheme } from "next-themes"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Users, Info, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 interface DashboardChartsProps {
   monthlyData: { month: string; currentYear: number; previousYear: number; monthNum: number }[]
@@ -44,12 +49,27 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
     color: isDark ? '#f3f4f6' : '#111827'
   }
 
+  // Interactive drilldown modal state
+  const [selectedSegment, setSelectedSegment] = useState<{ title: string; count: number; category: string } | null>(null)
+
+  const handleBarClick = (entry: any, categoryName: string) => {
+    if (!entry) return
+    const title = entry.name || entry.month || "Segment"
+    const count = entry.value ?? entry.currentYear ?? 0
+    setSelectedSegment({ title, count, category: categoryName })
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
       {/* Member Growth Line Chart with Year-over-Year Comparison */}
       <Card className="lg:col-span-3 xl:col-span-2 transition-all duration-300 hover:shadow-md">
         <CardHeader>
-          <CardTitle>Member Growth</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Member Growth</span>
+            <span className="text-xs text-muted-foreground font-normal flex items-center gap-1">
+              <Info className="h-3.5 w-3.5" /> Click points for details
+            </span>
+          </CardTitle>
           <CardDescription>New members joined this year vs previous year (last 6 months).</CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,7 +113,8 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                   stroke="#3b82f6" 
                   strokeWidth={3}
                   name="This Year"
-                  dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                  dot={{ fill: "#3b82f6", strokeWidth: 2, r: 5, className: "cursor-pointer" }}
+                  onClick={(e: any) => handleBarClick(e?.payload, "Monthly Growth")}
                 />
                 <Line 
                   type="monotone" 
@@ -102,7 +123,8 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                   strokeWidth={2}
                   strokeDasharray="5 5"
                   name="Previous Year"
-                  dot={{ fill: "#9ca3af", strokeWidth: 2, r: 3 }}
+                  dot={{ fill: "#9ca3af", strokeWidth: 2, r: 4, className: "cursor-pointer" }}
+                  onClick={(e: any) => handleBarClick(e?.payload, "Previous Year Growth")}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -110,11 +132,14 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
         </CardContent>
       </Card>
 
-      {/* Membership Status Pie Chart */}
+      {/* Ministry Volunteer Engagement Status Pie Chart */}
       <Card className="lg:col-span-1 xl:col-span-1 transition-all duration-300 hover:shadow-md">
         <CardHeader>
-          <CardTitle>Commitment Status</CardTitle>
-          <CardDescription>Members with vs without faith promise commitments.</CardDescription>
+          <CardTitle className="flex items-center justify-between">
+            <span>Ministry Volunteer Engagement</span>
+            <span className="text-xs text-muted-foreground font-normal">Click slice</span>
+          </CardTitle>
+          <CardDescription>Members serving in active ministries vs not yet serving.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full flex items-center justify-center">
@@ -129,9 +154,11 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                   paddingAngle={5}
                   dataKey="value"
                   stroke="none"
+                  className="cursor-pointer"
+                  onClick={(e) => handleBarClick(e, "Ministry Engagement")}
                 >
                   {membershipStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COMMITMENT_COLORS[index % COMMITMENT_COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={COMMITMENT_COLORS[index % COMMITMENT_COLORS.length]} className="cursor-pointer hover:opacity-80 transition-opacity" />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
@@ -145,7 +172,10 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
       {/* Age Demographics Bar Chart */}
       <Card className="lg:col-span-3 transition-all duration-300 hover:shadow-md mt-2">
         <CardHeader>
-          <CardTitle>Age Demographics</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Age Demographics</span>
+            <span className="text-xs text-muted-foreground font-normal">Click bar to inspect</span>
+          </CardTitle>
           <CardDescription>Breakdown of our congregation by age groups.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -172,9 +202,14 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                     axisLine={false}
                   />
                   <Tooltip contentStyle={tooltipStyle} cursor={{ fill: isDark ? '#333' : '#f3f4f6' }} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  <Bar 
+                    dataKey="value" 
+                    radius={[4, 4, 0, 0]}
+                    className="cursor-pointer"
+                    onClick={(e) => handleBarClick(e, "Age Demographics")}
+                  >
                     {ageData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} className="cursor-pointer hover:opacity-80 transition-opacity" />
                     ))}
                   </Bar>
                 </BarChart>
@@ -187,6 +222,48 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
           )}
         </CardContent>
       </Card>
+
+      {/* Interactive Segment Detail Dialog */}
+      <Dialog open={!!selectedSegment} onOpenChange={(open) => !open && setSelectedSegment(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              {selectedSegment?.category}: {selectedSegment?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed breakdown for the selected chart segment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between">
+              <div>
+                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Members in Segment</span>
+                <h3 className="text-3xl font-bold text-primary mt-0.5">{selectedSegment?.count}</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
+                {selectedSegment?.count}
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              You can filter and view complete member records, contact numbers, and emails in the Members Directory or Reports module.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <Button variant="outline" onClick={() => setSelectedSegment(null)}>
+              Close
+            </Button>
+            <Button asChild className="gap-2">
+              <Link href="/members">
+                <span>View Members Directory</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
