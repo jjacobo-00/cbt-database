@@ -131,23 +131,13 @@ const memberSchema = z.object({
     if (!data.position) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["position"], message: "Required" })
   }
   
-  // Step 5 Conditional validation — only the highest level row is required
+  // Step 5 Conditional validation — only the highest level school name is required
   const highestLevel = data.highest_educational_attainment
   data.education_details.forEach((edu, idx) => {
     const isHighestRow = edu.level === highestLevel
     if (isHighestRow) {
       if (!edu.school_name || edu.school_name.trim() === "") {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "school_name"], message: "School name is required for your highest attainment" })
-      }
-      if (!edu.year_started || edu.year_started.trim() === "") {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_started"], message: "Year started is required for your highest attainment" })
-      }
-      if (!edu.is_currently_enrolled && (!edu.year_graduated || edu.year_graduated.trim() === "")) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_graduated"], message: "Year graduated is required (or mark as currently enrolled)" })
-      }
-    } else {
-      if (!edu.is_currently_enrolled && edu.year_started && !edu.year_graduated) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["education_details", idx, "year_graduated"], message: "Year graduated required if not currently enrolled" })
       }
     }
   })
@@ -2002,11 +1992,11 @@ export function MemberForm({
                         )}
                       </div>
                       <div className="grid gap-2">
-                        <Label className="text-xs text-muted-foreground">Year Started</Label>
+                        <Label className="text-xs text-muted-foreground">Year Started (Optional)</Label>
                         <Input {...form.register(`education_details.${index}.year_started`)} placeholder="e.g. 2015" className="h-11 bg-transparent" />
                       </div>
                       <div className="grid gap-2">
-                        <Label className="text-xs text-muted-foreground">Year Graduated</Label>
+                        <Label className="text-xs text-muted-foreground">Year Graduated (Optional)</Label>
                         <Input {...form.register(`education_details.${index}.year_graduated`)} disabled={isEnrolled} placeholder={isEnrolled ? "Enrolled" : "e.g. 2019"} className="h-11 bg-transparent" />
                       </div>
                       {isHighest && (
