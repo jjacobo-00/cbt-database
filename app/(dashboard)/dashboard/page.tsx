@@ -35,21 +35,25 @@ export default async function DashboardPage() {
   // Fetch counts and data in parallel
   const [
     totalMembersResult,
-    totalMinistriesResult,
-    currentYearCommitmentsResult,
+    newMembersThisMonthResult,
+    newBaptismsResult,
     recentMembers,
     growthDataQuery,
     ageDataQuery,
     ministryEngagementResult,
     previousYearGrowthQuery,
-    newBaptismsResult,
   ] = await Promise.all([
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
-    db.select({ count: sql<number>`cast(count(*) as int)` }).from(ministries),
     db
       .select({ count: sql<number>`cast(count(*) as int)` })
-      .from(commitments)
-      .where(eq(commitments.year, currentYear)),
+      .from(members)
+      .where(
+        sql`EXTRACT(MONTH FROM COALESCE(${members.membership_date}, ${members.created_at})) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM COALESCE(${members.membership_date}, ${members.created_at})) = EXTRACT(YEAR FROM CURRENT_DATE)`
+      ),
+    db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(members)
+      .where(sql`EXTRACT(YEAR FROM ${members.date_baptized}) = ${currentYear}`),
     db
       .select({
         id: members.id,
@@ -88,17 +92,12 @@ export default async function DashboardPage() {
       .where(
         sql`${sql`COALESCE(${members.membership_date}, ${members.created_at})`} >= (date_trunc('month', current_date - interval '12 months')) AND ${sql`COALESCE(${members.membership_date}, ${members.created_at})`} < (date_trunc('month', current_date - interval '6 months'))`,
       ),
-    db
-      .select({ count: sql<number>`cast(count(*) as int)` })
-      .from(members)
-      .where(sql`EXTRACT(YEAR FROM ${members.date_baptized}) = ${currentYear}`),
   ]);
 
   const totalMembers = totalMembersResult[0]?.count || 0;
-  const totalMinistries = totalMinistriesResult[0]?.count || 0;
-  const totalCommitments = currentYearCommitmentsResult[0]?.count || 0;
-  const ministryEngagedMembers = ministryEngagementResult[0]?.count || 0;
+  const newMembersThisMonth = newMembersThisMonthResult[0]?.count || 0;
   const newBaptismsThisYear = newBaptismsResult[0]?.count || 0;
+  const ministryEngagedMembers = ministryEngagementResult[0]?.count || 0;
 
   // Calculate Age Demographics from birth_date
   let kids = 0,
@@ -139,10 +138,10 @@ export default async function DashboardPage() {
     { name: "Seniors (60+)", value: seniors },
   ];
 
-  // Membership Status Data (more meaningful than baptism status)
+  // Ministry Volunteer Engagement Data
   const membershipStatusData = [
-    { name: "This Year Commitments", value: totalCommitments },
-    { name: "Without Commitments", value: totalMembers - totalCommitments },
+    { name: "Serving in Ministries", value: ministryEngagedMembers },
+    { name: "Not Yet Serving", value: Math.max(0, totalMembers - ministryEngagedMembers) },
   ];
 
   // Format Monthly Growth Data for Area Chart with Year-over-Year Comparison
@@ -255,8 +254,8 @@ export default async function DashboardPage() {
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
+      {/* Streamlined KPI Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
@@ -267,41 +266,29 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-3xl font-bold">{totalMembers}</div>
             <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Registered in the database
+              Total registered in database
             </p>
           </CardContent>
         </Card>
 
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {currentYear} Commitments
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">New Members This Month</CardTitle>
             <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-4 w-4 text-purple-500" />
+              <UserPlus className="h-4 w-4 text-purple-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold flex items-baseline gap-2">
-              <span className="text-purple-600">{totalCommitments}</span>
-              <span className="text-lg text-muted-foreground font-normal">
-                / {totalMembers}
-              </span>
-            </div>
-            <div className="mt-3 h-2 w-full bg-secondary rounded-full overflow-hidden flex">
-              <div
-                className="bg-purple-500 h-full transition-all"
-                style={{
-                  width: `${totalMembers ? Math.round((totalCommitments / totalMembers) * 100) : 0}%`,
-                }}
-              />
-            </div>
+            <div className="text-3xl font-bold">{newMembersThisMonth}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              Registered in current month
+            </p>
           </CardContent>
         </Card>
 
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Baptized</CardTitle>
+            <CardTitle className="text-sm font-medium">Baptized This Year</CardTitle>
             <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
               <Droplets className="h-4 w-4 text-green-500" />
             </div>
@@ -309,68 +296,7 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-3xl font-bold">{newBaptismsThisYear}</div>
             <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Baptized this year
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-amber-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Ministries
-            </CardTitle>
-            <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center">
-              <HeartHandshake className="h-4 w-4 text-amber-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{totalMinistries}</div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Available to join
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-cyan-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Ministry Engagement
-            </CardTitle>
-            <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center">
-              <Target className="h-4 w-4 text-cyan-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {totalMembers
-                ? Math.round((ministryEngagedMembers / totalMembers) * 100)
-                : 0}
-              %
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              {ministryEngagedMembers} members serving
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-rose-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Giving Participation
-            </CardTitle>
-            <div className="h-8 w-8 bg-rose-500/10 rounded-full flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-rose-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {totalMembers
-                ? Math.round((totalCommitments / totalMembers) * 100)
-                : 0}
-              %
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Faith promise commitment
+              Baptized in {currentYear}
             </p>
           </CardContent>
         </Card>
