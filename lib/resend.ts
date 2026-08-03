@@ -2,8 +2,8 @@ import { Resend } from 'resend'
 import nodemailer from 'nodemailer'
 
 export async function sendOtpEmail(email: string, otp: string, memberName?: string) {
-  const gmailUser = process.env.GMAIL_USER
-  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD
+  const gmailUser = process.env.GMAIL_USER || process.env.EMAIL_USER
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASSWORD || process.env.GMAIL_PASS
   const resendApiKey = process.env.RESEND_API_KEY
   const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'CBT Database <onboarding@resend.dev>'
 
@@ -44,16 +44,17 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
   // Priority 1: Gmail SMTP (Sends from cbt.olongapo@gmail.com to ANY recipient)
   if (gmailUser && gmailAppPassword) {
     try {
+      const cleanPass = gmailAppPassword.replace(/\s+/g, '')
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: gmailUser,
-          pass: gmailAppPassword,
+          user: gmailUser.trim(),
+          pass: cleanPass,
         },
       })
 
       await transporter.sendMail({
-        from: `CBT Olongapo <${gmailUser}>`,
+        from: `CBT Olongapo <${gmailUser.trim()}>`,
         to: email,
         subject,
         html: htmlContent,
@@ -62,11 +63,11 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
       return { success: true, provider: 'gmail' }
     } catch (err: any) {
       console.error('[Gmail SMTP Error]', err)
-      throw new Error(err.message || 'Failed to send OTP via Gmail SMTP')
+      throw new Error(`Gmail SMTP Error: ${err.message || 'Failed to send OTP email'}`)
     }
   }
 
-  // Priority 2: Resend API (Requires domain verification for third-party recipients)
+  // Priority 2: Resend API (Requires domain verification for non-owner recipients)
   if (resendApiKey) {
     try {
       const resend = new Resend(resendApiKey)
@@ -79,19 +80,24 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
 
       if (error) {
         console.error('[Resend Error]', error)
+        if (error.message && error.message.includes('testing emails')) {
+          throw new Error(
+            `Resend Testing Limit: Resend free tier only sends to your account owner email. To send to ${email}, please add GMAIL_USER and GMAIL_APP_PASSWORD to your Vercel Environment Variables.`
+          )
+        }
         throw new Error(error.message || 'Failed to send OTP email via Resend')
       }
 
       return { success: true, data, provider: 'resend' }
     } catch (err: any) {
-      console.error('[Resend Error]', err)
+      console.error('[Resend Exception]', err)
       throw new Error(err.message || 'Error sending OTP email via Resend')
     }
   }
 
   // Fallback: Console Dev Mode
   console.log(`\n========================================`)
-  console.log(`[DEV OTP MODE] No email provider configured.`)
+  console.log(`[DEV OTP MODE] No email provider configured in environment variables.`)
   console.log(`Recipient: ${email} (${memberName || 'Member'})`)
   console.log(`OTP Code:  ${otp}`)
   console.log(`========================================\n`)
