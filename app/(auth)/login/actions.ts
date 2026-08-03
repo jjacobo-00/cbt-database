@@ -49,7 +49,7 @@ export async function requestMemberOtp(rawEmail: string) {
       expires,
     })
 
-    // Deliver OTP email via Resend
+    // Deliver OTP email via Resend / Gmail SMTP
     const primaryName = matchingMembers.length === 1 ? matchingMembers[0].first_name : "Member"
     await sendOtpEmail(email, otpCode, primaryName)
 
@@ -63,19 +63,38 @@ export async function requestMemberOtp(rawEmail: string) {
   }
 }
 
-export async function loginMemberWithOtp(email: string, code: string, memberId?: string) {
+export async function loginMemberWithOtp(email: string, code: string, rawMemberId?: string) {
   try {
-    const res = await signIn("otp", {
-      email,
-      code,
-      memberId,
+    const cleanEmail = email.trim().toLowerCase()
+    const cleanCode = code.trim()
+    const cleanMemberId =
+      rawMemberId && rawMemberId !== "undefined" && rawMemberId !== "null" && rawMemberId.trim() !== ""
+        ? rawMemberId.trim()
+        : undefined
+
+    const credentialsPayload: Record<string, string> = {
+      email: cleanEmail,
+      code: cleanCode,
+    }
+
+    if (cleanMemberId) {
+      credentialsPayload.memberId = cleanMemberId
+    }
+
+    await signIn("otp", {
+      ...credentialsPayload,
       redirect: false,
     })
 
     return { success: true, redirectTo: "/my-profile" }
   } catch (err: any) {
-    // NextAuth throws standard Redirect error on success if redirect: true, but with redirect: false it might throw CredentialsSignin
-    const errorMsg = err.cause?.err?.message || err.message || "Invalid or expired verification code."
+    console.error("[loginMemberWithOtp error]", err)
+    let errorMsg = "Invalid or expired verification code."
+    if (err?.cause?.err?.message) {
+      errorMsg = err.cause.err.message
+    } else if (err?.message && !err.message.includes("NEXT_REDIRECT")) {
+      errorMsg = err.message
+    }
     return { success: false, error: errorMsg }
   }
 }

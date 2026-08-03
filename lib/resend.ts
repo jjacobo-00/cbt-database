@@ -41,6 +41,8 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
     </html>
   `
 
+  const textContent = `Hello ${memberName ? memberName : 'Member'},\n\nYour 6-digit CBT Member Portal verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nCommunity Baptist Temple - Olongapo`
+
   // Priority 1: Gmail SMTP (Sends from cbt.olongapo@gmail.com to ANY recipient)
   if (gmailUser && gmailAppPassword) {
     try {
@@ -57,6 +59,7 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
         from: `CBT Olongapo <${gmailUser.trim()}>`,
         to: email,
         subject,
+        text: textContent,
         html: htmlContent,
       })
 
@@ -75,6 +78,7 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
         from: resendFromEmail,
         to: [email],
         subject,
+        text: textContent,
         html: htmlContent,
       })
 

@@ -34,9 +34,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const email = (credentials.email as string).trim().toLowerCase()
         const code = (credentials.code as string).trim()
-        const selectedMemberId = (credentials.memberId as string | undefined)?.trim()
+        const rawMemberId = typeof credentials?.memberId === "string" ? credentials.memberId.trim() : null
+        const validMemberId = (rawMemberId && rawMemberId !== "undefined" && rawMemberId !== "null" && rawMemberId.length > 0) ? rawMemberId : null
 
-        // Find token record
+        // 1. Verify token in verificationTokens table
         const tokenRecords = await db
           .select()
           .from(verificationTokens)
@@ -49,7 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .limit(1)
 
         if (!tokenRecords || tokenRecords.length === 0) {
-          throw new Error("Invalid verification code.")
+          throw new Error("Invalid verification code. Please check the code and try again.")
         }
 
         const tokenRecord = tokenRecords[0]
@@ -63,10 +64,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 eq(verificationTokens.token, code)
               )
             )
-          throw new Error("Verification code has expired. Please request a new one.")
+          throw new Error("Verification code has expired. Please request a new code.")
         }
 
-        // Delete valid used token
+        // Delete valid used token to prevent reuse
         await db
           .delete(verificationTokens)
           .where(
@@ -76,13 +77,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             )
           )
 
-        // Find matching member
+        // 2. Find matching member record
         let member
-        if (selectedMemberId) {
+        if (validMemberId) {
           member = await db.query.members.findFirst({
-            where: and(eq(members.id, selectedMemberId), ilike(members.email, email)),
+            where: and(eq(members.id, validMemberId), ilike(members.email, email)),
           })
-        } else {
+        }
+
+        if (!member) {
           member = await db.query.members.findFirst({
             where: ilike(members.email, email),
           })
@@ -111,7 +114,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = user.email
         if (!email) return false
 
-        // Check if the user is whitelisted for admin access
         const whitelistedUser = await db.query.whitelisted_users.findFirst({
           where: eq(whitelisted_users.email, email),
         })
