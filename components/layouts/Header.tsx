@@ -15,7 +15,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 export function Header({ setIsMobileMenuOpen }: { setIsMobileMenuOpen: (v: boolean) => void }) {
   const { theme, setTheme } = useTheme()
-  const { data: session } = useSession()
+  const sessionResponse = useSession()
+  const session = sessionResponse?.data
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-md px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 print:hidden">

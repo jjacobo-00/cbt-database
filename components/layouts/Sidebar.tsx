@@ -50,7 +50,8 @@ export function Sidebar({
   setIsMobileMenuOpen: (v: boolean) => void 
 }) {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const sessionResponse = useSession()
+  const session = sessionResponse?.data
   const [openSubMenu, setOpenSubMenu] = useState<string | null>("Commitments")
 
   const isMember = session?.user?.role === "member"
