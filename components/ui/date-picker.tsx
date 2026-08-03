@@ -220,7 +220,7 @@ export function DatePicker({
               }
               setOpen(false)
             }}
-            captionLayout="dropdown"
+            captionLayout="label"
             startMonth={new Date(1920, 0)}
             endMonth={new Date(2100, 11)}
             className="p-0"
