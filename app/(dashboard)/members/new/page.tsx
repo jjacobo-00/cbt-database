@@ -13,7 +13,7 @@ export default async function NewMemberPage() {
   ])
 
   return (
-    <div className="py-6 max-w-5xl">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 px-2 sm:px-4">
       <MemberForm ministries={ministries} offeringCategories={offeringCategories} allMembers={allMembers} />
     </div>
   )

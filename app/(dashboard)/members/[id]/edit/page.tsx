@@ -52,7 +52,7 @@ export default async function EditMemberPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <div className="py-6 max-w-5xl">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 px-2 sm:px-4">
       <MemberForm initialData={mappedMember} ministries={ministriesList} allMembers={allMembers} />
     </div>
   )
