@@ -256,50 +256,56 @@ export default async function DashboardPage() {
 
       {/* Streamlined KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-            <div className="h-8 w-8 bg-blue-500/10 rounded-full flex items-center justify-center">
-              <Users className="h-4 w-4 text-blue-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{totalMembers}</div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Total registered in database
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/members" className="block group">
+          <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500 cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-blue-600 transition-colors">Total Members</CardTitle>
+              <div className="h-8 w-8 bg-blue-500/10 rounded-full flex items-center justify-center">
+                <Users className="h-4 w-4 text-blue-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{totalMembers}</div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                Total registered in database →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Members This Month</CardTitle>
-            <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
-              <UserPlus className="h-4 w-4 text-purple-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{newMembersThisMonth}</div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Registered in current month
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/members?joined=this_month" className="block group">
+          <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-purple-500 cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-purple-600 transition-colors">New Members This Month</CardTitle>
+              <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
+                <UserPlus className="h-4 w-4 text-purple-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{newMembersThisMonth}</div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                Registered in current month →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Baptized This Year</CardTitle>
-            <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
-              <Droplets className="h-4 w-4 text-green-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{newBaptismsThisYear}</div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Baptized in {currentYear}
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/members?baptized=this_year" className="block group">
+          <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-green-500 cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-green-600 transition-colors">Baptized This Year</CardTitle>
+              <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
+                <Droplets className="h-4 w-4 text-green-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{newBaptismsThisYear}</div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                Baptized in {currentYear} →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Charts Section */}

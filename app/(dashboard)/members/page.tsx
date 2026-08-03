@@ -1,6 +1,6 @@
 import { db } from "@/db"
-import { members } from "@/db/schema"
-import { asc } from "drizzle-orm"
+import { members, ministries, member_ministries } from "@/db/schema"
+import { asc, eq } from "drizzle-orm"
 import { columns } from "@/components/members/columns"
 import { DataTable } from "@/components/members/data-table"
 import { Button } from "@/components/ui/button"
@@ -15,20 +15,56 @@ export default async function MembersPage() {
     id: members.id,
     first_name: members.first_name,
     last_name: members.last_name,
+    middle_name: members.middle_name,
+    suffix: members.suffix,
     church_role: members.church_role,
     contact_number: members.contact_number,
+    email: members.email,
     city: members.city,
     occupation: members.occupation,
     position: members.position,
     company: members.company,
     employment_status: members.employment_status,
+    gender: members.gender,
+    sex: members.sex,
+    birth_date: members.birth_date,
+    age: members.age,
+    marital_status: members.marital_status,
+    highest_educational_attainment: members.highest_educational_attainment,
+    blood_type: members.blood_type,
+    allergies: members.allergies,
+    membership_date: members.membership_date,
+    date_saved: members.date_saved,
+    date_baptized: members.date_baptized,
     created_at: members.created_at
   }).from(members).orderBy(asc(members.last_name))
+
+  const memberMinistryRows = await db
+    .select({
+      member_id: member_ministries.member_id,
+      ministry_name: ministries.name
+    })
+    .from(member_ministries)
+    .innerJoin(ministries, eq(member_ministries.ministry_id, ministries.id))
+
+  const ministriesList = await db.select({
+    id: ministries.id,
+    name: ministries.name
+  }).from(ministries).orderBy(asc(ministries.name))
+
+  // Map member ministries
+  const ministryMap = new Map<string, string[]>()
+  memberMinistryRows.forEach(row => {
+    const existing = ministryMap.get(row.member_id) || []
+    existing.push(row.ministry_name)
+    ministryMap.set(row.member_id, existing)
+  })
 
   const formattedMembers = membersList.map(member => ({
     ...member,
     church_role: member.church_role || "Member",
     occupation: member.occupation || member.position || (member.employment_status === "Student" ? "Student" : member.company ? `${member.position || "Employee"} at ${member.company}` : (member.employment_status && member.employment_status !== "None") ? member.employment_status : "-"),
+    ministries: ministryMap.get(member.id) || [],
     created_at: member.created_at?.toISOString() || ""
   }))
 
@@ -43,7 +79,7 @@ export default async function MembersPage() {
           </Button>
         </div>
       </div>
-      <DataTable columns={columns} data={formattedMembers} />
+      <DataTable columns={columns} data={formattedMembers} ministriesList={ministriesList} />
     </div>
   )
 }

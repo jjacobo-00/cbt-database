@@ -59,6 +59,23 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
     setSelectedSegment({ title, count, category: categoryName })
   }
 
+  const getFilteredMembersLink = () => {
+    if (!selectedSegment) return "/members"
+    const { category, title } = selectedSegment
+    if (category === "Age Demographics") {
+      if (title.includes("Kids")) return "/members?age_group=kids"
+      if (title.includes("Teens")) return "/members?age_group=teens"
+      if (title.includes("Young Adults")) return "/members?age_group=young_adults"
+      if (title.includes("Adults")) return "/members?age_group=adults"
+      if (title.includes("Seniors")) return "/members?age_group=seniors"
+    }
+    if (category === "Ministry Engagement") {
+      if (title.includes("Not")) return "/members?ministry=not_serving"
+      if (title.includes("Serving")) return "/members?ministry=serving"
+    }
+    return "/members"
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
       {/* Member Growth Line Chart with Year-over-Year Comparison */}
@@ -256,8 +273,8 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
               Close
             </Button>
             <Button asChild className="gap-2">
-              <Link href="/members">
-                <span>View Members Directory</span>
+              <Link href={getFilteredMembersLink()} onClick={() => setSelectedSegment(null)}>
+                <span>View Filtered Members Directory</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

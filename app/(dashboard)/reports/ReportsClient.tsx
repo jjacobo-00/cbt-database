@@ -23,6 +23,8 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Users, Droplets, MapPin, Activity, Target } from "lucide-react";
 import type { ReportMember } from "./page";
 
@@ -60,10 +62,36 @@ export function ReportsClient({
   ministryData?: MinistryParticipation[];
   faithPromiseData?: FaithPromiseData[];
 }) {
+  const router = useRouter();
   const [data] = useState<ReportMember[]>(initialData);
   const [ministryParticipation] =
     useState<MinistryParticipation[]>(ministryData);
   const [faithPromises] = useState<FaithPromiseData[]>(faithPromiseData);
+
+  const handleGenderClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    router.push(`/members?gender=${encodeURIComponent(entry.name)}`);
+  };
+
+  const handleMaritalClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    router.push(`/members?marital_status=${encodeURIComponent(entry.name)}`);
+  };
+
+  const handleAgeClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    const name = entry.name.toLowerCase();
+    if (name.includes("kids")) router.push("/members?age_group=kids");
+    else if (name.includes("teens")) router.push("/members?age_group=teens");
+    else if (name.includes("young")) router.push("/members?age_group=young_adults");
+    else if (name.includes("adults")) router.push("/members?age_group=adults");
+    else if (name.includes("seniors")) router.push("/members?age_group=seniors");
+  };
+
+  const handleMinistryClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    router.push(`/members?ministry=${encodeURIComponent(entry.name)}`);
+  };
 
   // Date Filtering State
   const [dateFilter, setDateFilter] = useState("all"); // all, this_year, last_year
@@ -270,53 +298,59 @@ export function ReportsClient({
 
       {/* KPI Cards */}
       <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        <Card className="border-t-4 border-t-blue-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-            <div className="h-8 w-8 bg-blue-500/10 rounded-full flex items-center justify-center">
-              <Users className="h-4 w-4 text-blue-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{totalMembers}</div>
-          </CardContent>
-        </Card>
+        <Link href="/members" className="block group">
+          <Card className="border-t-4 border-t-blue-500 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-blue-600 transition-colors">Total Members</CardTitle>
+              <div className="h-8 w-8 bg-blue-500/10 rounded-full flex items-center justify-center">
+                <Users className="h-4 w-4 text-blue-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{totalMembers}</div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-t-4 border-t-green-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Baptized Ratio
-            </CardTitle>
-            <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
-              <Droplets className="h-4 w-4 text-green-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {totalMembers
-                ? Math.round((baptizedMembers / totalMembers) * 100)
-                : 0}
-              %
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              {baptizedMembers} baptized members
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/members?baptized=true" className="block group">
+          <Card className="border-t-4 border-t-green-500 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-green-600 transition-colors">
+                Baptized Ratio
+              </CardTitle>
+              <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
+                <Droplets className="h-4 w-4 text-green-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {totalMembers
+                  ? Math.round((baptizedMembers / totalMembers) * 100)
+                  : 0}
+                %
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                {baptizedMembers} baptized members →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-t-4 border-t-pink-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gender Split</CardTitle>
-            <div className="h-8 w-8 bg-pink-500/10 rounded-full flex items-center justify-center">
-              <Activity className="h-4 w-4 text-pink-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {maleCount}M / {femaleCount}F
-            </div>
-          </CardContent>
-        </Card>
+        <Link href="/members?gender=Female" className="block group">
+          <Card className="border-t-4 border-t-pink-500 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-pink-600 transition-colors">Gender Split</CardTitle>
+              <div className="h-8 w-8 bg-pink-500/10 rounded-full flex items-center justify-center">
+                <Activity className="h-4 w-4 text-pink-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {maleCount}M / {femaleCount}F
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card className="border-t-4 border-t-amber-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -332,27 +366,29 @@ export function ReportsClient({
           </CardContent>
         </Card>
 
-        <Card className="border-t-4 border-t-cyan-500 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Ministry Engaged
-            </CardTitle>
-            <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center">
-              <Target className="h-4 w-4 text-cyan-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {totalMembers
-                ? Math.round((membersEngagedInMinistries / totalMembers) * 100)
-                : 0}
-              %
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              {membersEngagedInMinistries} members engaged
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/members?ministry=serving" className="block group">
+          <Card className="border-t-4 border-t-cyan-500 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-cyan-600 transition-colors">
+                Ministry Engaged
+              </CardTitle>
+              <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center">
+                <Target className="h-4 w-4 text-cyan-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {totalMembers
+                  ? Math.round((membersEngagedInMinistries / totalMembers) * 100)
+                  : 0}
+                %
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                {membersEngagedInMinistries} members engaged →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card className="border-t-4 border-t-rose-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -393,11 +429,14 @@ export function ReportsClient({
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
+                  className="cursor-pointer"
+                  onClick={handleGenderClick}
                 >
                   {genderData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
                     />
                   ))}
                 </Pie>
@@ -435,6 +474,8 @@ export function ReportsClient({
                   fill="#8b5cf6"
                   radius={[4, 4, 0, 0]}
                   name="Members"
+                  className="cursor-pointer"
+                  onClick={handleMaritalClick}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -474,6 +515,8 @@ export function ReportsClient({
                   fill="#10b981"
                   radius={[4, 4, 0, 0]}
                   name="Members"
+                  className="cursor-pointer"
+                  onClick={handleAgeClick}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -554,6 +597,8 @@ export function ReportsClient({
                 fill="#0891b2"
                 radius={[4, 4, 0, 0]}
                 name="Members"
+                className="cursor-pointer"
+                onClick={handleMinistryClick}
               />
             </BarChart>
           </ResponsiveContainer>
