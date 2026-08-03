@@ -1065,6 +1065,7 @@ export function MemberForm({
                     <option value="III" className="bg-card text-foreground">III</option>
                     <option value="IV" className="bg-card text-foreground">IV</option>
                     <option value="V" className="bg-card text-foreground">V</option>
+                    <option value="Rev." className="bg-card text-foreground">Rev.</option>
                     <option value="Ph.D." className="bg-card text-foreground">Ph.D.</option>
                     <option value="MD" className="bg-card text-foreground">MD</option>
                   </select>
