@@ -1049,7 +1049,27 @@ export function MemberForm({
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Suffix</Label>
-                <Input {...form.register("suffix")} className="h-12 bg-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0" placeholder="e.g. Jr, Sr" />
+                <div className="relative flex items-center">
+                  <select 
+                    {...form.register("suffix")} 
+                    className={cn(
+                      "flex appearance-none h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0",
+                      !form.watch("suffix") ? "text-muted-foreground" : "text-foreground"
+                    )}
+                  >
+                    <option value="" className="bg-card text-muted-foreground">None</option>
+                    <option value="Jr." className="bg-card text-foreground">Jr.</option>
+                    <option value="Sr." className="bg-card text-foreground">Sr.</option>
+                    <option value="I" className="bg-card text-foreground">I</option>
+                    <option value="II" className="bg-card text-foreground">II</option>
+                    <option value="III" className="bg-card text-foreground">III</option>
+                    <option value="IV" className="bg-card text-foreground">IV</option>
+                    <option value="V" className="bg-card text-foreground">V</option>
+                    <option value="Ph.D." className="bg-card text-foreground">Ph.D.</option>
+                    <option value="MD" className="bg-card text-foreground">MD</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 h-4 w-4 text-muted-foreground opacity-50 pointer-events-none" />
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Date of Birth<R/></Label>
