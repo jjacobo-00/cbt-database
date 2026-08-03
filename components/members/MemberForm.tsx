@@ -431,6 +431,31 @@ export function MemberForm({
   const [isEmergencyMember, setIsEmergencyMember] = useState(false)
   const [emergencyComboboxOpen, setEmergencyComboboxOpen] = useState(false)
 
+  const isErrorScrollingRef = React.useRef(false)
+
+  const scrollToErrorField = (fieldName?: string) => {
+    isErrorScrollingRef.current = true
+    setTimeout(() => {
+      let targetEl: HTMLElement | null = null
+
+      if (fieldName) {
+        targetEl = document.querySelector<HTMLElement>(`[name="${fieldName}"], [id="${fieldName}"], [data-field="${fieldName}"]`)
+      }
+
+      if (!targetEl) {
+        targetEl = document.querySelector<HTMLElement>('[aria-invalid="true"], .text-destructive, p.text-destructive')
+      }
+
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "center" })
+        const input = targetEl.tagName === "INPUT" || targetEl.tagName === "SELECT" || targetEl.tagName === "TEXTAREA" 
+          ? targetEl 
+          : targetEl.parentElement?.querySelector<HTMLElement>('input, select, textarea') || targetEl
+        input?.focus?.()
+      }
+    }, 180)
+  }
+
   const onInvalid = (errors: any) => {
     const firstKey = Object.keys(errors)[0]
     const firstError = errors[firstKey]
@@ -451,16 +476,7 @@ export function MemberForm({
       setStep(targetStep)
     }
 
-    setTimeout(() => {
-      const firstErrorEl = document.querySelector('[aria-invalid="true"], .text-destructive, p.text-destructive') as HTMLElement
-      if (firstErrorEl) {
-        firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" })
-        const input = firstErrorEl.tagName === "INPUT" || firstErrorEl.tagName === "SELECT" || firstErrorEl.tagName === "TEXTAREA" 
-          ? firstErrorEl 
-          : firstErrorEl.parentElement?.querySelector('input, select, textarea') as HTMLElement
-        input?.focus?.()
-      }
-    }, 150)
+    scrollToErrorField(firstKey)
   }
 
   const onSubmit = async (values: z.infer<typeof memberSchema>) => {
@@ -671,16 +687,9 @@ export function MemberForm({
         setStep(Math.min(step + 1, targetStepId))
       } else {
         toast.error("Please fill in all required fields correctly.")
-        setTimeout(() => {
-          const firstErrorEl = document.querySelector('[aria-invalid="true"], .text-destructive, p.text-destructive') as HTMLElement
-          if (firstErrorEl) {
-            firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" })
-            const input = firstErrorEl.tagName === "INPUT" || firstErrorEl.tagName === "SELECT" || firstErrorEl.tagName === "TEXTAREA" 
-              ? firstErrorEl 
-              : firstErrorEl.parentElement?.querySelector('input, select, textarea') as HTMLElement
-            input?.focus?.()
-          }
-        }, 150)
+        const formErrors = form.formState.errors
+        const firstErrKey = Object.keys(formErrors)[0]
+        scrollToErrorField(firstErrKey)
       }
     } else {
       setStep(Math.min(step + 1, targetStepId))
@@ -702,15 +711,9 @@ export function MemberForm({
         setStep(s => Math.min(STEPS.length, s + 1))
       } else {
         toast.error("Please fill in all required fields correctly.")
-        setTimeout(() => {
-          const firstErrorEl = document.querySelector('[aria-invalid="true"], .text-destructive, p.text-destructive') as HTMLElement
-          if (firstErrorEl) {
-            firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" })
-            const input = firstErrorEl.tagName === "INPUT" || firstErrorEl.tagName === "SELECT" || firstErrorEl.tagName === "TEXTAREA" 
-              ? firstErrorEl 
-              : firstErrorEl.parentElement?.querySelector('input, select, textarea') as HTMLElement
-          }
-        }, 150)
+        const formErrors = form.formState.errors
+        const firstErrKey = Object.keys(formErrors)[0]
+        scrollToErrorField(firstErrKey)
       }
     } else {
       setStep(s => Math.min(STEPS.length, s + 1))
@@ -718,6 +721,10 @@ export function MemberForm({
   }
 
   React.useEffect(() => {
+    if (isErrorScrollingRef.current) {
+      isErrorScrollingRef.current = false
+      return
+    }
     window.scrollTo({ top: 0, behavior: "smooth" })
   }, [step])
 
