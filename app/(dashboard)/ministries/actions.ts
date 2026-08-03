@@ -12,6 +12,7 @@ export async function getMinistries() {
       name: ministries.name,
       for_everyone: ministries.for_everyone,
       parent_id: ministries.parent_id,
+      leader_id: ministries.leader_id,
       created_at: ministries.created_at,
     }).from(ministries).orderBy(asc(ministries.name))
     
@@ -22,12 +23,13 @@ export async function getMinistries() {
   }
 }
 
-export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null) {
+export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null, leaderId?: string | null) {
   try {
     const [inserted] = await db.insert(ministries).values({
       name: name.trim(),
       for_everyone: forEveryone,
       parent_id: parentId || null,
+      leader_id: leaderId || null,
     }).returning()
 
     // If marked "For Everyone", auto-enroll all existing members & commitments
@@ -44,11 +46,12 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
   revalidatePath("/commitments")
 }
 
-export async function updateMinistry(id: string, name: string, forEveryone?: boolean) {
+export async function updateMinistry(id: string, name: string, forEveryone?: boolean, leaderId?: string | null) {
   try {
     await db.update(ministries).set({
       name: name.trim(),
       ...(forEveryone !== undefined && { for_everyone: forEveryone }),
+      ...(leaderId !== undefined && { leader_id: leaderId }),
     }).where(eq(ministries.id, id))
 
     if (forEveryone) {

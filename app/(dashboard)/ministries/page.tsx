@@ -1,11 +1,15 @@
 import { getMinistries } from "./actions"
+import { getMembersList } from "@/app/(dashboard)/members/actions"
 import { MinistriesClient } from "./MinistriesClient"
 import { ChurchIcon } from "lucide-react"
 
 export const metadata = { title: "Ministries | CBT Database" }
 
 export default async function MinistriesPage() {
-  const ministries = await getMinistries()
+  const [ministries, members] = await Promise.all([
+    getMinistries(),
+    getMembersList()
+  ])
 
   return (
     <div className="space-y-6">
@@ -15,10 +19,10 @@ export default async function MinistriesPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Ministries</h1>
-          <p className="text-muted-foreground text-sm">Manage church ministries available in the member form.</p>
+          <p className="text-muted-foreground text-sm">Manage church ministries and assign ministry leaders from members.</p>
         </div>
       </div>
-      <MinistriesClient ministries={ministries} />
+      <MinistriesClient ministries={ministries} members={members} />
     </div>
   )
 }

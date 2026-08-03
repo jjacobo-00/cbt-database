@@ -91,6 +91,7 @@ export const ministries = pgTable('ministries', {
   description: text('description'),
   for_everyone: boolean('for_everyone').default(false).notNull(),
   parent_id: uuid('parent_id'),
+  leader_id: uuid('leader_id'),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
