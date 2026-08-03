@@ -555,7 +555,7 @@ export function MemberForm({
 
   // Auto-sync Student Status (Step 4) -> Education Details (Step 6)
   React.useEffect(() => {
-    if (employmentStatus !== "Student") return
+    if (employmentStatus !== "Student" || (step !== 4 && step !== 6)) return
     const currentTargetLevel = studentLevel || "College"
 
     // 1. Sync highest_educational_attainment if needed
@@ -2305,7 +2305,7 @@ export function MemberForm({
         })()}
 
         {/* BOTTOM NAVIGATION BUTTONS */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t mt-8">
+        <div className="sticky bottom-16 sm:relative sm:bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 p-3 sm:p-0 pt-4 sm:pt-6 border-t bg-background/95 backdrop-blur-md mt-6 sm:mt-8 shadow-lg sm:shadow-none rounded-t-xl sm:rounded-none">
           <div className="flex items-center gap-2">
             <Button 
               type="button" 

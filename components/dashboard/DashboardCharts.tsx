@@ -53,7 +53,7 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
           <CardDescription>New members joined this year vs previous year (last 6 months).</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] w-full">
+          <div className="h-[300px] w-full touch-contain">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={monthlyData}
@@ -150,7 +150,7 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
         </CardHeader>
         <CardContent>
           {ageData.length > 0 ? (
-            <div className="h-[300px] w-full">
+            <div className="h-[300px] w-full touch-contain">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={ageData}

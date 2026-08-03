@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart, ChevronDown, Gift, RefreshCw, Network, MapPin, Target, DollarSign, Crown } from "lucide-react"
@@ -45,6 +45,18 @@ export function Sidebar({
 }) {
   const pathname = usePathname()
   const [openSubMenu, setOpenSubMenu] = useState<string | null>("Commitments")
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isMobileMenuOpen])
 
   const NavLinks = () => (
     <>

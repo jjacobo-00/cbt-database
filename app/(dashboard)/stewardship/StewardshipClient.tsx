@@ -141,7 +141,7 @@ export function StewardshipClient({
               <CardDescription>Commitment distribution by category</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
+              <div className="h-[300px] touch-contain">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={categoryChartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -163,7 +163,7 @@ export function StewardshipClient({
               <CardDescription>Monthly recurring vs one-time commitments</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
+              <div className="h-[300px] touch-contain">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -194,7 +194,7 @@ export function StewardshipClient({
               <CardDescription>Economic background of giving members</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
+              <div className="h-[300px] touch-contain">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={employmentChartData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
@@ -215,7 +215,7 @@ export function StewardshipClient({
               <CardDescription>Giving by years in church</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
+              <div className="h-[300px] touch-contain">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie

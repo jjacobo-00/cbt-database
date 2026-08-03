@@ -132,5 +132,25 @@
     @apply bg-background text-foreground;
     overflow-x: hidden;
     max-width: 100vw;
+    -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* Mobile Safe Areas & Utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.touch-contain {
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+.active-bounce {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.active-bounce:active {
+  transform: scale(0.97);
+}
+

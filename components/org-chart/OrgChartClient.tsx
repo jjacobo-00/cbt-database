@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Edit2, Trash2, UserCircle2, ChevronRight, ChevronDown, Network } from "lucide-react"
+import { Plus, Edit2, Trash2, UserCircle2, Network } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils/utils"
 
@@ -115,40 +115,40 @@ export function OrgChartClient({ initialNodes, members }: { initialNodes: OrgNod
     return (
       <div key={node.id} className="relative">
         <div className={cn(
-          "flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 mb-3 border rounded-xl bg-card shadow-sm transition-all hover:border-primary/40",
-          isRoot ? "border-primary/50 shadow-md bg-gradient-to-r from-primary/5 to-transparent" : "ml-4 sm:ml-8"
+          "flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 mb-3 border rounded-xl bg-card shadow-sm transition-all hover:border-primary/40 group",
+          isRoot ? "border-primary/50 shadow-md bg-gradient-to-r from-primary/5 to-transparent" : "ml-2 sm:ml-8"
         )}>
           {/* Vertical connecting line from parent if not root */}
           {!isRoot && (
-            <div className="absolute -left-4 sm:-left-8 top-8 w-4 sm:w-8 h-[2px] bg-border" />
+            <div className="absolute -left-2 sm:-left-8 top-8 w-2 sm:w-8 h-[2px] bg-border" />
           )}
 
-          <div className="flex items-center gap-4 w-full">
+          <div className="flex items-center gap-3 sm:gap-4 w-full">
             <div className={cn(
-              "p-3 rounded-full shrink-0 flex items-center justify-center",
+              "p-2.5 sm:p-3 rounded-full shrink-0 flex items-center justify-center",
               isRoot ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}>
               {assignedMember ? (
-                <div className="font-bold text-lg leading-none tracking-tight">
+                <div className="font-bold text-base sm:text-lg leading-none tracking-tight">
                   {assignedMember.first_name[0]}{assignedMember.last_name[0]}
                 </div>
               ) : (
-                <UserCircle2 className="h-6 w-6" />
+                <UserCircle2 className="h-5 w-5 sm:h-6 sm:w-6" />
               )}
             </div>
             
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base sm:text-lg truncate">{node.role_title}</h3>
-              <p className="text-sm text-muted-foreground truncate">
+              <h3 className="font-semibold text-sm sm:text-lg truncate">{node.role_title}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {assignedMember ? `${assignedMember.first_name} ${assignedMember.last_name}` : "Unassigned"}
               </p>
             </div>
 
-            <div className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-100">
-              <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(node)}>
+            <div className="flex shrink-0 gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(node)}>
                 <Edit2 className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(node.id)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(node.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -159,8 +159,8 @@ export function OrgChartClient({ initialNodes, members }: { initialNodes: OrgNod
         {children.length > 0 && (
           <div className="relative">
             {/* Vertical spine line for children */}
-            <div className="absolute left-6 sm:left-10 top-0 bottom-6 w-[2px] bg-border" />
-            <div className="pl-6 sm:pl-10">
+            <div className="absolute left-4 sm:left-10 top-0 bottom-6 w-[2px] bg-border" />
+            <div className="pl-3 sm:pl-10">
               {children.map((child) => renderNode(child, level + 1))}
             </div>
           </div>
@@ -191,8 +191,8 @@ export function OrgChartClient({ initialNodes, members }: { initialNodes: OrgNod
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto pb-4">
-          <div className="min-w-[600px] py-4">
+        <div className="overflow-x-auto pb-4 touch-contain">
+          <div className="min-w-[320px] sm:min-w-[500px] py-4">
             {rootNodes.map((node) => renderNode(node, 0))}
           </div>
         </div>

@@ -256,7 +256,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
         <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>

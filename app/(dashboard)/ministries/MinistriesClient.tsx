@@ -120,7 +120,7 @@ export function MinistriesClient({ ministries: initial }: { ministries: Ministry
 
     return (
       <React.Fragment key={m.id}>
-        <li className={`flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors gap-4 ${isChild ? "pl-12 bg-muted/5" : ""}`}>
+        <li className={`flex items-center justify-between px-3 sm:px-6 py-3.5 sm:py-4 hover:bg-muted/30 transition-colors gap-2 sm:gap-4 ${isChild ? "pl-8 sm:pl-12 bg-muted/5" : ""}`}>
           {editingId === m.id ? (
             <div className="flex flex-1 flex-col gap-2">
               <div className="flex gap-2 items-center">
