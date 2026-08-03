@@ -55,7 +55,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const tokenRecord = tokenRecords[0]
         if (new Date(tokenRecord.expires) < new Date()) {
-          // Cleanup expired token
           await db
             .delete(verificationTokens)
             .where(
@@ -67,7 +66,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Verification code has expired. Please request a new code.")
         }
 
-        // Delete valid used token to prevent reuse
         await db
           .delete(verificationTokens)
           .where(
@@ -120,7 +118,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
 
         if (whitelistedUser) {
-          user.role = "admin"
           return true
         }
 
@@ -130,8 +127,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
 
         if (memberRecord) {
-          user.role = "member"
-          user.memberId = memberRecord.id
           return true
         }
 
@@ -143,11 +138,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true
     },
     async jwt({ token, user }) {
-      if (user) {
+      if (user?.id) {
         token.sub = user.id
-        token.role = user.role || "member"
-        token.memberId = user.memberId
       }
+
+      // Explicit memberId passed from credentials authorize
+      if (user?.memberId) {
+        token.memberId = user.memberId
+        token.role = "member"
+      }
+
+      // Automatically resolve role and memberId from token.email if not set
+      if (token.email) {
+        const cleanEmail = token.email.trim().toLowerCase()
+
+        const whitelistedUser = await db.query.whitelisted_users.findFirst({
+          where: eq(whitelisted_users.email, cleanEmail),
+        })
+
+        if (whitelistedUser) {
+          token.role = "admin"
+        } else {
+          const memberRecord = await db.query.members.findFirst({
+            where: ilike(members.email, cleanEmail),
+          })
+
+          if (memberRecord) {
+            token.role = "member"
+            token.memberId = memberRecord.id
+          }
+        }
+      }
+
       return token
     },
     async session({ session, token }) {

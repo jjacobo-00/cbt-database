@@ -22,24 +22,33 @@ export default async function MyProfilePage() {
     redirect("/dashboard")
   }
 
-  const memberId = session.user.memberId
+  let memberId = session.user.memberId
+  let member
 
-  if (!memberId) {
+  if (memberId) {
+    const [found] = await db.select().from(members).where(eq(members.id, memberId))
+    member = found
+  }
+
+  // Fallback lookup by email if member not found by memberId
+  if (!member && session.user.email) {
+    const { ilike } = await import("drizzle-orm")
+    const [foundByEmail] = await db.select().from(members).where(ilike(members.email, session.user.email))
+    member = foundByEmail
+    if (member) {
+      memberId = member.id
+    }
+  }
+
+  if (!member || !memberId) {
     return (
       <div className="p-8 text-center max-w-md mx-auto space-y-4">
         <h2 className="text-xl font-bold">Member Profile Not Found</h2>
         <p className="text-sm text-muted-foreground">
-          Your account is logged in, but no linked member record was found. Please contact a church administrator to verify your registered email.
+          Your account ({session.user.email || "email"}) is logged in, but no matching member record was found in the database. Please contact a church administrator to verify your registered email.
         </p>
       </div>
     )
-  }
-
-  // 1. Fetch Member Details
-  const [member] = await db.select().from(members).where(eq(members.id, memberId))
-
-  if (!member) {
-    notFound()
   }
 
   // 2. Fetch Children
