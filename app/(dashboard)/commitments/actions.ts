@@ -7,6 +7,7 @@ import { eq, and, asc, desc, inArray } from "drizzle-orm"
 import { requireAdmin } from "@/lib/utils/action-helpers"
 
 export async function getCommitmentsByYear(year: number) {
+  await requireAdmin()
   try {
     // Fetch ALL members in the directory
     const allMembers = await db.select({
@@ -77,6 +78,7 @@ export async function getCommitmentsByYear(year: number) {
 }
 
 export async function getRecommitmentTrackerData(targetYear: number) {
+  await requireAdmin()
   try {
     const prevYear = targetYear - 1
 

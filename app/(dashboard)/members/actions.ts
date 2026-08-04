@@ -6,9 +6,10 @@ import { db } from "@/db"
 import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children, org_chart_nodes, missions } from "@/db/schema"
 import crypto from "crypto"
 import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
-import { requireAdmin } from "@/lib/utils/action-helpers"
+import { requireAdmin, requireSelfOrAdmin } from "@/lib/utils/action-helpers"
 
 export async function coreCreateMember(payloadStr: string) {
+  await requireAdmin()
   const data = JSON.parse(payloadStr)
 
   if (data.church_role === "Main Pastor") {
@@ -236,6 +237,7 @@ export async function createMember(payloadStr: string) {
 export async function coreUpdateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
   const id = data.id
+  await requireSelfOrAdmin(id)
 
   if (data.church_role === "Main Pastor") {
     await db.update(members).set({ church_role: "Member" }).where(and(eq(members.church_role, "Main Pastor"), ne(members.id, id)))
@@ -573,6 +575,7 @@ export async function revokeInviteLink(token: string) {
 }
 
 export async function getActiveInvitationLinks(memberId?: string) {
+  await requireAdmin()
   const now = new Date()
   const links = await db
     .select({
@@ -748,6 +751,7 @@ export async function submitInviteForm(token: string, payloadStr: string) {
 }
 
 export async function getMembersList(limit = 100, offset = 0) {
+  await requireAdmin()
   const result = await db.select({
     id: members.id,
     first_name: members.first_name,

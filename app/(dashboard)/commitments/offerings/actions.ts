@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { offering_categories } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
+import { requireAdmin } from "@/lib/utils/action-helpers"
 
 export async function getOfferingCategories() {
   try {
@@ -16,6 +17,7 @@ export async function getOfferingCategories() {
 }
 
 export async function createOfferingCategory(name: string, description: string, isMonthly: boolean, month?: number | null) {
+  await requireAdmin()
   try {
     await db.insert(offering_categories).values({
       name: name.trim(),
@@ -31,6 +33,7 @@ export async function createOfferingCategory(name: string, description: string, 
 }
 
 export async function updateOfferingCategory(id: string, name: string, description: string, isMonthly: boolean, month?: number | null) {
+  await requireAdmin()
   try {
     await db.update(offering_categories).set({
       name: name.trim(),
@@ -46,6 +49,7 @@ export async function updateOfferingCategory(id: string, name: string, descripti
 }
 
 export async function deleteOfferingCategory(id: string) {
+  await requireAdmin()
   try {
     await db.delete(offering_categories).where(eq(offering_categories.id, id))
   } catch (error) {
