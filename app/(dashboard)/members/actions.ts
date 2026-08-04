@@ -745,7 +745,7 @@ export async function submitInviteForm(token: string, payloadStr: string) {
   }
 }
 
-export async function getMembersList() {
+export async function getMembersList(limit = 100, offset = 0) {
   const result = await db.select({
     id: members.id,
     first_name: members.first_name,
@@ -758,7 +758,7 @@ export async function getMembersList() {
     position: members.position,
     company: members.company,
     birth_date: members.birth_date
-  }).from(members)
+  }).from(members).limit(limit).offset(offset)
   return result
 }
 

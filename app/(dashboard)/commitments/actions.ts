@@ -95,7 +95,7 @@ export async function getRecommitmentTrackerData(targetYear: number) {
       id: commitments.id,
       member_id: commitments.member_id,
       year: commitments.year,
-    }).from(commitments)
+    }).from(commitments).where(inArray(commitments.year, [targetYear, prevYear]))
 
     const commIds = allComms.map(c => c.id)
 
