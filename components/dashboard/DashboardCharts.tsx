@@ -1,9 +1,7 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -20,10 +18,8 @@ import {
 } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTheme } from "next-themes"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Users, Info, ArrowRight } from "lucide-react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Users, Info } from "lucide-react"
 
 interface DashboardChartsProps {
   monthlyData: { month: string; currentYear: number; previousYear: number; monthNum: number }[]
@@ -32,6 +28,7 @@ interface DashboardChartsProps {
 }
 
 export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: DashboardChartsProps) {
+  const router = useRouter()
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
@@ -49,42 +46,41 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
     color: isDark ? '#f3f4f6' : '#111827'
   }
 
-  // Interactive drilldown modal state
-  const [selectedSegment, setSelectedSegment] = useState<{ title: string; count: number; category: string } | null>(null)
-
-  const handleBarClick = (entry: any, categoryName: string) => {
-    if (!entry) return
-    const title = entry.name || entry.month || "Segment"
-    const count = entry.value ?? entry.currentYear ?? 0
-    setSelectedSegment({ title, count, category: categoryName })
+  // Direct Navigation Handlers
+  const handleGrowthClick = () => {
+    router.push("/members")
   }
 
-  const getFilteredMembersLink = () => {
-    if (!selectedSegment) return "/members"
-    const { category, title } = selectedSegment
-    if (category === "Age Demographics") {
-      if (title.includes("Kids")) return "/members?age_group=kids"
-      if (title.includes("Teens")) return "/members?age_group=teens"
-      if (title.includes("Young Adults")) return "/members?age_group=young_adults"
-      if (title.includes("Adults")) return "/members?age_group=adults"
-      if (title.includes("Seniors")) return "/members?age_group=seniors"
+  const handleMinistryClick = (entry: any) => {
+    if (!entry) return
+    const name = (entry.name || entry.payload?.name || "").toLowerCase()
+    if (name.includes("not")) {
+      router.push("/members?ministry=not_serving")
+    } else {
+      router.push("/members?ministry=serving")
     }
-    if (category === "Ministry Engagement") {
-      if (title.includes("Not")) return "/members?ministry=not_serving"
-      if (title.includes("Serving")) return "/members?ministry=serving"
-    }
-    return "/members"
+  }
+
+  const handleAgeClick = (entry: any) => {
+    if (!entry) return
+    const name = (entry.name || entry.payload?.name || "").toLowerCase()
+    if (name.includes("kids")) router.push("/members?age_group=kids")
+    else if (name.includes("youth") || name.includes("teens")) router.push("/members?age_group=teens")
+    else if (name.includes("young")) router.push("/members?age_group=young_adults")
+    else if (name.includes("adults")) router.push("/members?age_group=adults")
+    else if (name.includes("seniors")) router.push("/members?age_group=seniors")
+    else router.push("/members")
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-      {/* Member Growth Line Chart with Year-over-Year Comparison */}
-      <Card className="lg:col-span-3 xl:col-span-2 transition-all duration-300 hover:shadow-md">
+      {/* Member Growth Line Chart */}
+      <Card className="lg:col-span-3 xl:col-span-2 transition-all duration-300 hover:shadow-md cursor-pointer" onClick={handleGrowthClick}>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Member Growth</span>
-            <span className="text-xs text-muted-foreground font-normal flex items-center gap-1">
-              <Info className="h-3.5 w-3.5" /> Click points for details
+            <span className="text-xs text-primary font-normal flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" /> Click to view directory →
             </span>
           </CardTitle>
           <CardDescription>New members joined this year vs previous year (last 6 months).</CardDescription>
@@ -95,15 +91,12 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
               <LineChart
                 data={monthlyData}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                onClick={handleGrowthClick}
               >
                 <defs>
                   <linearGradient id="colorCurrentYear" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorPreviousYear" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#9ca3af" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
@@ -120,7 +113,6 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                   fontSize={12} 
                   tickLine={false} 
                   axisLine={false}
-                  tickFormatter={(value) => `${value}`}
                 />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend />
@@ -131,7 +123,6 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                   strokeWidth={3}
                   name="This Year"
                   dot={{ fill: "#3b82f6", strokeWidth: 2, r: 5, className: "cursor-pointer" }}
-                  onClick={(e: any) => handleBarClick(e?.payload, "Monthly Growth")}
                 />
                 <Line 
                   type="monotone" 
@@ -141,7 +132,6 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                   strokeDasharray="5 5"
                   name="Previous Year"
                   dot={{ fill: "#9ca3af", strokeWidth: 2, r: 4, className: "cursor-pointer" }}
-                  onClick={(e: any) => handleBarClick(e?.payload, "Previous Year Growth")}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -154,7 +144,7 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Ministry Volunteer Engagement</span>
-            <span className="text-xs text-muted-foreground font-normal">Click slice</span>
+            <span className="text-xs text-primary font-normal">Click slice →</span>
           </CardTitle>
           <CardDescription>Members serving in active ministries vs not yet serving.</CardDescription>
         </CardHeader>
@@ -172,10 +162,15 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                   dataKey="value"
                   stroke="none"
                   className="cursor-pointer"
-                  onClick={(e) => handleBarClick(e, "Ministry Engagement")}
+                  onClick={handleMinistryClick}
                 >
                   {membershipStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COMMITMENT_COLORS[index % COMMITMENT_COLORS.length]} className="cursor-pointer hover:opacity-80 transition-opacity" />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={COMMITMENT_COLORS[index % COMMITMENT_COLORS.length]} 
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => handleMinistryClick(entry)}
+                    />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
@@ -191,9 +186,9 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Age Demographics</span>
-            <span className="text-xs text-muted-foreground font-normal">Click bar to inspect</span>
+            <span className="text-xs text-primary font-normal">Click any bar to view matching members →</span>
           </CardTitle>
-          <CardDescription>Breakdown of our congregation by age groups.</CardDescription>
+          <CardDescription>Breakdown of congregation by age groups.</CardDescription>
         </CardHeader>
         <CardContent>
           {ageData.length > 0 ? (
@@ -202,6 +197,11 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                 <BarChart
                   data={ageData}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  onClick={(state: any) => {
+                    if (state && state.activePayload && state.activePayload[0]) {
+                      handleAgeClick(state.activePayload[0].payload)
+                    }
+                  }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
                   <XAxis 
@@ -223,10 +223,14 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
                     dataKey="value" 
                     radius={[4, 4, 0, 0]}
                     className="cursor-pointer"
-                    onClick={(e) => handleBarClick(e, "Age Demographics")}
                   >
                     {ageData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} className="cursor-pointer hover:opacity-80 transition-opacity" />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={AGE_COLORS[index % AGE_COLORS.length]} 
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => handleAgeClick(entry)}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -239,48 +243,6 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
           )}
         </CardContent>
       </Card>
-
-      {/* Interactive Segment Detail Dialog */}
-      <Dialog open={!!selectedSegment} onOpenChange={(open) => !open && setSelectedSegment(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              {selectedSegment?.category}: {selectedSegment?.title}
-            </DialogTitle>
-            <DialogDescription>
-              Detailed breakdown for the selected chart segment.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between">
-              <div>
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Members in Segment</span>
-                <h3 className="text-3xl font-bold text-primary mt-0.5">{selectedSegment?.count}</h3>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
-                {selectedSegment?.count}
-              </div>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              You can filter and view complete member records, contact numbers, and emails in the Members Directory or Reports module.
-            </p>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2 border-t">
-            <Button variant="outline" onClick={() => setSelectedSegment(null)}>
-              Close
-            </Button>
-            <Button asChild className="gap-2">
-              <Link href={getFilteredMembersLink()} onClick={() => setSelectedSegment(null)}>
-                <span>View Filtered Members Directory</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
