@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { members, ministries, member_ministries } from "@/db/schema"
+import { members, ministries, member_ministries, missions } from "@/db/schema"
 import { asc, eq } from "drizzle-orm"
 import { columns } from "@/components/members/columns"
 import { DataTable } from "@/components/members/data-table"
@@ -21,6 +21,8 @@ export default async function MembersPage() {
     contact_number: members.contact_number,
     email: members.email,
     city: members.city,
+    mission_id: members.mission_id,
+    mission_name: missions.name,
     occupation: members.occupation,
     position: members.position,
     company: members.company,
@@ -37,7 +39,10 @@ export default async function MembersPage() {
     date_saved: members.date_saved,
     date_baptized: members.date_baptized,
     created_at: members.created_at
-  }).from(members).orderBy(asc(members.last_name))
+  })
+  .from(members)
+  .leftJoin(missions, eq(members.mission_id, missions.id))
+  .orderBy(asc(members.last_name))
 
   const memberMinistryRows = await db
     .select({

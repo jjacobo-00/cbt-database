@@ -710,6 +710,8 @@ export function DataTable<TData, TValue>({
             const role = (row.original as any).occupation || "Member"
             const rawContact = (row.original as any).contact_number
             const rawEmail = (row.original as any).email
+            const missionName = (row.original as any).mission_name || "Mother / Main Church"
+            const isBaptized = Boolean((row.original as any).date_baptized || (row.original as any).baptism_date)
             
             const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 
@@ -729,10 +731,15 @@ export function DataTable<TData, TValue>({
                     <span className="font-semibold text-foreground text-base truncate">
                       {firstName} {lastName}
                     </span>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground truncate bg-muted px-2 py-0.5 rounded-full">
-                        {role}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                        {missionName}
                       </span>
+                      {isBaptized && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                          Baptized
+                        </span>
+                      )}
                       <span className="text-xs text-muted-foreground truncate">
                         {contact}
                       </span>

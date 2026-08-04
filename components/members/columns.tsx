@@ -13,6 +13,9 @@ export type MemberType = {
   contact_number: string | null
   city: string | null
   occupation: string | null
+  mission_name?: string | null
+  date_baptized?: string | null
+  baptism_date?: string | null
   created_at: string
 }
 
@@ -63,6 +66,18 @@ export const columns: ColumnDef<MemberType>[] = [
         <div className="font-medium flex items-center gap-2">
           <span>{row.original.first_name} {row.original.last_name}</span>
         </div>
+      )
+    },
+  },
+  {
+    accessorKey: "mission_name",
+    header: "Mission Branch",
+    cell: ({ row }) => {
+      const missionName = row.original.mission_name || "Mother / Main Church"
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          {missionName}
+        </span>
       )
     },
   },
