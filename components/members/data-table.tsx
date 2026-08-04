@@ -710,7 +710,7 @@ export function DataTable<TData, TValue>({
             const role = (row.original as any).occupation || "Member"
             const rawContact = (row.original as any).contact_number
             const rawEmail = (row.original as any).email
-            const missionName = (row.original as any).mission_name || "Mother / Main Church"
+            const missionName = (row.original as any).mission_name || "CBT Olongapo"
             const isBaptized = Boolean((row.original as any).date_baptized || (row.original as any).baptism_date)
             
             const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()

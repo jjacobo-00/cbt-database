@@ -123,7 +123,7 @@ export function ReportsClient({
 
   const handleMissionBranchClick = (entry: any) => {
     if (!entry || !entry.name) return;
-    if (entry.name === "Mother / Main Church") {
+    if (entry.name === "CBT Olongapo") {
       router.push("/members");
     } else {
       router.push(`/members?search=${encodeURIComponent(entry.name)}`);
@@ -219,7 +219,7 @@ export function ReportsClient({
   const missionBranchData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredData.forEach((m) => {
-      const branch = m.mission_name || "Mother / Main Church";
+      const branch = m.mission_name || "CBT Olongapo";
       counts[branch] = (counts[branch] || 0) + 1;
     });
     return Object.entries(counts)

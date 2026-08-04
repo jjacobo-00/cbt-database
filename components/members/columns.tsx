@@ -73,7 +73,7 @@ export const columns: ColumnDef<MemberType>[] = [
     accessorKey: "mission_name",
     header: "Mission Branch",
     cell: ({ row }) => {
-      const missionName = row.original.mission_name || "Mother / Main Church"
+      const missionName = row.original.mission_name || "CBT Olongapo"
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
           {missionName}

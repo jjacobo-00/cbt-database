@@ -1585,7 +1585,7 @@ export function MemberProfileView({
                     Assigned Mission Branch
                   </span>
                   <span className="font-medium text-amber-600 dark:text-amber-400">
-                    {member.mission_name || "Mother / Main Church"}
+                    {member.mission_name || "CBT Olongapo"}
                   </span>
                 </div>
                 <div>
@@ -2109,7 +2109,7 @@ export function MemberProfileView({
                 Assigned Mission Branch
               </span>
               <span className="font-semibold text-black break-words">
-                {member.mission_name || "Mother / Main Church"}
+                {member.mission_name || "CBT Olongapo"}
               </span>
             </div>
             <div className="p-2 min-w-0">

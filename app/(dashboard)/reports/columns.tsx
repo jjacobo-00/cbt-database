@@ -47,7 +47,7 @@ export const columns: ColumnDef<ReportMember>[] = [
   {
     accessorKey: "mission_name",
     header: "Mission Branch",
-    cell: ({ row }) => row.original.mission_name || "Mother / Main Church",
+    cell: ({ row }) => row.original.mission_name || "CBT Olongapo",
   },
   {
     accessorKey: "marital_status",
