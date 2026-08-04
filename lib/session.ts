@@ -1,14 +1,20 @@
 import { SignJWT, jwtVerify } from "jose"
 import { cookies } from "next/headers"
 
-const secretKey = process.env.SESSION_SECRET || "default_secret_key_for_cbt_directory_change_me_in_prod"
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000 // 24 hours
+const SESSION_DURATION_H = "24h"
+
+if (!process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET environment variable is not set. See .env.example.")
+}
+const secretKey = process.env.SESSION_SECRET
 const key = new TextEncoder().encode(secretKey)
 
 export async function encrypt(payload: any) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("24h")
+    .setExpirationTime(SESSION_DURATION_H)
     .sign(key)
 }
 
@@ -20,7 +26,7 @@ export async function decrypt(input: string): Promise<any> {
 }
 
 export async function createSession() {
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+  const expires = new Date(Date.now() + SESSION_DURATION_MS)
   const session = await encrypt({ role: "admin", expires })
 
   const cookieStore = await cookies()

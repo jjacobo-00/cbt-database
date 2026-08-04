@@ -7,7 +7,7 @@ import { eq, and, ilike } from "drizzle-orm"
 import { whitelisted_users, users, accounts, sessions, verificationTokens, members } from "@/db/schema"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET || process.env.SESSION_SECRET || "default_cbt_directory_secret_change_me_in_prod",
+  secret: process.env.AUTH_SECRET ?? (() => { throw new Error("AUTH_SECRET environment variable is not set. See .env.example.") })(),
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
