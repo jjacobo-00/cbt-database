@@ -25,7 +25,7 @@ import {
 } from "recharts";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, Droplets, MapPin, Activity, Target } from "lucide-react";
+import { Users, Droplets, MapPin, Activity, Target, Church } from "lucide-react";
 import type { ReportMember } from "./page";
 
 export type MinistryParticipation = {
@@ -93,6 +93,20 @@ export function ReportsClient({
     router.push(`/members?ministry=${encodeURIComponent(entry.name)}`);
   };
 
+  const handleMissionBranchClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    if (entry.name === "Mother / Main Church") {
+      router.push("/members");
+    } else {
+      router.push(`/members?search=${encodeURIComponent(entry.name)}`);
+    }
+  };
+
+  const handleResidenceCityClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    router.push(`/members?search=${encodeURIComponent(entry.name)}`);
+  };
+
   // Date Filtering State
   const [dateFilter, setDateFilter] = useState("all"); // all, this_year, last_year
 
@@ -117,11 +131,13 @@ export function ReportsClient({
   const femaleCount = filteredData.filter(
     (m) => (m.gender || m.sex) === "Female",
   ).length;
-  const uniqueCities = new Set(
-    filteredData
-      .map((m) => (m as any).mission_location || m.city)
-      .filter(Boolean),
+  const uniqueResidenceCities = new Set(
+    filteredData.map((m) => m.city).filter(Boolean),
   ).size;
+
+  const activeMissionBranches = new Set(
+    filteredData.map((m) => m.mission_name).filter(Boolean),
+  ).size || 1;
 
   // Gender Data for Chart
   const genderData = [
@@ -188,17 +204,29 @@ export function ReportsClient({
     ].filter((d) => d.count > 0);
   }, [filteredData]);
 
-  // City Geographic Spread (using mission location first, then residence city)
-  const cityData = useMemo(() => {
+  // Mission Church Branches & Outreaches
+  const missionBranchData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredData.forEach((m) => {
-      const city = (m as any).mission_location || m.city || "Unknown";
+      const branch = m.mission_name || "Mother / Main Church";
+      counts[branch] = (counts[branch] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredData]);
+
+  // Member Residence (City/Municipality)
+  const residenceCityData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredData.forEach((m) => {
+      const city = m.city || "Unspecified";
       counts[city] = (counts[city] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10); // Top 10 cities
+      .slice(0, 10);
   }, [filteredData]);
 
   // Educational Attainment
@@ -352,17 +380,39 @@ export function ReportsClient({
           </Card>
         </Link>
 
-        <Card className="border-t-4 border-t-amber-500 shadow-sm">
+        <Link href="/missions" className="block group">
+          <Card className="border-t-4 border-t-amber-500 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-amber-600 transition-colors">
+                Mission Outreaches
+              </CardTitle>
+              <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center">
+                <Church className="h-4 w-4 text-amber-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{activeMissionBranches}</div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                Active mission branches →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Card className="border-t-4 border-t-orange-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Cities Reached
+              Residence Cities
             </CardTitle>
-            <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center">
-              <MapPin className="h-4 w-4 text-amber-500" />
+            <div className="h-8 w-8 bg-orange-500/10 rounded-full flex items-center justify-center">
+              <MapPin className="h-4 w-4 text-orange-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{uniqueCities}</div>
+            <div className="text-3xl font-bold">{uniqueResidenceCities}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              Member home cities
+            </p>
           </CardContent>
         </Card>
 
@@ -417,6 +467,7 @@ export function ReportsClient({
         <Card className="col-span-1 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Gender Distribution</CardTitle>
+            <CardDescription className="text-xs">Click slice to view members →</CardDescription>
           </CardHeader>
           <CardContent className="h-[250px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
@@ -451,6 +502,7 @@ export function ReportsClient({
         <Card className="col-span-1 md:col-span-1 xl:col-span-2 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Marital Status</CardTitle>
+            <CardDescription className="text-xs">Click bar to view members →</CardDescription>
           </CardHeader>
           <CardContent className="h-[250px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
@@ -486,6 +538,7 @@ export function ReportsClient({
         <Card className="col-span-1 md:col-span-2 min-w-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Age Demographics</CardTitle>
+            <CardDescription className="text-xs">Click bar to view members →</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
@@ -523,15 +576,62 @@ export function ReportsClient({
           </CardContent>
         </Card>
 
-        {/* Top Cities */}
-        <Card className="col-span-1 min-w-0 shadow-sm">
+        {/* Mission Church Branches & Outreaches */}
+        <Card className="col-span-1 md:col-span-2 min-w-0 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base">Top Cities</CardTitle>
+            <CardTitle className="text-base">Mission Church Branches & Outreaches</CardTitle>
+            <CardDescription className="text-xs">
+              Member count by assigned church mission branch / outreach
+            </CardDescription>
           </CardHeader>
           <CardContent className="h-[300px] min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={cityData}
+                data={missionBranchData}
+                margin={{ top: 20, right: 30, left: 0, bottom: 35 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  opacity={0.3}
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11 }}
+                  angle={-25}
+                  textAnchor="end"
+                  height={50}
+                />
+                <YAxis allowDecimals={false} />
+                <Tooltip
+                  cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                  contentStyle={{ borderRadius: "8px" }}
+                />
+                <Bar
+                  dataKey="count"
+                  fill="#f59e0b"
+                  radius={[4, 4, 0, 0]}
+                  name="Members"
+                  className="cursor-pointer"
+                  onClick={handleMissionBranchClick}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Member Residence (City/Municipality) */}
+        <Card className="col-span-1 md:col-span-2 min-w-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base">Member Residence (City/Municipality)</CardTitle>
+            <CardDescription className="text-xs">
+              Geographic distribution of member home addresses
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px] min-w-0 overflow-hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={residenceCityData}
                 layout="vertical"
                 margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
               >
@@ -545,7 +645,7 @@ export function ReportsClient({
                   dataKey="name"
                   type="category"
                   tick={{ fontSize: 11 }}
-                  width={80}
+                  width={90}
                 />
                 <Tooltip
                   cursor={{ fill: "rgba(0,0,0,0.05)" }}
@@ -553,9 +653,11 @@ export function ReportsClient({
                 />
                 <Bar
                   dataKey="count"
-                  fill="#f59e0b"
+                  fill="#06b6d4"
                   radius={[0, 4, 4, 0]}
                   name="Members"
+                  className="cursor-pointer"
+                  onClick={handleResidenceCityClick}
                 />
               </BarChart>
             </ResponsiveContainer>

@@ -41,8 +41,13 @@ export const columns: ColumnDef<ReportMember>[] = [
   },
   {
     accessorKey: "city",
-    header: "City",
+    header: "Residence City",
     cell: ({ row }) => row.original.city || "-",
+  },
+  {
+    accessorKey: "mission_name",
+    header: "Mission Branch",
+    cell: ({ row }) => row.original.mission_name || "Mother / Main Church",
   },
   {
     accessorKey: "marital_status",

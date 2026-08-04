@@ -12,6 +12,8 @@ export type ReportMember = {
   age: number | null
   birth_date?: string | null
   city: string | null
+  mission_id?: string | null
+  mission_name?: string | null
   mission_location?: string | null
   marital_status: string | null
   occupation: string | null
@@ -56,6 +58,8 @@ export default async function ReportsPage() {
       age: members.age,
       birth_date: members.birth_date,
       city: members.city,
+      mission_id: members.mission_id,
+      mission_name: missions.name,
       mission_location: missions.location,
       marital_status: members.marital_status,
       occupation: members.occupation,
