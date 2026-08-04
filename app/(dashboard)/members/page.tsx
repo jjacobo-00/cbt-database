@@ -38,6 +38,7 @@ export default async function MembersPage() {
     membership_date: members.membership_date,
     date_saved: members.date_saved,
     date_baptized: members.date_baptized,
+    last_login_at: members.last_login_at,
     created_at: members.created_at
   })
   .from(members)
@@ -70,6 +71,7 @@ export default async function MembersPage() {
     church_role: member.church_role || "Member",
     occupation: member.occupation || member.position || (member.employment_status === "Student" ? "Student" : member.company ? `${member.position || "Employee"} at ${member.company}` : (member.employment_status && member.employment_status !== "None") ? member.employment_status : "-"),
     ministries: ministryMap.get(member.id) || [],
+    last_login_at: member.last_login_at?.toISOString() || null,
     created_at: member.created_at?.toISOString() || ""
   }))
 

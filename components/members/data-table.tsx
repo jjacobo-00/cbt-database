@@ -728,6 +728,7 @@ export function DataTable<TData, TValue>({
             const rawEmail = (row.original as any).email
             const missionName = (row.original as any).mission_name || "CBT Olongapo"
             const isBaptized = Boolean((row.original as any).date_baptized || (row.original as any).baptism_date)
+            const lastLoginAt = (row.original as any).last_login_at
             
             const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 
@@ -754,6 +755,11 @@ export function DataTable<TData, TValue>({
                       {isBaptized && (
                         <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
                           Baptized
+                        </span>
+                      )}
+                      {lastLoginAt && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shrink-0">
+                          Login: {new Date(lastLoginAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                         </span>
                       )}
                       <span className="text-xs text-muted-foreground truncate">

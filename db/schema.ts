@@ -60,6 +60,7 @@ export const whitelisted_users = pgTable("whitelisted_users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   name: text("name"),
+  last_login_at: timestamp("last_login_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
 })
 export const invitation_links = pgTable('invitation_links', {
@@ -195,6 +196,7 @@ export const members = pgTable('members', {
   // Metadata
   created_by: text('created_by').references(() => users.id),
   updated_by: text('updated_by').references(() => users.id),
+  last_login_at: timestamp('last_login_at', { withTimezone: true }),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })

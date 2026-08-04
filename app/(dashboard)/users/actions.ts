@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm"
 import { requireAdmin } from "@/lib/utils/action-helpers"
 
 export async function getWhitelistedUsers() {
+  await requireAdmin()
   return await db.query.whitelisted_users.findMany({
     orderBy: (users, { desc }) => [desc(users.created_at)],
   })

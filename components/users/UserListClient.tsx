@@ -20,6 +20,7 @@ type WhitelistedUser = {
   id: string
   email: string
   name: string | null
+  last_login_at?: string | Date | null
   created_at: string | Date | null
 }
 
@@ -35,6 +36,17 @@ export function UserListClient({ users }: { users: WhitelistedUser[] }) {
     })
   }
 
+  const formatLastLogin = (val?: string | Date | null) => {
+    if (!val) return <span className="text-muted-foreground text-xs italic">Never</span>
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return <span className="text-muted-foreground text-xs italic">Never</span>
+    return (
+      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        {d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} at {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </span>
+    )
+  }
+
   return (
     <>
       {/* Desktop Table View */}
@@ -44,6 +56,7 @@ export function UserListClient({ users }: { users: WhitelistedUser[] }) {
             <TableRow>
               <TableHead>Email Address</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Last Login</TableHead>
               <TableHead>Date Added</TableHead>
               <TableHead className="w-[100px]">Action</TableHead>
             </TableRow>
@@ -51,7 +64,7 @@ export function UserListClient({ users }: { users: WhitelistedUser[] }) {
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                   No users whitelisted yet.
                 </TableCell>
               </TableRow>
@@ -60,6 +73,7 @@ export function UserListClient({ users }: { users: WhitelistedUser[] }) {
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>{user.name || "-"}</TableCell>
+                  <TableCell>{formatLastLogin(user.last_login_at)}</TableCell>
                   <TableCell>
                     {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
                   </TableCell>
@@ -104,8 +118,9 @@ export function UserListClient({ users }: { users: WhitelistedUser[] }) {
                     <span className="text-xs text-muted-foreground truncate">
                       {user.email}
                     </span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">
-                      Added: {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
+                    <span className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <span>Last Login:</span>
+                      {formatLastLogin(user.last_login_at)}
                     </span>
                   </div>
                 </div>

@@ -763,7 +763,8 @@ export async function getMembersList(limit = 100, offset = 0) {
     contact_number: members.contact_number,
     position: members.position,
     company: members.company,
-    birth_date: members.birth_date
+    birth_date: members.birth_date,
+    last_login_at: members.last_login_at,
   }).from(members).limit(limit).offset(offset)
   return result
 }

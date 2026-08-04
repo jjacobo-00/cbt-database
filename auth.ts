@@ -92,6 +92,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("No active member profile found associated with this email.")
         }
 
+        // Record last login timestamp
+        await db.update(members).set({ last_login_at: new Date() }).where(eq(members.id, member.id))
+
         return {
           id: member.id,
           name: `${member.first_name} ${member.last_name}`,
@@ -117,6 +120,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
 
         if (whitelistedUser) {
+          await db.update(whitelisted_users).set({ last_login_at: new Date() }).where(eq(whitelisted_users.id, whitelistedUser.id))
           return true
         }
 
@@ -126,6 +130,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
 
         if (memberRecord) {
+          await db.update(members).set({ last_login_at: new Date() }).where(eq(members.id, memberRecord.id))
           return true
         }
 

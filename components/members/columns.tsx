@@ -16,6 +16,7 @@ export type MemberType = {
   mission_name?: string | null
   date_baptized?: string | null
   baptism_date?: string | null
+  last_login_at?: string | null
   created_at: string
 }
 
@@ -112,6 +113,21 @@ export const columns: ColumnDef<MemberType>[] = [
     accessorKey: "city",
     header: "City",
     cell: ({ row }) => <div>{row.getValue("city") || "-"}</div>,
+  },
+  {
+    accessorKey: "last_login_at",
+    header: "Last Login",
+    cell: ({ row }) => {
+      const val = row.original.last_login_at
+      if (!val) return <span className="text-muted-foreground text-xs italic">Never</span>
+      const date = new Date(val)
+      if (isNaN(date.getTime())) return <span className="text-muted-foreground text-xs italic">Never</span>
+      return (
+        <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          {date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+      )
+    },
   },
   {
     accessorKey: "created_at",
