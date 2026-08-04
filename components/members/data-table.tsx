@@ -14,6 +14,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
+import { GenerateInviteLinkButton } from "./GenerateInviteLinkButton"
+import { AGE_GROUPS, GENDER_OPTIONS, JOINED_OPTIONS } from "@/lib/constants/directory"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw } from "lucide-react"
@@ -44,21 +46,6 @@ interface DataTableProps<TData, TValue> {
   ministriesList?: MinistryOption[]
 }
 
-const AGE_GROUPS = [
-  { id: "kids", label: "Kids (0-12)" },
-  { id: "teens", label: "Teens (13-17)" },
-  { id: "young_adults", label: "Young Adults (18-35)" },
-  { id: "adults", label: "Adults (36-59)" },
-  { id: "seniors", label: "Seniors (60+)" },
-]
-
-const GENDER_OPTIONS = ["Male", "Female"]
-const MARITAL_OPTIONS = ["Single", "Married", "Widowed", "Separated"]
-const JOINED_OPTIONS = [
-  { id: "this_year", label: "Joined This Year (2026)" },
-  { id: "this_month", label: "Joined This Month" },
-  { id: "last_year", label: "Joined Last Year" },
-]
 const BAPTIZED_OPTIONS = [
   { id: "this_year", label: "Baptized This Year (2026)" },
   { id: "true", label: "All Baptized Members" },
