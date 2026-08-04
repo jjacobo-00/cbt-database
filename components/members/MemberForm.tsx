@@ -41,6 +41,7 @@ const memberSchema = z.object({
   
   // Spiritual info
   church_role: z.string().default("Member"),
+  mission_id: z.string().default("main"),
   date_saved: z.string().default(""),
   membership_date: z.string().default(""),
   baptism_date: z.string().default(""),
@@ -157,12 +158,14 @@ const STEPS = [
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
 type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
 type BaseMember = { id: string; first_name: string; last_name: string; suffix?: string | null; contact_number?: string | null }
+type MissionOption = { id: string; name: string; location?: string | null }
 
 export function MemberForm({ 
   initialData, 
   ministries = [], 
   offeringCategories = [], 
   allMembers = [],
+  missions = [],
   onSubmitOverride,
   hideBackButton = false,
   isInvite = false,
@@ -174,6 +177,7 @@ export function MemberForm({
   ministries?: Ministry[]; 
   offeringCategories?: OfferingCategory[]; 
   allMembers?: BaseMember[];
+  missions?: MissionOption[];
   onSubmitOverride?: (payload: string) => Promise<void>;
   hideBackButton?: boolean;
   isInvite?: boolean;
@@ -269,6 +273,7 @@ export function MemberForm({
       spouse_occupation: initialData?.spouse_occupation || "",
       anniversary_date: initialData?.anniversary_date || "",
       church_role: initialData?.church_role || "Member",
+      mission_id: initialData?.mission_id || "main",
       date_saved: initialData?.date_saved || "",
       membership_date: initialData?.membership_date || new Date().toISOString().split("T")[0],
       baptism_date: initialData?.baptism_date || "",
@@ -481,7 +486,8 @@ export function MemberForm({
         values.siblings = values.siblings.filter(s => s.name && s.name.trim() !== "")
       }
 
-      const payload = JSON.stringify({ id: initialData?.id, ...values })
+      const missionIdVal = values.mission_id === "main" ? null : (values.mission_id || null)
+      const payload = JSON.stringify({ id: initialData?.id, ...values, mission_id: missionIdVal })
       
       if (onSubmitOverride) {
         await onSubmitOverride(payload)
@@ -1317,6 +1323,31 @@ export function MemberForm({
                   )}
                 </div>
               )}
+
+              <div className="grid gap-2 col-span-1 md:col-span-2">
+                <Label className="text-[13px] text-muted-foreground font-medium flex items-center gap-1.5">
+                  <Church className="h-4 w-4 text-primary" /> CBT Location / Mission Branch
+                </Label>
+                <Select 
+                  value={form.watch("mission_id") || "main"} 
+                  onValueChange={(val) => form.setValue("mission_id", val, { shouldValidate: true, shouldDirty: true })}
+                >
+                  <SelectTrigger className="h-12 w-full bg-transparent font-medium">
+                    <SelectValue placeholder="Select CBT Location / Mission Branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="main">CBT Olongapo (Main Church)</SelectItem>
+                    {missions.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name} {m.location ? `(${m.location})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Default is CBT Olongapo (Main Church). Select a mission branch if member is assigned to an outreach branch.
+                </p>
+              </div>
               
               <div className="grid gap-2">
                 <Label className="text-[13px] text-muted-foreground">Membership Date (Joined CBT)</Label>

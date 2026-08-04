@@ -60,6 +60,7 @@ export async function coreCreateMember(payloadStr: string) {
     
     // Spiritual & Church Info
     church_role: data.church_role || "Member",
+    mission_id: data.mission_id || null,
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
     baptism_date: data.baptism_date || null,
@@ -292,6 +293,7 @@ export async function coreUpdateMember(payloadStr: string) {
     
     // Spiritual & Church Info
     church_role: data.church_role || existingMember?.church_role || "Member",
+    mission_id: data.mission_id || null,
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
     baptism_date: data.baptism_date || null,
