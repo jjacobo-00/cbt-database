@@ -15,7 +15,7 @@ import {
 } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { GenerateInviteLinkButton } from "./GenerateInviteLinkButton"
-import { AGE_GROUPS, GENDER_OPTIONS, JOINED_OPTIONS } from "@/lib/constants/directory"
+import { AGE_GROUPS, GENDER_OPTIONS, MARITAL_OPTIONS, JOINED_OPTIONS } from "@/lib/constants/directory"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw } from "lucide-react"
@@ -253,7 +253,7 @@ export function DataTable<TData, TValue>({
           className="w-full h-10 px-3 rounded-lg border bg-background text-sm font-medium focus:ring-1 focus:ring-primary"
         >
           <option value="">All Ages</option>
-          {AGE_GROUPS.map((g) => (
+          {AGE_GROUPS.filter(g => g.value !== "all").map((g) => (
             <option key={g.value} value={g.value}>{g.label}</option>
           ))}
         </select>
@@ -268,8 +268,8 @@ export function DataTable<TData, TValue>({
           className="w-full h-10 px-3 rounded-lg border bg-background text-sm font-medium focus:ring-1 focus:ring-primary"
         >
           <option value="">All Genders</option>
-          {GENDER_OPTIONS.map((g) => (
-            <option key={g} value={g}>{g}</option>
+          {GENDER_OPTIONS.filter(g => g.value !== "all").map((g) => (
+            <option key={g.value} value={g.value}>{g.label}</option>
           ))}
         </select>
       </div>
@@ -298,8 +298,8 @@ export function DataTable<TData, TValue>({
           className="w-full h-10 px-3 rounded-lg border bg-background text-sm font-medium focus:ring-1 focus:ring-primary"
         >
           <option value="">Any Join Date</option>
-          {JOINED_OPTIONS.map((j) => (
-            <option key={j.id} value={j.id}>{j.label}</option>
+          {JOINED_OPTIONS.filter(j => j.value !== "all").map((j) => (
+            <option key={j.value} value={j.value}>{j.label}</option>
           ))}
         </select>
       </div>
@@ -557,7 +557,7 @@ export function DataTable<TData, TValue>({
 
           {activeAgeGroup && (
             <span className="inline-flex items-center gap-1 text-xs bg-card border px-2.5 py-1 rounded-full font-medium">
-              Age: {AGE_GROUPS.find((g) => g.id === activeAgeGroup)?.label || activeAgeGroup}
+              Age: {AGE_GROUPS.find((g) => g.value === activeAgeGroup)?.label || activeAgeGroup}
               <button onClick={() => updateFilters({ age_group: null })} className="hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
@@ -566,7 +566,7 @@ export function DataTable<TData, TValue>({
 
           {activeGender && (
             <span className="inline-flex items-center gap-1 text-xs bg-card border px-2.5 py-1 rounded-full font-medium">
-              Gender: {activeGender}
+              Gender: {GENDER_OPTIONS.find((g) => g.value === activeGender)?.label || activeGender}
               <button onClick={() => updateFilters({ gender: null })} className="hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
@@ -584,7 +584,7 @@ export function DataTable<TData, TValue>({
 
           {activeJoined && (
             <span className="inline-flex items-center gap-1 text-xs bg-card border px-2.5 py-1 rounded-full font-medium">
-              Joined: {JOINED_OPTIONS.find((j) => j.id === activeJoined)?.label || activeJoined}
+              Joined: {JOINED_OPTIONS.find((j) => j.value === activeJoined)?.label || activeJoined}
               <button onClick={() => updateFilters({ joined: null })} className="hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>

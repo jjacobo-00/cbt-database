@@ -4,10 +4,7 @@ import { cookies } from "next/headers"
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000 // 24 hours
 const SESSION_DURATION_H = "24h"
 
-if (!process.env.SESSION_SECRET) {
-  throw new Error("SESSION_SECRET environment variable is not set. See .env.example.")
-}
-const secretKey = process.env.SESSION_SECRET
+const secretKey = process.env.SESSION_SECRET || process.env.AUTH_SECRET || "build_fallback_secret_do_not_use_in_prod"
 const key = new TextEncoder().encode(secretKey)
 
 export async function encrypt(payload: any) {

@@ -13,6 +13,13 @@ export const GENDER_OPTIONS = [
   { label: "Female", value: "Female" },
 ] as const
 
+export const MARITAL_OPTIONS = [
+  "Single",
+  "Married",
+  "Widowed",
+  "Separated",
+] as const
+
 export const JOINED_OPTIONS = [
   { label: "Any Time", value: "all" },
   { label: "This Month", value: "this_month" },
