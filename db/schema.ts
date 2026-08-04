@@ -7,7 +7,7 @@ export const users = pgTable("users", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
-  email: text("email").notNull(),
+  email: text("email").notNull().unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
 })
@@ -175,10 +175,12 @@ export const members = pgTable('members', {
   mission_id: uuid('mission_id').references(() => missions.id, { onDelete: 'set null' }),
   date_saved: date('date_saved'),
   membership_date: date('membership_date'),
-  witnessed_by: text('witnessed_by'),
-  baptized_by: text('baptized_by'),
-  date_baptized: date('date_baptized'),
-  baptism_date: date('baptism_date'),
+  // Deprecated redundant columns (scheduled for cleanup migration)
+  // Note: sex is redundant with gender; date_baptized with baptism_date; witnessed_by with baptized_by
+  witnessed_by: text("witnessed_by"),
+  baptized_by: text("baptized_by"),
+  date_baptized: date("date_baptized"),
+  baptism_date: date("baptism_date"),
   witness_by: text('witness_by'),
   place_of_baptism: text('place_of_baptism'),
   years_in_church: integer('years_in_church'),
