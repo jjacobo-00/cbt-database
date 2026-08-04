@@ -55,6 +55,16 @@ export const columns: ColumnDef<ReportMember>[] = [
     cell: ({ row }) => row.original.marital_status || "-",
   },
   {
+    accessorKey: "blood_type",
+    header: "Blood Type",
+    cell: ({ row }) => row.original.blood_type || "-",
+  },
+  {
+    accessorKey: "allergies",
+    header: "Allergies",
+    cell: ({ row }) => row.original.allergies || "None",
+  },
+  {
     accessorKey: "highest_educational_attainment",
     header: "Education",
     cell: ({ row }) => row.original.highest_educational_attainment || "-",

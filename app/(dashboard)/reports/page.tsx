@@ -19,6 +19,11 @@ export type ReportMember = {
   occupation: string | null
   employment_status: string | null
   highest_educational_attainment: string | null
+  blood_type?: string | null
+  allergies?: string | null
+  medical_conditions?: string | null
+  emergency_contact_number?: string | null
+  years_in_church?: number | null
   date_baptized: string | null
   membership_date: string | null
   created_at: string | null
@@ -65,6 +70,11 @@ export default async function ReportsPage() {
       occupation: members.occupation,
       employment_status: members.employment_status,
       highest_educational_attainment: members.highest_educational_attainment,
+      blood_type: members.blood_type,
+      allergies: members.allergies,
+      medical_conditions: members.medical_conditions,
+      emergency_contact_number: members.emergency_contact_number,
+      years_in_church: members.years_in_church,
       date_baptized: members.date_baptized,
       membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
       created_at: members.created_at
