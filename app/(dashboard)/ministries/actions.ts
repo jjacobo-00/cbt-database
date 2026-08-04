@@ -30,7 +30,7 @@ export async function getMinistries() {
 export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null, leaderId?: string | null) {
   await requireAdmin()
   const parsed = ministryNameSchema.safeParse(name)
-  if (!parsed.success) throw new Error(parsed.error.errors[0].message)
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message)
   try {
     const [inserted] = await db.insert(ministries).values({
       name: parsed.data.trim(),
@@ -56,7 +56,7 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
 export async function updateMinistry(id: string, name: string, forEveryone?: boolean, leaderId?: string | null) {
   await requireAdmin()
   const parsed = ministryNameSchema.safeParse(name)
-  if (!parsed.success) throw new Error(parsed.error.errors[0].message)
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message)
   try {
     await db.update(ministries).set({
       name: parsed.data.trim(),
