@@ -47,8 +47,15 @@ export function DashboardCharts({ monthlyData, membershipStatusData, ageData }: 
   }
 
   // Direct Navigation Handlers
-  const handleGrowthClick = () => {
-    router.push("/members")
+  const handleGrowthClick = (entry?: any) => {
+    if (entry && entry.activePayload && entry.activePayload[0]) {
+      const payload = entry.activePayload[0].payload
+      if (payload && payload.month) {
+        router.push(`/members?joined=month_${encodeURIComponent(payload.month)}`)
+        return
+      }
+    }
+    router.push("/members?joined=this_year")
   }
 
   const handleMinistryClick = (entry: any) => {

@@ -154,6 +154,22 @@ export function DataTable<TData, TValue>({
         if (activeJoined === "this_year" && d.getFullYear() !== currentYear) return false
         if (activeJoined === "last_year" && d.getFullYear() !== currentYear - 1) return false
         if (activeJoined === "this_month" && (d.getFullYear() !== currentYear || d.getMonth() !== currentMonth)) return false
+        if (activeJoined === "recent_growth") {
+          const sixMonthsAgo = new Date()
+          sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+          sixMonthsAgo.setDate(1)
+          sixMonthsAgo.setHours(0, 0, 0, 0)
+          if (d < sixMonthsAgo) return false
+        }
+        if (activeJoined.startsWith("month_")) {
+          const monthKey = activeJoined.replace("month_", "")
+          const monthsArr = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+          let targetMonthIdx = monthsArr.findIndex(m => m.toLowerCase() === monthKey.toLowerCase())
+          if (targetMonthIdx === -1 && !isNaN(Number(monthKey))) {
+            targetMonthIdx = Number(monthKey)
+          }
+          if (targetMonthIdx !== -1 && d.getMonth() !== targetMonthIdx) return false
+        }
       }
 
       // Baptized Filter
