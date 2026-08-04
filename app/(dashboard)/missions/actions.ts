@@ -6,9 +6,25 @@ import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/utils/action-helpers"
 
+import { sql } from "drizzle-orm"
+import { members } from "@/db/schema"
+
 export async function getMissions() {
   try {
-    const data = await db.select().from(missions).orderBy(missions.name)
+    const data = await db
+      .select({
+        id: missions.id,
+        name: missions.name,
+        location: missions.location,
+        pastor_name: missions.pastor_name,
+        established_date: missions.established_date,
+        created_at: missions.created_at,
+        member_count: sql<number>`count(${members.id})::int`,
+      })
+      .from(missions)
+      .leftJoin(members, eq(members.mission_id, missions.id))
+      .groupBy(missions.id)
+      .orderBy(missions.name)
     return data
   } catch (error) {
     console.error("Error fetching missions:", error)

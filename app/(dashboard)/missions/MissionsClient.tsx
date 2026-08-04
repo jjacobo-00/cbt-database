@@ -18,6 +18,7 @@ type Mission = {
   location: string | null
   pastor_name: string | null
   established_date: string | null
+  member_count?: number
 }
 
 export function MissionsClient({ 
@@ -168,6 +169,17 @@ export function MissionsClient({
                     <span>Established {new Date(mission.established_date).getFullYear()}</span>
                   </div>
                 )}
+                <div className="pt-2 border-t mt-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full">
+                    {mission.member_count || 0} Members
+                  </span>
+                  <a
+                    href={`/members?search=${encodeURIComponent(mission.name)}`}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    View Members →
+                  </a>
+                </div>
               </CardContent>
             </Card>
           ))

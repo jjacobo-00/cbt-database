@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { 
   members, children, member_ministries, ministries, 
-  commitments, commitment_ministries, commitment_offerings, offering_categories 
+  commitments, commitment_ministries, commitment_offerings, offering_categories, missions 
 } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { notFound } from "next/navigation"
@@ -13,11 +13,27 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
   const resolvedParams = await params
   const memberId = resolvedParams.id
 
-  // 1. Fetch Member
-  const [member] = await db.select().from(members).where(eq(members.id, memberId))
+  // 1. Fetch Member with Mission details
+  const [memberResult] = await db
+    .select({
+      member: members,
+      mission_name: missions.name,
+      mission_location: missions.location,
+      mission_pastor_name: missions.pastor_name,
+    })
+    .from(members)
+    .leftJoin(missions, eq(members.mission_id, missions.id))
+    .where(eq(members.id, memberId))
 
-  if (!member) {
+  if (!memberResult || !memberResult.member) {
     notFound()
+  }
+
+  const member = {
+    ...memberResult.member,
+    mission_name: memberResult.mission_name || null,
+    mission_location: memberResult.mission_location || null,
+    mission_pastor_name: memberResult.mission_pastor_name || null,
   }
 
   // 2. Fetch Children

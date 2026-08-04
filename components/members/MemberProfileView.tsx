@@ -1569,9 +1569,9 @@ export function MemberProfileView({
             {/* Local Church Membership */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 border-b pb-1">
-                Church History & Membership
+                Church History & Mission Branch Assignment
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <span className="text-muted-foreground text-xs block">
                     Church Name
@@ -1582,10 +1582,26 @@ export function MemberProfileView({
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">
-                    Location
+                    Assigned Mission Branch
+                  </span>
+                  <span className="font-medium text-amber-600 dark:text-amber-400">
+                    {member.mission_name || "Mother / Main Church"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">
+                    Assigned Mission Pastor
                   </span>
                   <span className="font-medium">
-                    Keith Streets, Gordon Heights, Olongapo City
+                    {member.mission_pastor_name || "Lead Pastor"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">
+                    Mission Location
+                  </span>
+                  <span className="font-medium">
+                    {member.mission_location || "Gordon Heights, Olongapo City"}
                   </span>
                 </div>
                 <div>
@@ -2076,7 +2092,7 @@ export function MemberProfileView({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
+          <div className="grid grid-cols-3 divide-x divide-slate-300 border-b border-slate-300 break-inside-avoid">
             <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">
                 Church Name
@@ -2090,10 +2106,18 @@ export function MemberProfileView({
             </div>
             <div className="p-2 min-w-0">
               <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">
-                Location
+                Assigned Mission Branch
               </span>
               <span className="font-semibold text-black break-words">
-                Keith Streets, Gordon Heights, Olongapo City
+                {member.mission_name || "Mother / Main Church"}
+              </span>
+            </div>
+            <div className="p-2 min-w-0">
+              <span className="block text-[10px] uppercase font-semibold text-slate-500 mb-0.5">
+                Assigned Mission Pastor
+              </span>
+              <span className="font-semibold text-black break-words">
+                {member.mission_pastor_name || "Lead Pastor"}
               </span>
             </div>
           </div>
