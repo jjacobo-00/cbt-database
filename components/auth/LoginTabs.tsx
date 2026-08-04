@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
-import { MemberLoginForm } from "@/components/auth/MemberLoginForm"
-import { Sparkles, Mail, ChevronDown, ChevronUp } from "lucide-react"
+import React, { useState } from "react";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { MemberLoginForm } from "@/components/auth/MemberLoginForm";
+import { Sparkles, Mail, ChevronDown, ChevronUp } from "lucide-react";
 
 export function LoginTabs() {
-  const [showOtp, setShowOtp] = useState(false)
+  const [showOtp, setShowOtp] = useState(false);
 
   return (
     <div className="space-y-5">
@@ -14,7 +14,8 @@ export function LoginTabs() {
       <div className="space-y-3">
         <GoogleSignInButton />
         <p className="text-[11px] text-center text-muted-foreground">
-          Members and Staff can sign in with 1-click using their registered Google email.
+          CBT members can sign in with 1-click using their registered Google
+          email.
         </p>
       </div>
 
@@ -52,5 +53,5 @@ export function LoginTabs() {
         )}
       </div>
     </div>
-  )
+  );
 }
