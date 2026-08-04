@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "../actions"
 import { cn } from "@/lib/utils/utils"
+import { useRouter } from "next/navigation"
 
 type TrackerMember = {
   member_id: string
@@ -37,6 +38,7 @@ export function RecommitmentClient({
   allMinistries: Ministry[]
   allOfferings: OfferingCat[]
 }) {
+  const router = useRouter()
   const [list, setList] = useState(initialData)
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<"all" | "recommitted" | "pending" | "unassigned">("all")
@@ -48,7 +50,9 @@ export function RecommitmentClient({
   const [editOfferings, setEditOfferings] = useState<string[]>([])
 
   const handleYearChange = (newYear: number) => {
-    window.location.href = `/commitments/recommitment?year=${newYear}`
+    startTransition(() => {
+      router.push(`/commitments/recommitment?year=${newYear}`)
+    })
   }
 
   const openRecommitModal = (m: TrackerMember) => {

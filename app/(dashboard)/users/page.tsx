@@ -1,6 +1,7 @@
 import { getWhitelistedUsers, removeWhitelistedUser } from "./actions"
 import { getMembersList } from "@/app/(dashboard)/members/actions"
 import { AddUserClient } from "@/components/users/AddUserClient"
+import { UserListClient } from "@/components/users/UserListClient"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -25,94 +26,7 @@ export default async function UsersPage() {
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
             <AddUserClient members={members} />
-
-            {/* Desktop Table View */}
-            <div className="hidden md:block rounded-md border bg-card overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted/50">
-                  <TableRow>
-                    <TableHead>Email Address</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Date Added</TableHead>
-                    <TableHead className="w-[100px]">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                        No users whitelisted yet.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.email}</TableCell>
-                        <TableCell>{user.name || "-"}</TableCell>
-                        <TableCell>
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <form action={async () => {
-                            "use server"
-                            await removeWhitelistedUser(user.id)
-                          }}>
-                            <Button size="sm" variant="destructive" type="submit">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </form>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Mobile Touch Card List View */}
-            <div className="flex flex-col md:hidden gap-3 mt-3">
-              {users.length === 0 ? (
-                <div className="text-center p-6 text-muted-foreground border rounded-xl bg-card text-sm">
-                  No users whitelisted yet.
-                </div>
-              ) : (
-                users.map((user) => {
-                  const initial = (user.name || user.email || "U").charAt(0).toUpperCase()
-                  return (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 rounded-xl bg-card border shadow-xs gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm">
-                          {initial}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-semibold text-foreground text-sm truncate">
-                            {user.name || "Whitelisted User"}
-                          </span>
-                          <span className="text-xs text-muted-foreground truncate">
-                            {user.email}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground mt-0.5">
-                            Added: {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <form action={async () => {
-                        "use server"
-                        await removeWhitelistedUser(user.id)
-                      }} className="shrink-0">
-                        <Button size="sm" variant="destructive" type="submit" className="h-9 w-9 p-0">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </form>
-                    </div>
-                  )
-                })
-              )}
-            </div>
+            <UserListClient users={users} />
           </CardContent>
         </Card>
       </div>

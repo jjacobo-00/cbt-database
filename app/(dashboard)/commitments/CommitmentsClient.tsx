@@ -22,6 +22,8 @@ type CommitmentRow = {
 type Ministry = { id: string; name: string; parent_id: string | null }
 type OfferingCat = { id: string; name: string; is_monthly: boolean; month: number | null }
 
+import { useRouter } from "next/navigation"
+
 export function CommitmentsClient({
   commitments: initial,
   year: initialYear,
@@ -35,6 +37,7 @@ export function CommitmentsClient({
   allMinistries: Ministry[]
   allOfferings: OfferingCat[]
 }) {
+  const router = useRouter()
   const [commitmentsList, setCommitmentsList] = useState(initial)
   const [year, setYear] = useState(initialYear)
   const [search, setSearch] = useState("")
@@ -52,7 +55,9 @@ export function CommitmentsClient({
 
   const handleYearChange = (newYear: number) => {
     setYear(newYear)
-    window.location.href = `/commitments?year=${newYear}`
+    startTransition(() => {
+      router.push(`/commitments?year=${newYear}`)
+    })
   }
 
   const openEdit = (c: CommitmentRow) => {

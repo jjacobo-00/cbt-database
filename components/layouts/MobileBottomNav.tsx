@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation"
 import { Home, Users, HandHeart, Menu } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 
+import { useSession } from "next-auth/react"
+
 export function MobileBottomNav({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
@@ -13,12 +15,21 @@ export function MobileBottomNav({
   setIsMobileMenuOpen: (v: boolean) => void
 }) {
   const pathname = usePathname()
+  const { data: session } = useSession()
 
-  const navItems = [
+  const isMember = session?.user?.role === "member"
+
+  const adminNavItems = [
     { name: "Home", href: "/dashboard", icon: Home },
     { name: "Members", href: "/members", icon: Users },
     { name: "Commitments", href: "/commitments", icon: HandHeart },
   ]
+
+  const memberNavItems = [
+    { name: "My Profile", href: "/my-profile", icon: Users },
+  ]
+
+  const navItems = isMember ? memberNavItems : adminNavItems
 
   const triggerHaptic = () => {
     if (typeof window !== "undefined" && window.navigator?.vibrate) {

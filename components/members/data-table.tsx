@@ -18,7 +18,7 @@ import { GenerateInviteLinkButton } from "./GenerateInviteLinkButton"
 import { AGE_GROUPS, GENDER_OPTIONS, MARITAL_OPTIONS, JOINED_OPTIONS } from "@/lib/constants/directory"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw } from "lucide-react"
+import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw, Phone, Mail } from "lucide-react"
 import { TablePagination } from "@/components/ui/table-pagination"
 import {
   Popover,
@@ -708,17 +708,20 @@ export function DataTable<TData, TValue>({
             const lastName = (row.original as any).last_name || ""
             const contact = (row.original as any).contact_number || "No contact info"
             const role = (row.original as any).occupation || "Member"
+            const rawContact = (row.original as any).contact_number
+            const rawEmail = (row.original as any).email
             
             const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 
             return (
-              <Link 
+              <div 
                 key={row.id} 
-                href={`/members/${memberId}`}
-                className="group relative flex items-center justify-between p-4 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-all active:scale-[0.98] overflow-hidden"
+                className="group relative flex items-center justify-between p-4 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-all overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex items-center gap-4 min-w-0 relative z-10">
+                <Link
+                  href={`/members/${memberId}`}
+                  className="flex items-center gap-3.5 min-w-0 flex-1 pr-2"
+                >
                   <div className="h-12 w-12 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-inner">
                     {initials || <User2 className="h-6 w-6" />}
                   </div>
@@ -735,11 +738,36 @@ export function DataTable<TData, TValue>({
                       </span>
                     </div>
                   </div>
+                </Link>
+
+                <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-border/50">
+                  {rawContact && (
+                    <a
+                      href={`tel:${rawContact}`}
+                      title="Call member"
+                      className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    >
+                      <Phone className="h-4 w-4" />
+                    </a>
+                  )}
+                  {rawEmail && (
+                    <a
+                      href={`mailto:${rawEmail}`}
+                      title="Email member"
+                      className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    >
+                      <Mail className="h-4 w-4" />
+                    </a>
+                  )}
+                  <Link
+                    href={`/members/${memberId}`}
+                    title="View details"
+                    className="p-2 rounded-full bg-muted/50 hover:bg-primary hover:text-primary-foreground transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
                 </div>
-                <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 ml-3 group-hover:bg-primary group-hover:text-primary-foreground transition-colors relative z-10">
-                  <ChevronRight className="h-4 w-4" />
-                </div>
-              </Link>
+              </div>
             )
           })
         ) : (
