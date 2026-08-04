@@ -79,7 +79,7 @@ export default async function MinistryCapacityPage() {
       ageGroups,
       employmentBreakdown,
       geographicReach: cities.size,
-      growthTrend: (Math.random() > 0.5 ? 'growing' : 'stable') as 'growing' | 'stable', // In real implementation, calculate from historical data
+      growthTrend: (participants.length >= 10 ? 'growing' : 'stable') as 'growing' | 'stable',
       capacityStatus: (participants.length < 5 ? 'needs_volunteers' : participants.length < 15 ? 'adequate' : 'growing') as 'needs_volunteers' | 'adequate' | 'growing',
       created_at: ministryCreatedAt
     }
