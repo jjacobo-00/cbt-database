@@ -254,7 +254,7 @@ export function DataTable<TData, TValue>({
         >
           <option value="">All Ages</option>
           {AGE_GROUPS.map((g) => (
-            <option key={g.id} value={g.id}>{g.label}</option>
+            <option key={g.value} value={g.value}>{g.label}</option>
           ))}
         </select>
       </div>
