@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { commitments, commitment_ministries, commitment_offerings, members, ministries, offering_categories } from "@/db/schema"
 import { eq, and, asc, desc, inArray } from "drizzle-orm"
+import { requireAdmin } from "@/lib/utils/action-helpers"
 
 export async function getCommitmentsByYear(year: number) {
   try {
@@ -164,6 +165,7 @@ export async function getRecommitmentTrackerData(targetYear: number) {
 }
 
 export async function upsertCommitment(memberId: string, year: number, ministryIds: string[], offeringCategoryIds: string[]) {
+  await requireAdmin()
   try {
     // Upsert commitment record
     let [commitment] = await db.select().from(commitments)

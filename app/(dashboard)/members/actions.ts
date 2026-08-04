@@ -6,6 +6,7 @@ import { db } from "@/db"
 import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children, org_chart_nodes, missions } from "@/db/schema"
 import crypto from "crypto"
 import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
+import { requireAdmin } from "@/lib/utils/action-helpers"
 
 export async function coreCreateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
@@ -503,6 +504,7 @@ export async function updateMember(payloadStr: string) {
 }
 
 export async function deleteMember(id: string) {
+  await requireAdmin()
   await db.delete(members).where(eq(members.id, id))
   revalidatePath("/members")
   redirect("/members")
@@ -528,6 +530,7 @@ export async function generateInviteLink(arg?: string | {
   presetMissionId?: string | null
   expirationMinutes?: number
 }) {
+  await requireAdmin()
   const options = typeof arg === "string" ? { memberId: arg } : arg
 
   const token = crypto.randomBytes(32).toString("hex")
@@ -562,6 +565,7 @@ export async function generateInviteLink(arg?: string | {
 }
 
 export async function revokeInviteLink(token: string) {
+  await requireAdmin()
   await db.update(invitation_links).set({ is_disabled: true }).where(eq(invitation_links.token, token))
   revalidatePath("/members")
 }

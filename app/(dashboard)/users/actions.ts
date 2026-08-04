@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { whitelisted_users } from "@/db/schema"
 import { eq } from "drizzle-orm"
+import { requireAdmin } from "@/lib/utils/action-helpers"
 
 export async function getWhitelistedUsers() {
   return await db.query.whitelisted_users.findMany({
@@ -12,6 +13,7 @@ export async function getWhitelistedUsers() {
 }
 
 export async function addWhitelistedUser(formData: FormData) {
+  await requireAdmin()
   const email = formData.get("email") as string;
   const name = formData.get("name") as string;
 
@@ -26,6 +28,7 @@ export async function addWhitelistedUser(formData: FormData) {
 }
 
 export async function removeWhitelistedUser(id: string) {
+  await requireAdmin()
   await db.delete(whitelisted_users).where(eq(whitelisted_users.id, id));
   revalidatePath("/users")
 }

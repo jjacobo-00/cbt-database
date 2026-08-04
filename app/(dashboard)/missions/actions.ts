@@ -4,6 +4,7 @@ import { db } from "@/db"
 import { missions } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { requireAdmin } from "@/lib/utils/action-helpers"
 
 export async function getMissions() {
   try {
@@ -21,6 +22,7 @@ export async function createMission(data: {
   pastor_name?: string
   established_date?: string
 }) {
+  await requireAdmin()
   try {
     const newMission = await db.insert(missions).values({
       name: data.name,
@@ -46,6 +48,7 @@ export async function updateMission(
     established_date?: string
   }
 ) {
+  await requireAdmin()
   try {
     const updatedMission = await db.update(missions).set({
       name: data.name,
@@ -63,6 +66,7 @@ export async function updateMission(
 }
 
 export async function deleteMission(id: string) {
+  await requireAdmin()
   try {
     await db.delete(missions).where(eq(missions.id, id))
     revalidatePath("/missions")

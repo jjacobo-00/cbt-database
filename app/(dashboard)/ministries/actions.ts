@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { ministries, members, member_ministries, commitments, commitment_ministries } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
+import { requireAdmin } from "@/lib/utils/action-helpers"
+import { z } from "zod"
+
+const ministryNameSchema = z.string().min(1, "Ministry name is required").max(100)
 
 export async function getMinistries() {
   try {
@@ -24,9 +28,12 @@ export async function getMinistries() {
 }
 
 export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null, leaderId?: string | null) {
+  await requireAdmin()
+  const parsed = ministryNameSchema.safeParse(name)
+  if (!parsed.success) throw new Error(parsed.error.errors[0].message)
   try {
     const [inserted] = await db.insert(ministries).values({
-      name: name.trim(),
+      name: parsed.data.trim(),
       for_everyone: forEveryone,
       parent_id: parentId || null,
       leader_id: leaderId || null,
@@ -47,9 +54,12 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
 }
 
 export async function updateMinistry(id: string, name: string, forEveryone?: boolean, leaderId?: string | null) {
+  await requireAdmin()
+  const parsed = ministryNameSchema.safeParse(name)
+  if (!parsed.success) throw new Error(parsed.error.errors[0].message)
   try {
     await db.update(ministries).set({
-      name: name.trim(),
+      name: parsed.data.trim(),
       ...(forEveryone !== undefined && { for_everyone: forEveryone }),
       ...(leaderId !== undefined && { leader_id: leaderId }),
     }).where(eq(ministries.id, id))
@@ -68,6 +78,7 @@ export async function updateMinistry(id: string, name: string, forEveryone?: boo
 }
 
 export async function deleteMinistry(id: string) {
+  await requireAdmin()
   try {
     await db.delete(ministries).where(eq(ministries.parent_id, id))
     await db.delete(ministries).where(eq(ministries.id, id))
