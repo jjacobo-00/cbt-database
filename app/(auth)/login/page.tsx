@@ -1,26 +1,40 @@
-import React from "react"
-import { LoginTabs } from "@/components/auth/LoginTabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Image from "next/image"
+import React from "react";
+import { LoginTabs } from "@/components/auth/LoginTabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Image from "next/image";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const resolvedSearchParams = await searchParams
+  const resolvedSearchParams = await searchParams;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
       <Card className="w-full max-w-[420px] shadow-xl border border-border/80">
         <CardHeader className="space-y-2 items-center text-center pb-4">
           <div className="flex items-center justify-center p-2 rounded-2xl bg-primary/10 border border-primary/20">
-            <Image src="/logo.svg" alt="CBT Logo" width={56} height={56} className="object-contain" />
+            <Image
+              src="/logo.svg"
+              alt="CBT Logo"
+              width={56}
+              height={56}
+              className="object-contain"
+            />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold tracking-tight">CBT Portal</CardTitle>
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              CBT Portal
+            </CardTitle>
             <CardDescription className="text-xs text-muted-foreground mt-1">
-              Community Baptist Temple - Olongapo Directory
+              Christian Baptist Tabernacle Database
             </CardDescription>
           </div>
         </CardHeader>
@@ -35,5 +49,5 @@ export default async function LoginPage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

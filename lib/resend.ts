@@ -1,13 +1,21 @@
-import { Resend } from 'resend'
-import nodemailer from 'nodemailer'
+import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-export async function sendOtpEmail(email: string, otp: string, memberName?: string) {
-  const gmailUser = process.env.GMAIL_USER || process.env.EMAIL_USER
-  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASSWORD || process.env.GMAIL_PASS
-  const resendApiKey = process.env.RESEND_API_KEY
-  const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'CBT Database <onboarding@resend.dev>'
+export async function sendOtpEmail(
+  email: string,
+  otp: string,
+  memberName?: string,
+) {
+  const gmailUser = process.env.GMAIL_USER || process.env.EMAIL_USER;
+  const gmailAppPassword =
+    process.env.GMAIL_APP_PASSWORD ||
+    process.env.EMAIL_PASSWORD ||
+    process.env.GMAIL_PASS;
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const resendFromEmail =
+    process.env.RESEND_FROM_EMAIL || "CBT Database <onboarding@resend.dev>";
 
-  const subject = `${otp} is your CBT Member Portal login code`
+  const subject = `${otp} is your CBT Member Portal login code`;
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -29,31 +37,31 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
         <div class="header">
           <div class="logo-text">⛪ CBT Olongapo</div>
           <div class="title">Member Verification Code</div>
-          <div class="subtitle">Hello ${memberName ? memberName : 'Member'}, use the 6-digit code below to log into your CBT Member Portal.</div>
+          <div class="subtitle">Hello ${memberName ? memberName : "Member"}, use the 6-digit code below to log into your CBT Member Portal.</div>
         </div>
         <div class="otp-box">${otp}</div>
         <p style="font-size: 13px; color: #64748b; text-align: center;">This code will expire in <strong>10 minutes</strong>. If you did not request this code, please ignore this email.</p>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} Community Baptist Temple - Olongapo. All rights reserved.
+          &copy; ${new Date().getFullYear()} Christian Baptist Tabernacle Database - Olongapo. All rights reserved.
         </div>
       </div>
     </body>
     </html>
-  `
+  `;
 
-  const textContent = `Hello ${memberName ? memberName : 'Member'},\n\nYour 6-digit CBT Member Portal verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nCommunity Baptist Temple - Olongapo`
+  const textContent = `Hello ${memberName ? memberName : "Member"},\n\nYour 6-digit CBT Member Portal verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nChristian Baptist Tabernacle Database - Olongapo`;
 
   // Priority 1: Gmail SMTP (Sends from cbt.olongapo@gmail.com to ANY recipient)
   if (gmailUser && gmailAppPassword) {
     try {
-      const cleanPass = gmailAppPassword.replace(/\s+/g, '')
+      const cleanPass = gmailAppPassword.replace(/\s+/g, "");
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        service: "gmail",
         auth: {
           user: gmailUser.trim(),
           pass: cleanPass,
         },
-      })
+      });
 
       await transporter.sendMail({
         from: `CBT Olongapo <${gmailUser.trim()}>`,
@@ -61,49 +69,53 @@ export async function sendOtpEmail(email: string, otp: string, memberName?: stri
         subject,
         text: textContent,
         html: htmlContent,
-      })
+      });
 
-      return { success: true, provider: 'gmail' }
+      return { success: true, provider: "gmail" };
     } catch (err: any) {
-      console.error('[Gmail SMTP Error]', err)
-      throw new Error(`Gmail SMTP Error: ${err.message || 'Failed to send OTP email'}`)
+      console.error("[Gmail SMTP Error]", err);
+      throw new Error(
+        `Gmail SMTP Error: ${err.message || "Failed to send OTP email"}`,
+      );
     }
   }
 
   // Priority 2: Resend API (Requires domain verification for non-owner recipients)
   if (resendApiKey) {
     try {
-      const resend = new Resend(resendApiKey)
+      const resend = new Resend(resendApiKey);
       const { data, error } = await resend.emails.send({
         from: resendFromEmail,
         to: [email],
         subject,
         text: textContent,
         html: htmlContent,
-      })
+      });
 
       if (error) {
-        console.error('[Resend Error]', error)
-        if (error.message && error.message.includes('testing emails')) {
+        console.error("[Resend Error]", error);
+        if (error.message && error.message.includes("testing emails")) {
           throw new Error(
-            `Resend Testing Limit: Resend free tier only sends to your account owner email. To send to ${email}, please add GMAIL_USER and GMAIL_APP_PASSWORD to your Vercel Environment Variables.`
-          )
+            `Resend Testing Limit: Resend free tier only sends to your account owner email. To send to ${email}, please add GMAIL_USER and GMAIL_APP_PASSWORD to your Vercel Environment Variables.`,
+          );
         }
-        throw new Error(error.message || 'Failed to send OTP email via Resend')
+        throw new Error(error.message || "Failed to send OTP email via Resend");
       }
 
-      return { success: true, data, provider: 'resend' }
+      return { success: true, data, provider: "resend" };
     } catch (err: any) {
-      console.error('[Resend Exception]', err)
-      throw new Error(err.message || 'Error sending OTP email via Resend')
+      console.error("[Resend Exception]", err);
+      throw new Error(err.message || "Error sending OTP email via Resend");
     }
   }
 
   // Fallback: Console Dev Mode
-  console.log(`\n========================================`)
-  console.log(`[DEV OTP MODE] No email provider configured in environment variables.`)
-  console.log(`Recipient: ${email} (${memberName || 'Member'})`)
-  console.log(`OTP Code:  ${otp}`)
-  console.log(`========================================\n`)
-  return { success: true, devMode: true }
+  console.log(`\n========================================`);
+  console.log(
+    `[DEV OTP MODE] No email provider configured in environment variables.`,
+  );
+  console.log(`Recipient: ${email} (${memberName || "Member"})`);
+  console.log(`OTP Code:  ${otp}`);
+  console.log(`========================================\n`);
+  return { success: true, devMode: true };
 }
