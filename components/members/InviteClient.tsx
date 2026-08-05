@@ -59,15 +59,6 @@ export function InviteClient({
     }
   }
 
-  if (inviteDetails.error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-        <h1 className="text-2xl font-bold text-destructive">Link Invalid or Expired</h1>
-        <p className="text-muted-foreground mt-2">This registration link is no longer valid. Please request a new one.</p>
-      </div>
-    )
-  }
-
   if (isSuccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-card">
@@ -75,6 +66,15 @@ export function InviteClient({
         <h1 className="text-2xl font-bold">Successfully Submitted!</h1>
         <p className="text-muted-foreground mt-2">Thank you! Your profile has been saved.</p>
         <p className="text-sm mt-8 text-muted-foreground">You may now close this page.</p>
+      </div>
+    )
+  }
+
+  if (inviteDetails.error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <h1 className="text-2xl font-bold text-destructive">Link Invalid or Expired</h1>
+        <p className="text-muted-foreground mt-2">This registration link is no longer valid. Please request a new one.</p>
       </div>
     )
   }
