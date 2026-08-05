@@ -1896,9 +1896,7 @@ export function MemberForm({
                                     value={`${m.first_name} ${m.last_name}`}
                                     onSelect={() => {
                                       form.setValue("emergency_contact_name", `${m.first_name} ${m.last_name}`, { shouldDirty: true, shouldValidate: true })
-                                      if (m.contact_number) {
-                                        form.setValue("emergency_contact_number", m.contact_number, { shouldDirty: true, shouldValidate: true })
-                                      }
+                                      form.setValue("emergency_contact_number", m.contact_number || "", { shouldDirty: true, shouldValidate: true })
                                       // Auto-set relationship based on member context
                                       if (isSpouse) {
                                         form.setValue("emergency_contact_relationship", "Spouse", { shouldDirty: true, shouldValidate: true })
