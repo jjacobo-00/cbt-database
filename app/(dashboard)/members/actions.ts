@@ -7,7 +7,7 @@ import { members, ministries, member_ministries, commitments, commitment_ministr
 import crypto from "crypto"
 import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
 import { requireAdmin, requireSelfOrAdmin } from "@/lib/utils/action-helpers"
-import { formatName } from "@/lib/utils/utils"
+import { formatName, normalizeCity } from "@/lib/utils/utils"
 
 export async function coreCreateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
@@ -38,7 +38,7 @@ export async function coreCreateMember(payloadStr: string) {
     unit_number: data.unit_number || "",
     street: data.street || data.address || "",
     barangay: data.barangay || "",
-    city: data.city || "",
+    city: normalizeCity(data.city) || "",
     province: data.province || "",
     zip_code: data.zip_code || "",
     country: data.country || "Philippines",
@@ -49,7 +49,7 @@ export async function coreCreateMember(payloadStr: string) {
     perm_unit_number: data.is_perm_same_as_current ? (data.unit_number || "") : (data.perm_unit_number || ""),
     perm_street: data.is_perm_same_as_current ? (data.street || data.address || "") : (data.perm_street || ""),
     perm_barangay: data.is_perm_same_as_current ? (data.barangay || "") : (data.perm_barangay || ""),
-    perm_city: data.is_perm_same_as_current ? (data.city || "") : (data.perm_city || ""),
+    perm_city: data.is_perm_same_as_current ? (normalizeCity(data.city) || "") : (normalizeCity(data.perm_city) || ""),
     perm_province: data.is_perm_same_as_current ? (data.province || "") : (data.perm_province || ""),
     perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),
@@ -272,7 +272,7 @@ export async function coreUpdateMember(payloadStr: string) {
     unit_number: data.unit_number || "",
     street: data.street || data.address || "",
     barangay: data.barangay || "",
-    city: data.city || "",
+    city: normalizeCity(data.city) || "",
     province: data.province || "",
     zip_code: data.zip_code || "",
     country: data.country || "Philippines",
@@ -283,7 +283,7 @@ export async function coreUpdateMember(payloadStr: string) {
     perm_unit_number: data.is_perm_same_as_current ? (data.unit_number || "") : (data.perm_unit_number || ""),
     perm_street: data.is_perm_same_as_current ? (data.street || data.address || "") : (data.perm_street || ""),
     perm_barangay: data.is_perm_same_as_current ? (data.barangay || "") : (data.perm_barangay || ""),
-    perm_city: data.is_perm_same_as_current ? (data.city || "") : (data.perm_city || ""),
+    perm_city: data.is_perm_same_as_current ? (normalizeCity(data.city) || "") : (normalizeCity(data.perm_city) || ""),
     perm_province: data.is_perm_same_as_current ? (data.province || "") : (data.perm_province || ""),
     perm_zip_code: data.is_perm_same_as_current ? (data.zip_code || "") : (data.perm_zip_code || ""),
     perm_country: data.is_perm_same_as_current ? (data.country || "Philippines") : (data.perm_country || "Philippines"),

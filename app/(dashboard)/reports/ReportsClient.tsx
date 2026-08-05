@@ -40,6 +40,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import type { ReportMember } from "./page";
+import { normalizeCity } from "@/lib/utils/utils";
 
 export type MinistryParticipation = {
   member_id: string;
@@ -231,7 +232,7 @@ export function ReportsClient({
   const residenceCityData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredData.forEach((m) => {
-      const city = m.city || "Unspecified";
+      const city = normalizeCity(m.city) || "Unspecified";
       counts[city] = (counts[city] || 0) + 1;
     });
     return Object.entries(counts)
