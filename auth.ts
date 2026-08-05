@@ -92,8 +92,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("No active member profile found associated with this email.")
         }
 
-        // Record last login timestamp
-        await db.update(members).set({ last_login_at: new Date() }).where(eq(members.id, member.id))
+        // Record last login timestamp safely
+        try {
+          await db.update(members).set({ last_login_at: new Date() }).where(eq(members.id, member.id))
+        } catch (err) {
+          console.error("[auth] Non-fatal error updating member last_login_at:", err)
+        }
 
         return {
           id: member.id,
@@ -121,7 +125,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
 
         if (whitelistedUser) {
-          await db.update(whitelisted_users).set({ last_login_at: new Date() }).where(eq(whitelisted_users.id, whitelistedUser.id))
+          try {
+            await db.update(whitelisted_users).set({ last_login_at: new Date() }).where(eq(whitelisted_users.id, whitelistedUser.id))
+          } catch (err) {
+            console.error("[auth] Non-fatal error updating whitelisted_user last_login_at:", err)
+          }
           return true
         }
 
@@ -131,7 +139,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
 
         if (memberRecord) {
-          await db.update(members).set({ last_login_at: new Date() }).where(eq(members.id, memberRecord.id))
+          try {
+            await db.update(members).set({ last_login_at: new Date() }).where(eq(members.id, memberRecord.id))
+          } catch (err) {
+            console.error("[auth] Non-fatal error updating member last_login_at:", err)
+          }
           return true
         }
 
