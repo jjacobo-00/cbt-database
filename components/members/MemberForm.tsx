@@ -1621,12 +1621,16 @@ export function MemberForm({
                     <SelectItem value="I don't know">I don't know</SelectItem>
                     <SelectItem value="A+">A+</SelectItem>
                     <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="A">A (Unspecified Rh)</SelectItem>
                     <SelectItem value="B+">B+</SelectItem>
                     <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="B">B (Unspecified Rh)</SelectItem>
                     <SelectItem value="AB+">AB+</SelectItem>
                     <SelectItem value="AB-">AB-</SelectItem>
+                    <SelectItem value="AB">AB (Unspecified Rh)</SelectItem>
                     <SelectItem value="O+">O+</SelectItem>
                     <SelectItem value="O-">O-</SelectItem>
+                    <SelectItem value="O">O (Unspecified Rh)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1655,9 +1659,12 @@ export function MemberForm({
             <div className="grid gap-2 max-w-xs">
               <Label className="text-[13px] text-muted-foreground">Status<R/></Label>
               <select {...form.register("employment_status")} className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-1">
-                <option value="None">None / Unemployed</option>
-                <option value="Student">Student</option>
                 <option value="Employed">Employed</option>
+                <option value="Self-employed">Self-employed</option>
+                <option value="Student">Student</option>
+                <option value="Unemployed">Unemployed</option>
+                <option value="Retired">Retired</option>
+                <option value="None">None</option>
               </select>
             </div>
 

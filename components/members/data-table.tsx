@@ -52,7 +52,7 @@ const BAPTIZED_OPTIONS = [
   { id: "true", label: "All Baptized Members" },
 ]
 const EDUCATION_OPTIONS = ["Elementary", "High School", "Senior High School", "Vocational", "College", "Postgraduate"]
-const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]
+const BLOOD_TYPES = ["A+", "A-", "A", "B+", "B-", "B", "AB+", "AB-", "AB", "O+", "O-", "O"]
 const EMPLOYMENT_OPTIONS = ["Employed", "Self-employed", "Unemployed", "Student", "Retired"]
 
 export function DataTable<TData, TValue>({
@@ -206,8 +206,19 @@ export function DataTable<TData, TValue>({
 
       // Blood Type Filter
       if (activeBloodType) {
-        const blood = (member.blood_type || "").toLowerCase()
-        if (blood !== activeBloodType.toLowerCase()) return false
+        const blood = (member.blood_type || "").trim().toLowerCase()
+        const target = activeBloodType.trim().toLowerCase()
+        if (target === "b") {
+          if (!blood.startsWith("b")) return false
+        } else if (target === "a") {
+          if (blood !== "a" && blood !== "a+" && blood !== "a-") return false
+        } else if (target === "ab") {
+          if (!blood.startsWith("ab")) return false
+        } else if (target === "o") {
+          if (!blood.startsWith("o")) return false
+        } else if (blood !== target) {
+          return false
+        }
       }
 
       // Allergies Filter
