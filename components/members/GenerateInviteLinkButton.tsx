@@ -117,6 +117,14 @@ export function GenerateInviteLinkButton({
   useEffect(() => {
     if (isOpen) {
       fetchInitialData();
+    } else {
+      // Safety cleanup: Ensure body pointer-events are unlocked when dialog closes on mobile
+      const timer = setTimeout(() => {
+        if (typeof document !== "undefined") {
+          document.body.style.pointerEvents = "";
+        }
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -226,7 +234,17 @@ export function GenerateInviteLinkButton({
         </Button>
       )}
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(openState) => {
+          setIsOpen(openState);
+          if (!openState && typeof document !== "undefined") {
+            setTimeout(() => {
+              document.body.style.pointerEvents = "";
+            }, 50);
+          }
+        }}
+      >
         <DialogContent className="max-w-lg w-full p-0 overflow-hidden bg-card border shadow-2xl">
           <div className="p-6 pb-4 border-b bg-muted/30">
             <DialogHeader>
