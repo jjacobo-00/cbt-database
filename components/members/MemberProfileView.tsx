@@ -345,9 +345,13 @@ export function MemberProfileView({
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       {member.church_role === "Mission Pastor"
-                        ? `Mission Pastor — ${member.mission_name || "Mission Branch"}`
+                        ? member.mission_name
+                          ? `Mission Pastor — ${member.mission_name}`
+                          : "Mission Pastor"
                         : member.church_role === "Ministry Leader"
-                          ? `Ministry Leader — ${ledMinistries.length > 0 ? ledMinistries.join(", ") : "Ministry"}`
+                          ? ledMinistries.length > 0
+                            ? `Ministry Leader — ${ledMinistries.join(", ")}`
+                            : "Ministry Leader"
                           : member.church_role}
                     </span>
                   )}
