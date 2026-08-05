@@ -773,11 +773,6 @@ export function DataTable<TData, TValue>({
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
                         {missionName}
                       </span>
-                      {isBaptized && (
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
-                          Baptized
-                        </span>
-                      )}
                       {lastLoginAt && (
                         <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shrink-0">
                           Login: {new Date(lastLoginAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
