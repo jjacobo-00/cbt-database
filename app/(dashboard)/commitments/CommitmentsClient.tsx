@@ -5,7 +5,7 @@ import { Search, Loader2, Pencil, X, Check, Plus, AlertCircle, ChevronRight, Use
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "./actions"
-import { cn } from "@/lib/utils/utils"
+import { cn, formatName } from "@/lib/utils/utils"
 
 type CommitmentRow = {
   id: string
@@ -162,7 +162,7 @@ export function CommitmentsClient({
               {filtered.map(c => (
                 <tr key={c.member_id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium">{c.first_name} {c.last_name}</p>
+                    <p className="font-medium">{formatName(`${c.first_name} ${c.last_name}`)}</p>
                     <p className="text-xs text-muted-foreground">{c.contact_number || "-"}</p>
                   </td>
                   <td className="px-4 py-3">
@@ -234,7 +234,7 @@ export function CommitmentsClient({
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-semibold text-foreground truncate">
-                    {c.first_name} {c.last_name}
+                    {formatName(`${c.first_name} ${c.last_name}`)}
                   </span>
                   <span className="text-xs text-muted-foreground truncate">
                     {c.has_pledged 
@@ -261,7 +261,7 @@ export function CommitmentsClient({
             <div className="sticky top-0 bg-card border-b px-6 py-4 flex items-center justify-between z-10">
               <div>
                 <h2 className="text-lg font-semibold">Ministry & Offering Commitments</h2>
-                <p className="text-sm text-muted-foreground">{editingMember.first_name} {editingMember.last_name} — {year}</p>
+                <p className="text-sm text-muted-foreground">{formatName(`${editingMember.first_name} ${editingMember.last_name}`)} — {year}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setEditingMember(null)}><X className="h-5 w-5" /></Button>
             </div>

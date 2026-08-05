@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
 import { Check, ChevronLeft, ChevronRight, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles, Save, Loader2, User, User2, Heart, Church, ChevronsUpDown, X } from "lucide-react"
 import { format, parseISO } from "date-fns"
-import { cn } from "@/lib/utils/utils"
+import { cn, formatName } from "@/lib/utils/utils"
 import Link from "next/link"
 import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
 import { isRedirectError } from "next/dist/client/components/redirect-error"
@@ -814,7 +814,7 @@ export function MemberForm({
                   {currentId
                     ? (() => {
                         const m = allMembers.find((member) => member.id === currentId)
-                        return m ? `${m.first_name} ${m.last_name}` : "Select a member..."
+                        return m ? formatName(`${m.first_name} ${m.last_name}`) : "Select a member..."
                       })()
                     : "Select a member..."}
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -854,7 +854,7 @@ export function MemberForm({
                               currentId === m.id ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          {m.first_name} {m.last_name}
+                          {formatName(`${m.first_name} ${m.last_name}`)}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -1242,7 +1242,7 @@ export function MemberForm({
                               {form.watch("spouse_member_id")
                                 ? (() => {
                                     const m = allMembers.find((member) => member.id === form.watch("spouse_member_id"))
-                                    return m ? `${m.first_name} ${m.last_name}` : "Select a member..."
+                                    return m ? formatName(`${m.first_name} ${m.last_name}`) : "Select a member..."
                                   })()
                                 : "Select a member..."}
                               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1274,7 +1274,7 @@ export function MemberForm({
                                           form.watch("spouse_member_id") === m.id ? "opacity-100" : "opacity-0"
                                         )}
                                       />
-                                      {m.first_name} {m.last_name}
+                                      {formatName(`${m.first_name} ${m.last_name}`)}
                                     </CommandItem>
                                   ))}
                                 </CommandGroup>
@@ -2496,7 +2496,7 @@ export function MemberForm({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <h4 className="font-bold text-foreground text-base truncate">
-                      {form.watch("first_name") || form.watch("last_name") ? `${form.watch("first_name")} ${form.watch("last_name")}`.trim() : "Member Name"}
+                      {form.watch("first_name") || form.watch("last_name") ? formatName(`${form.watch("first_name") || ""} ${form.watch("last_name") || ""}`) : "Member Name"}
                     </h4>
                     <span className="inline-flex items-center text-xs text-primary font-semibold bg-primary/10 px-2.5 py-0.5 rounded-full w-fit mt-1">
                       {form.watch("church_role") || "Member"}

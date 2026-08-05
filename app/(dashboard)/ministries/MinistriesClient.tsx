@@ -5,6 +5,7 @@ import { Trash2, Plus, Loader2, ChurchIcon, Pencil, Check, X, Users, ChevronDown
 import { createMinistry, deleteMinistry, updateMinistry } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { formatName } from "@/lib/utils/utils"
 
 type Ministry = { id: string; name: string; for_everyone: boolean; parent_id: string | null; leader_id?: string | null; created_at: string }
 type MemberOption = { id: string; first_name: string; last_name: string }
@@ -133,7 +134,7 @@ export function MinistriesClient({
     const isExpanded = expanded.has(m.id)
 
     const leader = members.find(mem => mem.id === m.leader_id)
-    const leaderName = leader ? `${leader.first_name} ${leader.last_name}` : null
+    const leaderName = leader ? formatName(`${leader.first_name} ${leader.last_name}`) : null
 
     return (
       <React.Fragment key={m.id}>
@@ -152,7 +153,7 @@ export function MinistriesClient({
                   <option value="">No Ministry Leader</option>
                   {members.map(mem => (
                     <option key={mem.id} value={mem.id}>
-                      {mem.first_name} {mem.last_name}
+                      {formatName(`${mem.first_name} ${mem.last_name}`)}
                     </option>
                   ))}
                 </select>
@@ -267,7 +268,7 @@ export function MinistriesClient({
                   <option value="">No Ministry Leader</option>
                   {members.map(mem => (
                     <option key={mem.id} value={mem.id}>
-                      {mem.first_name} {mem.last_name}
+                      {formatName(`${mem.first_name} ${mem.last_name}`)}
                     </option>
                   ))}
                 </select>
@@ -317,7 +318,7 @@ export function MinistriesClient({
               <option value="">Select Ministry Leader (Optional)</option>
               {members.map(mem => (
                 <option key={mem.id} value={mem.id}>
-                  {mem.first_name} {mem.last_name}
+                  {formatName(`${mem.first_name} ${mem.last_name}`)}
                 </option>
               ))}
             </select>

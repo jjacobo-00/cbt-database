@@ -16,7 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Edit2, Trash2, UserCircle2, Network } from "lucide-react"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils/utils"
+import { cn, formatName } from "@/lib/utils/utils"
 
 type OrgNode = {
   id: string
@@ -140,7 +140,7 @@ export function OrgChartClient({ initialNodes, members }: { initialNodes: OrgNod
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm sm:text-lg truncate">{node.role_title}</h3>
               <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {assignedMember ? `${assignedMember.first_name} ${assignedMember.last_name}` : "Unassigned"}
+                {assignedMember ? formatName(`${assignedMember.first_name} ${assignedMember.last_name}`) : "Unassigned"}
               </p>
             </div>
 
@@ -225,7 +225,7 @@ export function OrgChartClient({ initialNodes, members }: { initialNodes: OrgNod
                   <SelectItem value="unassigned">-- Unassigned / Vacant --</SelectItem>
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.first_name} {m.last_name}
+                      {formatName(`${m.first_name} ${m.last_name}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>

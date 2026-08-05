@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { db } from "@/db"
 import { 
   members, children, member_ministries, ministries, 
-  commitments, commitment_ministries, commitment_offerings, offering_categories 
+  commitments, commitment_ministries, commitment_offerings, offering_categories, missions 
 } from "@/db/schema"
 import { eq, desc, or } from "drizzle-orm"
 import { redirect, notFound } from "next/navigation"
@@ -26,16 +26,32 @@ export default async function MyProfilePage() {
   let member
 
   if (memberId) {
-    const [found] = await db.select().from(members).where(eq(members.id, memberId))
-    member = found
+    const [found] = await db
+      .select({
+        member: members,
+        mission_name: missions.name,
+      })
+      .from(members)
+      .leftJoin(missions, eq(members.mission_id, missions.id))
+      .where(eq(members.id, memberId))
+    if (found?.member) {
+      member = { ...found.member, mission_name: found.mission_name || null }
+    }
   }
 
   // Fallback lookup by email if member not found by memberId
   if (!member && session.user.email) {
     const { ilike } = await import("drizzle-orm")
-    const [foundByEmail] = await db.select().from(members).where(ilike(members.email, session.user.email))
-    member = foundByEmail
-    if (member) {
+    const [foundByEmail] = await db
+      .select({
+        member: members,
+        mission_name: missions.name,
+      })
+      .from(members)
+      .leftJoin(missions, eq(members.mission_id, missions.id))
+      .where(ilike(members.email, session.user.email))
+    if (foundByEmail?.member) {
+      member = { ...foundByEmail.member, mission_name: foundByEmail.mission_name || null }
       memberId = member.id
     }
   }
@@ -137,12 +153,21 @@ export default async function MyProfilePage() {
     })
   )
 
+  // Fetch Ministries Led by this Member
+  const ledMinistriesRows = await db
+    .select({ name: ministries.name })
+    .from(ministries)
+    .where(eq(ministries.leader_id, memberId))
+
+  const ledMinistries = ledMinistriesRows.map(m => m.name)
+
   return (
     <MemberProfileView
       member={member}
       childrenList={childrenList}
       ministriesList={ministriesList}
       commitmentsHistory={commitmentsHistory}
+      ledMinistries={ledMinistries}
       isReadOnly={true}
     />
   )

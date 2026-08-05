@@ -90,6 +90,7 @@ type MemberProfileProps = {
   childrenList: ChildDetail[];
   ministriesList: MinistryDetail[];
   commitmentsHistory: CommitmentHistoryItem[];
+  ledMinistries?: string[];
   isReadOnly?: boolean;
 };
 
@@ -98,6 +99,7 @@ export function MemberProfileView({
   childrenList,
   ministriesList,
   commitmentsHistory,
+  ledMinistries = [],
   isReadOnly = false,
 }: MemberProfileProps) {
   const [activeTab, setActiveTab] = useState<
@@ -342,7 +344,16 @@ export function MemberProfileView({
                       )}
                     >
                       <Sparkles className="h-3.5 w-3.5" />
-                      {member.church_role}
+                      {member.church_role === "Mission Pastor"
+                        ? `Mission Pastor — ${member.mission_name || "Mission Branch"}`
+                        : member.church_role === "Ministry Leader"
+                          ? `Ministry Leader — ${ledMinistries.length > 0 ? ledMinistries.join(", ") : "Ministry"}`
+                          : member.church_role}
+                    </span>
+                  )}
+                  {member.mission_name && member.church_role !== "Mission Pastor" && (
+                    <span className="px-2.5 py-0.5 rounded-full font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      Branch: {member.mission_name}
                     </span>
                   )}
                   {(member.gender || member.sex) && (
@@ -721,6 +732,16 @@ export function MemberProfileView({
                     <p className="text-xs text-muted-foreground">Baptized By</p>
                     <p className="font-medium">{member.baptized_by || "—"}</p>
                   </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Mission Branch</p>
+                    <p className="font-medium text-blue-600 dark:text-blue-400">{member.mission_name || "CBT Olongapo (Main Branch)"}</p>
+                  </div>
+                  {ledMinistries.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground">Ministries Led</p>
+                      <p className="font-medium text-emerald-600 dark:text-emerald-400">{ledMinistries.join(", ")}</p>
+                    </div>
+                  )}
                   <div className="col-span-2 pt-2 border-t flex items-center justify-between">
                     <p className="text-xs text-muted-foreground font-medium">
                       Years in CBT

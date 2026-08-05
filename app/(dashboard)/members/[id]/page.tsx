@@ -127,12 +127,21 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
     })
   )
 
+  // 3b. Fetch Ministries Led by this Member
+  const ledMinistriesRows = await db
+    .select({ name: ministries.name })
+    .from(ministries)
+    .where(eq(ministries.leader_id, memberId))
+
+  const ledMinistries = ledMinistriesRows.map(m => m.name)
+
   return (
     <MemberProfileView
       member={member}
       childrenList={childrenList}
       ministriesList={ministriesList}
       commitmentsHistory={commitmentsHistory}
+      ledMinistries={ledMinistries}
     />
   )
 }

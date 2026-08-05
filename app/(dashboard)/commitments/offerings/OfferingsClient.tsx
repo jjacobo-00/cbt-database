@@ -6,7 +6,7 @@ import { createOfferingCategory, deleteOfferingCategory, updateOfferingCategory 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils/utils"
+import { cn, formatName } from "@/lib/utils/utils"
 
 const MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -154,7 +154,7 @@ export function OfferingsClient({
                   {filteredPledges.map(m => (
                     <tr key={m.member_id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
-                        {m.first_name} {m.last_name}
+                        {formatName(`${m.first_name} ${m.last_name}`)}
                       </td>
                       <td className="px-4 py-3">
                         {m.offerings.length === 0 ? (

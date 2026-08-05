@@ -8,6 +8,7 @@ import { Mail, KeyRound, Loader2, ArrowRight, UserCheck, RefreshCw, AlertCircle,
 import { requestMemberOtp, loginMemberWithOtp } from "@/app/(auth)/login/actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { formatName } from "@/lib/utils/utils"
 
 interface SharedMember {
   id: string
@@ -164,7 +165,7 @@ export function MemberLoginForm() {
                     <UserCheck className="h-4 w-4 text-primary" />
                     <div>
                       <div className="text-sm">
-                        {m.first_name} {m.last_name}
+                        {formatName(`${m.first_name} ${m.last_name}`)}
                       </div>
                       <div className="text-[10px] text-muted-foreground">{m.church_role || "Member"}</div>
                     </div>

@@ -5,7 +5,7 @@ import { Search, Loader2, Check, X, ArrowRight, History, CheckCircle2, Clock, He
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "../actions"
-import { cn } from "@/lib/utils/utils"
+import { cn, formatName } from "@/lib/utils/utils"
 import { useRouter } from "next/navigation"
 
 type TrackerMember = {
@@ -209,7 +209,7 @@ export function RecommitmentClient({
               {filtered.map(m => (
                 <tr key={m.member_id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium">{m.first_name} {m.last_name}</p>
+                    <p className="font-medium">{formatName(`${m.first_name} ${m.last_name}`)}</p>
                     <p className="text-xs text-muted-foreground">{m.contact_number || "-"}</p>
                   </td>
 
@@ -302,7 +302,7 @@ export function RecommitmentClient({
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <span>Recommitment for {targetYear}</span>
                 </h2>
-                <p className="text-sm text-muted-foreground">{selectedMember.first_name} {selectedMember.last_name}</p>
+                <p className="text-sm text-muted-foreground">{formatName(`${selectedMember.first_name} ${selectedMember.last_name}`)}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setSelectedMember(null)}><X className="h-5 w-5" /></Button>
             </div>
