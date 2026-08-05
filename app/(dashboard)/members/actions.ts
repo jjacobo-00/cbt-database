@@ -743,12 +743,19 @@ export async function submitInviteForm(token: string, payloadStr: string) {
     if (invite.preset_role) {
       data.church_role = invite.preset_role
     }
+    if (invite.preset_mission_id && !data.mission_id) {
+      data.mission_id = invite.preset_mission_id
+    }
     await coreCreateMember(JSON.stringify(data))
 
     const newUseCount = (invite.use_count || 0) + 1
     const isNowUsed = invite.max_uses ? newUseCount >= invite.max_uses : false
     await db.update(invitation_links).set({ use_count: newUseCount, is_used: isNowUsed }).where(eq(invitation_links.token, token))
   }
+
+  revalidatePath("/members")
+  revalidatePath("/dashboard")
+  revalidatePath("/commitments")
 }
 
 export async function getMembersList(limit = 100, offset = 0) {

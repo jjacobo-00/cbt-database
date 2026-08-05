@@ -50,8 +50,13 @@ export function InviteClient({
   }
 
   const handleSubmit = async (payload: string) => {
-    await submitInviteForm(token, payload)
-    setIsSuccess(true)
+    try {
+      await submitInviteForm(token, payload)
+      setIsSuccess(true)
+    } catch (error: any) {
+      console.error("[InviteClient error]", error)
+      toast.error(error?.message || "Failed to submit form. Please check your information and try again.")
+    }
   }
 
   if (inviteDetails.error) {

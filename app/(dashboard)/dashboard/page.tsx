@@ -23,6 +23,8 @@ import Link from "next/link";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable";
 
+export const revalidate = 0
+
 export default async function DashboardPage() {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
