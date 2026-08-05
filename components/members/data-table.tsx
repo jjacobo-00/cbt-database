@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { formatName } from "@/lib/utils/utils"
+import { formatName, normalizeCity } from "@/lib/utils/utils"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -65,7 +65,7 @@ export function DataTable<TData, TValue>({
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [globalFilter, setGlobalFilter] = React.useState("")
+  const [globalFilter, setGlobalFilter] = React.useState(searchParams.get("search") || "")
   const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
   const [isFilterSheetOpen, setIsFilterSheetOpen] = React.useState(false)
 
@@ -80,6 +80,7 @@ export function DataTable<TData, TValue>({
   const activeBloodType = searchParams.get("blood_type") || ""
   const activeHasAllergies = searchParams.get("has_allergies") || ""
   const activeEmployment = searchParams.get("employment") || ""
+  const activeCity = searchParams.get("city") || ""
 
   // Helper to update URL search parameters
   const updateFilters = (newParams: Record<string, string | null>) => {
@@ -111,6 +112,7 @@ export function DataTable<TData, TValue>({
     activeBloodType,
     activeHasAllergies,
     activeEmployment,
+    activeCity,
   ].filter(Boolean).length
 
   // Filter dataset based on active smart filters
@@ -222,6 +224,12 @@ export function DataTable<TData, TValue>({
         if (emp !== activeEmployment.toLowerCase()) return false
       }
 
+      // City Filter (normalized matching)
+      if (activeCity) {
+        const memberCity = normalizeCity(member.city)
+        if (memberCity.toLowerCase() !== activeCity.toLowerCase()) return false
+      }
+
       return true
     })
   }, [
@@ -236,6 +244,7 @@ export function DataTable<TData, TValue>({
     activeBloodType,
     activeHasAllergies,
     activeEmployment,
+    activeCity,
   ])
 
   const table = useReactTable({

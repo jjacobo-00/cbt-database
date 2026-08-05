@@ -132,8 +132,8 @@ export function ReportsClient({
   };
 
   const handleResidenceCityClick = (entry: any) => {
-    if (!entry || !entry.name) return;
-    router.push(`/members?search=${encodeURIComponent(entry.name)}`);
+    if (!entry || !entry.name || entry.name === "Unspecified") return;
+    router.push(`/members?city=${encodeURIComponent(entry.name)}`);
   };
 
   // Top KPIs
