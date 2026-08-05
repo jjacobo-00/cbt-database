@@ -503,7 +503,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Quick Filter Presets Strip */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 touch-contain">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 touch-contain w-full max-w-full">
         <button
           onClick={clearAllFilters}
           className={cn(

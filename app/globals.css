@@ -145,7 +145,15 @@
 }
 .touch-contain {
   overscroll-behavior: contain;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 .active-bounce {
   transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
