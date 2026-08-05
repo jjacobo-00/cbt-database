@@ -113,10 +113,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account?.provider === "google") {
         const email = user.email
         if (!email) return false
+        const cleanEmail = email.trim().toLowerCase()
 
         // 1. Check if user is in whitelisted_users (Admin / Staff access)
         const whitelistedUser = await db.query.whitelisted_users.findFirst({
-          where: eq(whitelisted_users.email, email),
+          where: ilike(whitelisted_users.email, cleanEmail),
         })
 
         if (whitelistedUser) {
@@ -126,7 +127,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // 2. Check if user is in members table (Member self-service portal)
         const memberRecord = await db.query.members.findFirst({
-          where: ilike(members.email, email),
+          where: ilike(members.email, cleanEmail),
         })
 
         if (memberRecord) {
@@ -157,7 +158,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const cleanEmail = token.email.trim().toLowerCase()
 
         const whitelistedUser = await db.query.whitelisted_users.findFirst({
-          where: eq(whitelisted_users.email, cleanEmail),
+          where: ilike(whitelisted_users.email, cleanEmail),
         })
 
         if (whitelistedUser) {

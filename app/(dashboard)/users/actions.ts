@@ -15,14 +15,15 @@ export async function getWhitelistedUsers() {
 
 export async function addWhitelistedUser(formData: FormData) {
   await requireAdmin()
-  const email = formData.get("email") as string;
+  const rawEmail = formData.get("email") as string;
   const name = formData.get("name") as string;
 
-  if (!email) return;
+  if (!rawEmail) return;
+  const email = rawEmail.trim().toLowerCase();
 
   await db.insert(whitelisted_users).values({
     email,
-    name: name || null,
+    name: name?.trim() || null,
   }).onConflictDoNothing();
 
   revalidatePath("/users")
