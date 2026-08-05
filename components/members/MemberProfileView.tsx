@@ -650,22 +650,32 @@ export function MemberProfileView({
                       Civil / Marital Status
                     </p>
                     <p className="font-medium">
-                      {member.marital_status === "Married"
-                        ? `Married to ${member.spouse_name || "Unknown"} (${
-                            member.anniversary_date
-                              ? !isNaN(
-                                  new Date(
-                                    member.anniversary_date,
-                                  ).getFullYear(),
-                                )
-                                ? `${new Date().getFullYear() - new Date(member.anniversary_date).getFullYear()} years`
-                                : "Unknown"
-                              : "Unknown"
-                          })`
-                        : member.marital_status === "Widowed" &&
-                            member.widowed_date
-                          ? `Widowed (Since ${member.widowed_date})`
-                          : member.marital_status || "—"}
+                      {(() => {
+                        if (member.marital_status !== "Married") {
+                          if (member.marital_status === "Widowed" && member.widowed_date) {
+                            return `Widowed (Since ${member.widowed_date})`
+                          }
+                          return member.marital_status || "—"
+                        }
+
+                        const spouse = member.spouse_name?.trim() ? formatName(member.spouse_name) : null
+                        let years: string | null = null
+
+                        if (member.anniversary_date) {
+                          const annYear = new Date(member.anniversary_date).getFullYear()
+                          if (!isNaN(annYear)) {
+                            const diff = new Date().getFullYear() - annYear
+                            if (diff >= 0) {
+                              years = `${diff} year${diff === 1 ? "" : "s"}`
+                            }
+                          }
+                        }
+
+                        let text = "Married"
+                        if (spouse) text += ` to ${spouse}`
+                        if (years) text += ` (${years})`
+                        return text
+                      })()}
                     </p>
                   </div>
                 </div>
