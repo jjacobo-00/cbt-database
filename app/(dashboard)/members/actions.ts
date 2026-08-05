@@ -9,7 +9,6 @@ import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
 import { requireAdmin, requireSelfOrAdmin } from "@/lib/utils/action-helpers"
 
 export async function coreCreateMember(payloadStr: string) {
-  await requireAdmin()
   const data = JSON.parse(payloadStr)
 
   if (data.church_role === "Main Pastor") {
@@ -228,6 +227,7 @@ export async function coreCreateMember(payloadStr: string) {
 }
 
 export async function createMember(payloadStr: string) {
+  await requireAdmin()
   const memberId = await coreCreateMember(payloadStr)
   revalidatePath("/members")
   revalidatePath("/commitments")
@@ -237,7 +237,6 @@ export async function createMember(payloadStr: string) {
 export async function coreUpdateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
   const id = data.id
-  await requireSelfOrAdmin(id)
 
   if (data.church_role === "Main Pastor") {
     await db.update(members).set({ church_role: "Member" }).where(and(eq(members.church_role, "Main Pastor"), ne(members.id, id)))
@@ -501,6 +500,8 @@ export async function coreUpdateMember(payloadStr: string) {
 }
 
 export async function updateMember(payloadStr: string) {
+  const data = JSON.parse(payloadStr)
+  await requireSelfOrAdmin(data.id)
   const memberId = await coreUpdateMember(payloadStr)
   revalidatePath("/members")
   revalidatePath(`/members/${memberId}`)
