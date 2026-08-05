@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Users, ChevronRight, User2 } from "lucide-react"
+import { formatName } from "@/lib/utils/utils"
 
 interface RecentMember {
   id: string
@@ -72,7 +73,7 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
                           {getInitials(member.first_name, member.last_name)}
                         </div>
                         <div className="font-medium flex items-center gap-2">
-                          {member.first_name} {member.last_name}
+                          {formatName(`${member.first_name} ${member.last_name}`)}
                           {isNew && (
                             <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
                               New
@@ -125,7 +126,7 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-semibold text-foreground truncate">
-                      {member.first_name} {member.last_name}
+                      {formatName(`${member.first_name} ${member.last_name}`)}
                     </span>
                     <span className="text-xs text-muted-foreground truncate">
                       {member.city || member.contact_number || "No contact info"}

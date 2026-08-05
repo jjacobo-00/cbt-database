@@ -5,6 +5,7 @@ import { db } from "@/db"
 import { whitelisted_users } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { requireAdmin } from "@/lib/utils/action-helpers"
+import { formatName } from "@/lib/utils/utils"
 
 export async function getWhitelistedUsers() {
   await requireAdmin()
@@ -23,7 +24,7 @@ export async function addWhitelistedUser(formData: FormData) {
 
   await db.insert(whitelisted_users).values({
     email,
-    name: name?.trim() || null,
+    name: name ? formatName(name) : null,
   }).onConflictDoNothing();
 
   revalidatePath("/users")

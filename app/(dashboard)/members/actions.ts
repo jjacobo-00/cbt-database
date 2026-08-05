@@ -7,6 +7,7 @@ import { members, ministries, member_ministries, commitments, commitment_ministr
 import crypto from "crypto"
 import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
 import { requireAdmin, requireSelfOrAdmin } from "@/lib/utils/action-helpers"
+import { formatName } from "@/lib/utils/utils"
 
 export async function coreCreateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
@@ -17,19 +18,19 @@ export async function coreCreateMember(payloadStr: string) {
 
   const [member] = await db.insert(members).values({
     // Step 1: Personal
-    first_name: data.first_name,
-    middle_name: data.middle_name || "",
-    last_name: data.last_name,
+    first_name: formatName(data.first_name),
+    middle_name: formatName(data.middle_name || ""),
+    last_name: formatName(data.last_name),
     suffix: data.suffix || "",
     birth_date: data.birth_date || null,
     birth_place: data.birth_place || "",
     gender: data.gender,
     sex: data.gender,
     contact_number: data.contact_number,
-    email: data.email || "",
+    email: data.email ? data.email.trim().toLowerCase() : "",
     marital_status: data.marital_status || "Single",
     widowed_date: data.widowed_date || null,
-    spouse_name: data.spouse_name || "",
+    spouse_name: formatName(data.spouse_name || ""),
     spouse_member_id: data.spouse_member_id || null,
     spouse_occupation: data.spouse_occupation || "",
     anniversary_date: data.anniversary_date || null,
@@ -90,17 +91,17 @@ export async function coreCreateMember(payloadStr: string) {
     position: data.position,
     
     // Step 3: Family
-    father_name: data.father_name,
+    father_name: formatName(data.father_name),
     father_member_id: data.father_member_id || null,
     father_occupation: data.father_occupation,
     father_contact_number: data.father_contact_number,
-    mother_name: data.mother_name,
+    mother_name: formatName(data.mother_name),
     mother_member_id: data.mother_member_id || null,
     mother_occupation: data.mother_occupation,
     mother_contact_number: data.mother_contact_number,
     parents_civil_status: data.parents_civil_status,
     siblings: data.siblings,
-    emergency_contact_name: data.emergency_contact_name,
+    emergency_contact_name: formatName(data.emergency_contact_name),
     emergency_contact_relationship: data.emergency_contact_relationship,
     emergency_contact_number: data.emergency_contact_number,
     

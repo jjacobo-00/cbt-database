@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, MoreHorizontal, Pencil, Eye } from "lucide-react"
 import Link from "next/link"
+import { formatName } from "@/lib/utils/utils"
 
 export type MemberType = {
   id: string
@@ -61,11 +62,12 @@ export const columns: ColumnDef<MemberType>[] = [
       )
     },
     // We add a custom global filter accessor
-    accessorFn: (row) => `${row.first_name} ${row.last_name}`,
+    accessorFn: (row) => formatName(`${row.first_name} ${row.last_name}`),
     cell: ({ row }) => {
+      const fullName = formatName(`${row.original.first_name} ${row.original.last_name}`)
       return (
         <div className="font-medium flex items-center gap-2">
-          <span>{row.original.first_name} {row.original.last_name}</span>
+          <span>{fullName}</span>
         </div>
       )
     },

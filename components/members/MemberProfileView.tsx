@@ -31,6 +31,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatName } from "@/lib/utils/utils";
 import {
   Card,
   CardContent,
@@ -323,10 +324,7 @@ export function MemberProfileView({
               <div className="space-y-1 pb-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                    {member.first_name}{" "}
-                    {member.middle_name ? `${member.middle_name} ` : ""}
-                    {member.last_name}
-                    {member.suffix ? ` ${member.suffix}` : ""}
+                    {formatName([member.first_name, member.middle_name, member.last_name, member.suffix].filter(Boolean).join(" "))}
                   </h2>
                 </div>
 

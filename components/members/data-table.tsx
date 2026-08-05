@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { formatName } from "@/lib/utils/utils"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -720,8 +721,8 @@ export function DataTable<TData, TValue>({
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => {
             const memberId = (row.original as any).id
-            const firstName = (row.original as any).first_name || ""
-            const lastName = (row.original as any).last_name || ""
+            const firstName = formatName((row.original as any).first_name || "")
+            const lastName = formatName((row.original as any).last_name || "")
             const contact = (row.original as any).contact_number || "No contact info"
             const role = (row.original as any).occupation || "Member"
             const rawContact = (row.original as any).contact_number

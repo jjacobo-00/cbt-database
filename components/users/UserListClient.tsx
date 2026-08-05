@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Trash2, Loader2 } from "lucide-react"
 import { removeWhitelistedUser } from "@/app/(dashboard)/users/actions"
+import { formatName } from "@/lib/utils/utils"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,7 +73,7 @@ export function UserListClient({ users }: { users: WhitelistedUser[] }) {
               users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
-                  <TableCell>{user.name || "-"}</TableCell>
+                  <TableCell>{user.name ? formatName(user.name) : "-"}</TableCell>
                   <TableCell>{formatLastLogin(user.last_login_at)}</TableCell>
                   <TableCell>
                     {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
@@ -113,7 +114,7 @@ export function UserListClient({ users }: { users: WhitelistedUser[] }) {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-semibold text-foreground text-sm truncate">
-                      {user.name || "Whitelisted User"}
+                      {user.name ? formatName(user.name) : "Whitelisted User"}
                     </span>
                     <span className="text-xs text-muted-foreground truncate">
                       {user.email}
