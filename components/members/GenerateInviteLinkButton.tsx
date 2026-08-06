@@ -214,9 +214,9 @@ export function GenerateInviteLinkButton({
     <>
       {asDropdownItem ? (
         <DropdownMenuItem
-          onClick={(e) => {
+          onSelect={(e) => {
             e.preventDefault();
-            setIsOpen(true);
+            setTimeout(() => setIsOpen(true), 0);
           }}
           className={className}
         >

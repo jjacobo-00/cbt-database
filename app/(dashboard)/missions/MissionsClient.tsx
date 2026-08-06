@@ -374,11 +374,19 @@ export function MissionsClient({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditModal(mission)}>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setTimeout(() => openEditModal(mission), 0);
+                          }}
+                        >
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setIsDeletingId(mission.id)}
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setTimeout(() => setIsDeletingId(mission.id), 0);
+                          }}
                           className="text-destructive"
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete

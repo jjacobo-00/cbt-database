@@ -251,7 +251,10 @@ export function MemberProfileView({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => setShowDeleteConfirm(true)}
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setTimeout(() => setShowDeleteConfirm(true), 0);
+                    }}
                     className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-medium"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
