@@ -198,6 +198,7 @@ export function ReportsClient({
     });
   }, [data, dateFilter]);
 
+  // Click Handlers for Interactive Filtering
   const handleGenderClick = (entry: any) => {
     if (!entry || !entry.name) return;
     router.push(`/members?gender=${encodeURIComponent(entry.name)}`);
@@ -227,6 +228,33 @@ export function ReportsClient({
   const handleResidenceCityClick = (entry: any) => {
     if (!entry || !entry.name || entry.name === "Unspecified") return;
     router.push(`/members?city=${encodeURIComponent(entry.name)}`);
+  };
+  const handleBloodTypeClick = (entry: any) => {
+    if (!entry || !entry.name || entry.name === "UNSPECIFIED") return;
+    router.push(`/members?blood_type=${encodeURIComponent(entry.name)}`);
+  };
+  const handleAllergyClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    if (entry.name === "Known Allergies") {
+      router.push("/members?has_allergies=true");
+    } else {
+      router.push("/members?has_allergies=false");
+    }
+  };
+  const handleEmploymentClick = (entry: any) => {
+    if (!entry || !entry.name || entry.name === "Unspecified") return;
+    router.push(`/members?employment=${encodeURIComponent(entry.name)}`);
+  };
+  const handleEducationClick = (entry: any) => {
+    if (!entry || !entry.name || entry.name === "Unspecified") return;
+    router.push(`/members?education=${encodeURIComponent(entry.name)}`);
+  };
+  const handleOccupationClick = (entry: any) => {
+    if (!entry || !entry.name) return;
+    router.push(`/members?search=${encodeURIComponent(entry.name)}`);
+  };
+  const handleFaithPromiseClick = (entry: any) => {
+    router.push("/commitments");
   };
 
   const totalMembers = filteredData.length;
@@ -365,13 +393,6 @@ export function ReportsClient({
       ministryCounts[name] = (ministryCounts[name] || 0) + 1;
     });
     return Object.entries(ministryCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
-  }, [filteredData, ministryParticipation]);
-
-  const membersEngagedInMinistries = useMemo(() => {
-    const engagedMemberIds = new Set(
-      ministryParticipation.filter((mp) => filteredData.some((m) => m.id === mp.member_id)).map((mp) => mp.member_id)
-    );
-    return engagedMemberIds.size;
   }, [filteredData, ministryParticipation]);
 
   const faithPromiseStats = useMemo(() => {
@@ -579,7 +600,7 @@ export function ReportsClient({
             <Card className="col-span-1 md:col-span-2 min-w-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Mission Church Branches & Outreaches</CardTitle>
-                <CardDescription className="text-xs">Member count by assigned church mission branch / outreach</CardDescription>
+                <CardDescription className="text-xs">Member count by assigned church mission branch / outreach →</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -604,7 +625,7 @@ export function ReportsClient({
             <Card className="col-span-1 md:col-span-2 min-w-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Member Residence (City/Municipality)</CardTitle>
-                <CardDescription className="text-xs">Geographic distribution of member home addresses</CardDescription>
+                <CardDescription className="text-xs">Click bar to view members in city →</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -630,46 +651,52 @@ export function ReportsClient({
         {/* TAB 2: Health & Emergency Preparedness */}
         <TabsContent value="health" className="space-y-6">
           <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="border-t-4 border-t-red-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Emergency Readiness</CardTitle>
-                <div className="h-8 w-8 bg-red-500/10 rounded-full flex items-center justify-center"><ShieldAlert className="h-4 w-4 text-red-500" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{emergencyReadinessPercent}%</div>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">Members with emergency contact on file</p>
-              </CardContent>
-            </Card>
+            <Link href="/members" className="block group">
+              <Card className="border-t-4 border-t-red-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium group-hover:text-red-600 transition-colors">Emergency Readiness</CardTitle>
+                  <div className="h-8 w-8 bg-red-500/10 rounded-full flex items-center justify-center"><ShieldAlert className="h-4 w-4 text-red-500" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{emergencyReadinessPercent}%</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Members with emergency contact on file →</p>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card className="border-t-4 border-t-rose-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Blood Donor Pool</CardTitle>
-                <div className="h-8 w-8 bg-rose-500/10 rounded-full flex items-center justify-center"><HeartPulse className="h-4 w-4 text-rose-500" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{filteredData.filter((m) => m.blood_type && m.blood_type.trim() !== "").length}</div>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">Members with blood type specified</p>
-              </CardContent>
-            </Card>
+            <Link href="/members?blood_type=A" className="block group">
+              <Card className="border-t-4 border-t-rose-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium group-hover:text-rose-600 transition-colors">Blood Donor Pool</CardTitle>
+                  <div className="h-8 w-8 bg-rose-500/10 rounded-full flex items-center justify-center"><HeartPulse className="h-4 w-4 text-rose-500" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{filteredData.filter((m) => m.blood_type && m.blood_type.trim() !== "").length}</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Members with blood type specified →</p>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card className="border-t-4 border-t-amber-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Dietary & Allergy Alerts</CardTitle>
-                <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center"><Activity className="h-4 w-4 text-amber-500" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{allergyData.find((d) => d.name === "Known Allergies")?.value || 0}</div>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">Members requiring allergy accommodations at retreats</p>
-              </CardContent>
-            </Card>
+            <Link href="/members?has_allergies=true" className="block group">
+              <Card className="border-t-4 border-t-amber-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium group-hover:text-amber-600 transition-colors">Dietary & Allergy Alerts</CardTitle>
+                  <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center"><Activity className="h-4 w-4 text-amber-500" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{allergyData.find((d) => d.name === "Known Allergies")?.value || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Members requiring allergy accommodations →</p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
 
           <div className="grid min-w-0 gap-4 md:grid-cols-2">
-            {/* Blood Type Bar */}
+            {/* Blood Type Bar — Interactive */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Blood Type Distribution</CardTitle>
-                <CardDescription className="text-xs">Crucial for emergency church blood drives & hospital support</CardDescription>
+                <CardDescription className="text-xs">Click bar to view matching members →</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -684,24 +711,24 @@ export function ReportsClient({
                     <XAxis dataKey="name" tick={axisStyle} axisLine={false} tickLine={false} />
                     <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip total={totalMembers} />} cursor={{ fill: cursorFill }} />
-                    <Bar dataKey="count" fill="url(#gradRose)" radius={[6, 6, 0, 0]} name="Members" {...animProps} />
+                    <Bar dataKey="count" fill="url(#gradRose)" radius={[6, 6, 0, 0]} name="Members" className="cursor-pointer" onClick={handleBloodTypeClick} {...animProps} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            {/* Allergy Donut */}
+            {/* Allergy Donut — Interactive */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Allergy & Health Safety Overview</CardTitle>
-                <CardDescription className="text-xs">Retreat, youth camp, and fellowship meal safety ratio</CardDescription>
+                <CardDescription className="text-xs">Click slice to view members →</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="75%">
                   <PieChart>
-                    <Pie data={allergyData} cx="50%" cy="50%" innerRadius={58} outerRadius={82} paddingAngle={5} dataKey="value" strokeWidth={0}>
+                    <Pie data={allergyData} cx="50%" cy="50%" innerRadius={58} outerRadius={82} paddingAngle={5} dataKey="value" strokeWidth={0} className="cursor-pointer" onClick={handleAllergyClick}>
                       {allergyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={ALLERGY_COLORS[index % ALLERGY_COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={ALLERGY_COLORS[index % ALLERGY_COLORS.length]} className="cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleAllergyClick(entry)} />
                       ))}
                       <Label
                         content={(props: any) => (
@@ -722,48 +749,54 @@ export function ReportsClient({
         {/* TAB 3: Career & Education */}
         <TabsContent value="labor" className="space-y-6">
           <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="border-t-4 border-t-purple-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Workforce Employed</CardTitle>
-                <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center"><Briefcase className="h-4 w-4 text-purple-500" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{filteredData.filter((m) => (m.employment_status || "").toLowerCase().includes("employ")).length}</div>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">Employed or self-employed members</p>
-              </CardContent>
-            </Card>
+            <Link href="/members?employment=Employed" className="block group">
+              <Card className="border-t-4 border-t-purple-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium group-hover:text-purple-600 transition-colors">Workforce Employed</CardTitle>
+                  <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center"><Briefcase className="h-4 w-4 text-purple-500" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{filteredData.filter((m) => (m.employment_status || "").toLowerCase().includes("employ")).length}</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Employed or self-employed members →</p>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card className="border-t-4 border-t-cyan-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Student Community</CardTitle>
-                <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center"><GraduationCap className="h-4 w-4 text-cyan-500" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{filteredData.filter((m) => (m.employment_status || "").toLowerCase() === "student").length}</div>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">Students pursuing education</p>
-              </CardContent>
-            </Card>
+            <Link href="/members?employment=Student" className="block group">
+              <Card className="border-t-4 border-t-cyan-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium group-hover:text-cyan-600 transition-colors">Student Community</CardTitle>
+                  <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center"><GraduationCap className="h-4 w-4 text-cyan-500" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{filteredData.filter((m) => (m.employment_status || "").toLowerCase() === "student").length}</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Students pursuing education →</p>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card className="border-t-4 border-t-indigo-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Higher Education Ratio</CardTitle>
-                <div className="h-8 w-8 bg-indigo-500/10 rounded-full flex items-center justify-center"><GraduationCap className="h-4 w-4 text-indigo-500" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {totalMembers ? Math.round((filteredData.filter((m) => ["College", "Postgraduate"].includes(m.highest_educational_attainment || "")).length / totalMembers) * 100) : 0}%
-                </div>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">College degree or higher</p>
-              </CardContent>
-            </Card>
+            <Link href="/members?education=College" className="block group">
+              <Card className="border-t-4 border-t-indigo-500 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium group-hover:text-indigo-600 transition-colors">Higher Education Ratio</CardTitle>
+                  <div className="h-8 w-8 bg-indigo-500/10 rounded-full flex items-center justify-center"><GraduationCap className="h-4 w-4 text-indigo-500" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">
+                    {totalMembers ? Math.round((filteredData.filter((m) => ["College", "Postgraduate"].includes(m.highest_educational_attainment || "")).length / totalMembers) * 100) : 0}%
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">College degree or higher →</p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
 
           <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {/* Employment Status Bar */}
+            {/* Employment Status Bar — Interactive */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Employment Status</CardTitle>
-                <CardDescription className="text-xs">Labor force breakdown of congregation</CardDescription>
+                <CardDescription className="text-xs">Click bar to view matching members →</CardDescription>
               </CardHeader>
               <CardContent className="h-[280px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -778,17 +811,17 @@ export function ReportsClient({
                     <XAxis dataKey="name" tick={axisStyle} axisLine={false} tickLine={false} angle={-25} textAnchor="end" height={50} />
                     <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip total={totalMembers} />} cursor={{ fill: cursorFill }} />
-                    <Bar dataKey="count" fill="url(#gradViolet2)" radius={[6, 6, 0, 0]} name="Members" {...animProps} />
+                    <Bar dataKey="count" fill="url(#gradViolet2)" radius={[6, 6, 0, 0]} name="Members" className="cursor-pointer" onClick={handleEmploymentClick} {...animProps} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            {/* Educational Attainment Bar */}
+            {/* Educational Attainment Bar — Interactive */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Educational Attainment</CardTitle>
-                <CardDescription className="text-xs">Highest degree completed</CardDescription>
+                <CardDescription className="text-xs">Click bar to view matching members →</CardDescription>
               </CardHeader>
               <CardContent className="h-[280px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -803,17 +836,17 @@ export function ReportsClient({
                     <XAxis dataKey="name" tick={axisStyle} axisLine={false} tickLine={false} angle={-25} textAnchor="end" height={50} />
                     <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip total={totalMembers} />} cursor={{ fill: cursorFill }} />
-                    <Bar dataKey="count" fill="url(#gradCyan2)" radius={[6, 6, 0, 0]} name="Members" {...animProps} />
+                    <Bar dataKey="count" fill="url(#gradCyan2)" radius={[6, 6, 0, 0]} name="Members" className="cursor-pointer" onClick={handleEducationClick} {...animProps} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            {/* Top Professional Fields Horizontal */}
+            {/* Top Professional Fields Horizontal Bar — Interactive */}
             <Card className="shadow-sm md:col-span-2 xl:col-span-1">
               <CardHeader>
                 <CardTitle className="text-base">Top Professional Fields</CardTitle>
-                <CardDescription className="text-xs">Top occupations & skillsets</CardDescription>
+                <CardDescription className="text-xs">Click bar to view matching members →</CardDescription>
               </CardHeader>
               <CardContent className="h-[280px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -828,7 +861,7 @@ export function ReportsClient({
                     <XAxis type="number" allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
                     <YAxis dataKey="name" type="category" tick={axisStyle} width={95} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip total={totalMembers} />} cursor={{ fill: cursorFill }} />
-                    <Bar dataKey="count" fill="url(#gradEmerald2)" radius={[0, 6, 6, 0]} name="Members" {...animProps} />
+                    <Bar dataKey="count" fill="url(#gradEmerald2)" radius={[0, 6, 6, 0]} name="Members" className="cursor-pointer" onClick={handleOccupationClick} {...animProps} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -843,7 +876,7 @@ export function ReportsClient({
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Ministry Participation</CardTitle>
-                <CardDescription className="text-xs">Top ministries by member engagement</CardDescription>
+                <CardDescription className="text-xs">Click bar to view matching members →</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -864,11 +897,11 @@ export function ReportsClient({
               </CardContent>
             </Card>
 
-            {/* Faith Promise Categories Bar */}
+            {/* Faith Promise Categories Bar — Interactive */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base">Faith Promise Categories</CardTitle>
-                <CardDescription className="text-xs">Commitment categories for giving this year</CardDescription>
+                <CardDescription className="text-xs">Click bar to view faith promise pledges →</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] min-w-0 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
@@ -883,7 +916,7 @@ export function ReportsClient({
                     <XAxis dataKey="name" tick={axisStyle} axisLine={false} tickLine={false} angle={-25} textAnchor="end" height={50} />
                     <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip total={faithPromiseStats.totalCommitments} />} cursor={{ fill: cursorFill }} />
-                    <Bar dataKey="count" fill="url(#gradRose2)" radius={[6, 6, 0, 0]} name="Commitments" {...animProps} />
+                    <Bar dataKey="count" fill="url(#gradRose2)" radius={[6, 6, 0, 0]} name="Commitments" className="cursor-pointer" onClick={handleFaithPromiseClick} {...animProps} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
