@@ -17,7 +17,10 @@ export async function getMissions() {
         name: missions.name,
         location: missions.location,
         pastor_name: missions.pastor_name,
+        pastor_start_date: missions.pastor_start_date,
         established_date: missions.established_date,
+        organized_date: missions.organized_date,
+        status: missions.status,
         created_at: missions.created_at,
         member_count: sql<number>`count(${members.id})::int`,
       })
@@ -36,7 +39,10 @@ export async function createMission(data: {
   name: string
   location?: string
   pastor_name?: string
+  pastor_start_date?: string
   established_date?: string
+  organized_date?: string
+  status?: string
 }) {
   await requireAdmin()
   try {
@@ -44,7 +50,10 @@ export async function createMission(data: {
       name: data.name,
       location: data.location || null,
       pastor_name: data.pastor_name || null,
+      pastor_start_date: data.pastor_start_date || null,
       established_date: data.established_date || null,
+      organized_date: data.organized_date || null,
+      status: data.status || 'mission_outreach',
     }).returning()
     
     revalidatePath("/missions")
@@ -61,7 +70,10 @@ export async function updateMission(
     name: string
     location?: string
     pastor_name?: string
+    pastor_start_date?: string
     established_date?: string
+    organized_date?: string
+    status?: string
   }
 ) {
   await requireAdmin()
@@ -70,7 +82,10 @@ export async function updateMission(
       name: data.name,
       location: data.location || null,
       pastor_name: data.pastor_name || null,
+      pastor_start_date: data.pastor_start_date || null,
       established_date: data.established_date || null,
+      organized_date: data.organized_date || null,
+      status: data.status || 'mission_outreach',
     }).where(eq(missions.id, id)).returning()
     
     revalidatePath("/missions")

@@ -82,7 +82,10 @@ export const missions = pgTable('missions', {
   name: text('name').notNull(),
   location: text('location'),
   pastor_name: text('pastor_name'),
+  pastor_start_date: date('pastor_start_date'),
   established_date: date('established_date'),
+  organized_date: date('organized_date'),
+  status: text('status').default('mission_outreach').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
