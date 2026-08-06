@@ -63,15 +63,15 @@ export function DatePicker({
     }
   }
 
-  // Detect Mobile Viewports (< 640px)
-  const [isMobile, setIsMobile] = React.useState(false)
+  // Detect Mobile Viewports (< 640px) or Short Screen Heights (< 720px)
+  const [isMobileOrShort, setIsMobileOrShort] = React.useState(false)
   React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640)
+    const checkViewport = () => {
+      setIsMobileOrShort(window.innerWidth < 640 || window.innerHeight < 720)
     }
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
+    checkViewport()
+    window.addEventListener("resize", checkViewport)
+    return () => window.removeEventListener("resize", checkViewport)
   }, [])
 
   // Trigger subtle haptic feedback on mobile if supported
@@ -381,7 +381,7 @@ export function DatePicker({
               <X className="h-3.5 w-3.5 mr-1" /> Clear
             </Button>
           )}
-          {isMobile && (
+          {isMobileOrShort && (
             <Button
               type="button"
               variant="outline"
@@ -422,8 +422,8 @@ export function DatePicker({
 
   return (
     <>
-      {/* RENDER MODE A: Mobile Responsive Centered Modal Dialog (< 640px) */}
-      {isMobile ? (
+      {/* RENDER MODE A: Mobile & Short Laptop Viewport Centered Modal Dialog */}
+      {isMobileOrShort ? (
         <>
           {TriggerButton}
           {open && (
@@ -441,7 +441,7 @@ export function DatePicker({
           )}
         </>
       ) : (
-        /* RENDER MODE B: Desktop / Laptop Collision-Aware Popover (≥ 640px) Anchored directly to Button */
+        /* RENDER MODE B: Desktop / Large Display Collision-Aware Popover Anchored directly to Button */
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             {TriggerButton}
@@ -450,7 +450,7 @@ export function DatePicker({
             align="start"
             side="bottom"
             sideOffset={6}
-            className="w-[350px] p-4 z-[60] shadow-xl rounded-2xl border bg-popover text-popover-foreground max-h-[calc(100vh-2rem)] overflow-y-auto"
+            className="w-[350px] p-4 z-[60] shadow-xl rounded-2xl border bg-popover text-popover-foreground max-h-[var(--radix-popover-content-available-height,calc(100vh-2rem))] overflow-y-auto"
           >
             {DatePickerContent}
           </PopoverContent>
