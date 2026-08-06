@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import {
   Plus,
@@ -58,6 +59,7 @@ export type Mission = {
   id: string
   name: string
   location: string | null
+  pastor_id?: string | null
   pastor_name: string | null
   pastor_start_date?: string | null
   established_date: string | null
@@ -100,16 +102,16 @@ export function MissionsClient({
     id?: string
     name: string
     location: string
+    pastor_id: string
     pastor_name: string
-    pastor_start_date: string
     established_date: string
     organized_date: string
     status: string
   }>({
     name: "",
     location: "",
+    pastor_id: "",
     pastor_name: "",
-    pastor_start_date: "",
     established_date: "",
     organized_date: "",
     status: "mission_outreach",
@@ -142,8 +144,8 @@ export function MissionsClient({
     setFormData({
       name: "",
       location: "",
+      pastor_id: "",
       pastor_name: "",
-      pastor_start_date: "",
       established_date: "",
       organized_date: "",
       status: "mission_outreach",
@@ -157,8 +159,8 @@ export function MissionsClient({
       id: mission.id,
       name: mission.name,
       location: mission.location || "",
+      pastor_id: mission.pastor_id || "",
       pastor_name: mission.pastor_name || "",
-      pastor_start_date: mission.pastor_start_date || "",
       established_date: mission.established_date || "",
       organized_date: mission.organized_date || "",
       status: isOrganized ? "organized_church" : "mission_outreach",
@@ -407,9 +409,15 @@ export function MissionsClient({
                   <div className="flex items-center justify-between gap-2 text-muted-foreground flex-wrap">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-primary/70 shrink-0" />
-                      <span className="font-medium text-foreground">
-                        {mission.pastor_name || "No designated pastor"}
-                      </span>
+                      {mission.pastor_id ? (
+                        <Link href={`/members/${mission.pastor_id}`} className="font-semibold text-primary hover:underline">
+                          {mission.pastor_name}
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-foreground">
+                          {mission.pastor_name || "No designated pastor"}
+                        </span>
+                      )}
                     </div>
 
                     {/* Pastor Tenure Pill (CONDITIONAL: ONLY SHOWN IF PASTOR START DATE EXISTS) */}
@@ -480,7 +488,7 @@ export function MissionsClient({
             <DialogTitle>{formData.id ? "Edit Mission Church" : "Add Mission Church"}</DialogTitle>
             <DialogDescription>
               {formData.id
-                ? "Update details, pastorate start date, and status for this mission."
+                ? "Update location, designated pastor, and status for this mission."
                 : "Enter details for the new mission church plant."}
             </DialogDescription>
           </DialogHeader>
@@ -522,33 +530,31 @@ export function MissionsClient({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pastor_name">Designated Pastor</Label>
-              <Input
-                id="pastor_name"
-                list="members-list"
-                value={formData.pastor_name}
-                onChange={(e) => setFormData({ ...formData, pastor_name: e.target.value })}
-                placeholder="e.g. Ptr. John Doe"
-              />
-              <datalist id="members-list">
-                {members.map((member) => (
-                  <option
-                    key={member.id}
-                    value={`${member.first_name} ${member.last_name}`}
-                  />
+              <Label htmlFor="pastor_id">Designated Pastor</Label>
+              <select
+                id="pastor_id"
+                value={formData.pastor_id}
+                onChange={(e) => {
+                  const selectedId = e.target.value
+                  const selectedMember = members.find((m) => m.id === selectedId)
+                  setFormData({
+                    ...formData,
+                    pastor_id: selectedId,
+                    pastor_name: selectedMember ? `${selectedMember.first_name} ${selectedMember.last_name}` : "",
+                  })
+                }}
+                className="h-10 rounded-lg border border-input bg-card text-foreground px-3 w-full font-medium text-sm"
+              >
+                <option value="">-- Select Member / Pastor --</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.first_name} {m.last_name}
+                  </option>
                 ))}
-              </datalist>
-            </div>
-
-            {/* Date Became Mission Pastor */}
-            <div className="space-y-2">
-              <Label htmlFor="pastor_start_date">Date Became Mission Pastor</Label>
-              <DatePicker
-                value={formData.pastor_start_date}
-                onChange={(val) => setFormData({ ...formData, pastor_start_date: val || "" })}
-                placeholder="Select date pastor started"
-                className="h-10 w-full"
-              />
+              </select>
+              <p className="text-[11px] text-muted-foreground">
+                Selecting a pastor dynamically links their personal profile & tenure to this mission branch.
+              </p>
             </div>
 
             {/* Established Date */}

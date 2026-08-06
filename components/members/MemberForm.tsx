@@ -44,6 +44,8 @@ const memberSchema = z.object({
   mission_id: z.string().default("main"),
   date_saved: z.string().default(""),
   membership_date: z.string().default(""),
+  pastoring_start_date: z.string().default(""),
+  pastoring_location: z.string().default(""),
   baptism_date: z.string().default(""),
   baptized_by: z.string().default(""),
   witness_by: z.string().default(""),
@@ -276,6 +278,8 @@ export function MemberForm({
       mission_id: initialData?.mission_id || "main",
       date_saved: initialData?.date_saved || "",
       membership_date: initialData?.membership_date || "",
+      pastoring_start_date: initialData?.pastoring_start_date || "",
+      pastoring_location: initialData?.pastoring_location || "",
       baptism_date: initialData?.baptism_date || "",
       baptized_by: initialData?.baptized_by || "",
       witness_by: initialData?.witness_by || "",
@@ -1321,6 +1325,36 @@ export function MemberForm({
                   {form.watch("church_role") === "Main Pastor" && (
                     <p className="text-xs text-amber-500 font-medium">Note: Designating this member as Main Pastor will automatically set them as Senior Leader in the Org Chart.</p>
                   )}
+                </div>
+              )}
+
+              {(form.watch("church_role") === "Main Pastor" || form.watch("church_role") === "Mission Pastor") && (
+                <div className="col-span-1 md:col-span-2 p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3 my-2">
+                  <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                    <Church className="h-4 w-4" />
+                    <span>Pastoral Ministry Details</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label className="text-[13px] text-muted-foreground font-medium">Pastoring Start Date</Label>
+                      <DatePicker 
+                        value={form.watch("pastoring_start_date")} 
+                        onChange={(v) => form.setValue("pastoring_start_date", v, { shouldValidate: true, shouldDirty: true })} 
+                        placeholder="Select date started pastoring" 
+                        className="h-12 w-full bg-background" 
+                      />
+                      <p className="text-[11px] text-muted-foreground">Date this pastor officially began pastoral ministry.</p>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-[13px] text-muted-foreground font-medium">Pastoring Location</Label>
+                      <Input 
+                        {...form.register("pastoring_location")} 
+                        className="h-12 bg-background" 
+                        placeholder="e.g. CBT Olongapo / Subic Outreach" 
+                      />
+                      <p className="text-[11px] text-muted-foreground">Location / venue where pastoring started or takes place.</p>
+                    </div>
+                  </div>
                 </div>
               )}
 

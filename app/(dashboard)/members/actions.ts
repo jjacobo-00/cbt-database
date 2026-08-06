@@ -64,6 +64,8 @@ export async function coreCreateMember(payloadStr: string) {
     mission_id: data.mission_id || null,
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
+    pastoring_start_date: data.pastoring_start_date || null,
+    pastoring_location: data.pastoring_location || null,
     baptism_date: data.baptism_date || null,
     date_baptized: data.date_baptized || data.baptism_date || null,
     baptized_by: data.baptized_by || "",
@@ -113,6 +115,11 @@ export async function coreCreateMember(payloadStr: string) {
 
   if (!member) {
     throw new Error("Failed to create member")
+  }
+
+  // Link pastor to mission if Mission Pastor role
+  if (data.church_role === "Mission Pastor" && data.mission_id && data.mission_id !== "main") {
+    await db.update(missions).set({ pastor_id: member.id }).where(eq(missions.id, data.mission_id))
   }
 
   // Auto-enroll new member in all "for everyone" ministries
@@ -298,6 +305,8 @@ export async function coreUpdateMember(payloadStr: string) {
     mission_id: data.mission_id || null,
     date_saved: data.date_saved || null,
     membership_date: data.membership_date || null,
+    pastoring_start_date: data.pastoring_start_date || null,
+    pastoring_location: data.pastoring_location || null,
     baptism_date: data.baptism_date || null,
     date_baptized: data.date_baptized || data.baptism_date || null,
     baptized_by: data.baptized_by || "",

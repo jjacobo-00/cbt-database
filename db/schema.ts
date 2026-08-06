@@ -1,4 +1,4 @@
-import { pgTable, text, integer, date, timestamp, uuid, jsonb, primaryKey, boolean, unique } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, date, timestamp, uuid, jsonb, primaryKey, boolean, unique, AnyPgColumn } from 'drizzle-orm/pg-core'
 
 import type { AdapterAccountType } from "next-auth/adapters"
 
@@ -63,6 +63,7 @@ export const whitelisted_users = pgTable("whitelisted_users", {
   last_login_at: timestamp("last_login_at", { withTimezone: true }),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
 })
+
 export const invitation_links = pgTable('invitation_links', {
   token: text('token').primaryKey(),
   member_id: uuid('member_id').references(() => members.id),
@@ -81,6 +82,7 @@ export const missions = pgTable('missions', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   location: text('location'),
+  pastor_id: uuid('pastor_id').references((): AnyPgColumn => members.id, { onDelete: 'set null' }),
   pastor_name: text('pastor_name'),
   pastor_start_date: date('pastor_start_date'),
   established_date: date('established_date'),
@@ -179,6 +181,8 @@ export const members = pgTable('members', {
   mission_id: uuid('mission_id').references(() => missions.id, { onDelete: 'set null' }),
   date_saved: date('date_saved'),
   membership_date: date('membership_date'),
+  pastoring_start_date: date('pastoring_start_date'),
+  pastoring_location: text('pastoring_location'),
   // Deprecated redundant columns (scheduled for cleanup migration)
   // Note: sex is redundant with gender; date_baptized with baptism_date; witnessed_by with baptized_by
   witnessed_by: text("witnessed_by"),
@@ -257,8 +261,6 @@ export const commitment_offerings = pgTable('commitment_offerings', {
 // ──────────────────────────────────────────────
 // ORG CHART SYSTEM
 // ──────────────────────────────────────────────
-
-import { AnyPgColumn } from 'drizzle-orm/pg-core'
 
 export const org_chart_nodes = pgTable('org_chart_nodes', {
   id: uuid('id').primaryKey().defaultRandom(),

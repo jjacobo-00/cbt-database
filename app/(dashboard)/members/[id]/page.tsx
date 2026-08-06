@@ -31,11 +31,10 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
 
   let fetchedMissionName = memberResult.mission_name || null
   if (!fetchedMissionName && memberResult.member.church_role === "Mission Pastor") {
-    const { ilike } = await import("drizzle-orm")
     const [matchingMission] = await db
       .select({ name: missions.name })
       .from(missions)
-      .where(ilike(missions.pastor_name, `%${memberResult.member.last_name}%`))
+      .where(eq(missions.pastor_id, memberId))
     if (matchingMission) {
       fetchedMissionName = matchingMission.name
     }

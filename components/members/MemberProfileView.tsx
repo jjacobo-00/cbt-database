@@ -94,6 +94,22 @@ type MemberProfileProps = {
   isReadOnly?: boolean;
 };
 
+function calculateTenureText(dateString?: string | null): string | null {
+  if (!dateString) return null
+  const start = new Date(dateString)
+  if (isNaN(start.getTime())) return null
+  const now = new Date()
+  let years = now.getFullYear() - start.getFullYear()
+  const monthDiff = now.getMonth() - start.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < start.getDate())) {
+    years--
+  }
+  if (years < 0) return null
+  if (years === 0) return "<1 year"
+  if (years === 1) return "1 year"
+  return `${years} years`
+}
+
 export function MemberProfileView({
   member,
   childrenList,
@@ -743,6 +759,31 @@ export function MemberProfileView({
                     <p className="text-xs text-muted-foreground">Mission Branch</p>
                     <p className="font-medium text-blue-600 dark:text-blue-400">{member.mission_name || "CBT Olongapo (Main Branch)"}</p>
                   </div>
+                  {(member.church_role === "Main Pastor" || member.church_role === "Mission Pastor" || member.pastoring_start_date) && (
+                    <div className="col-span-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs space-y-1">
+                      <p className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                        <Church className="h-3.5 w-3.5" /> Pastoral Ministry
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-foreground">
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Pastoring Started</span>
+                          <span className="font-medium">{member.pastoring_start_date || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Pastoral Tenure</span>
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            {calculateTenureText(member.pastoring_start_date) || "—"}
+                          </span>
+                        </div>
+                        {member.pastoring_location && (
+                          <div className="col-span-2">
+                            <span className="text-muted-foreground block text-[11px]">Location / Venue</span>
+                            <span className="font-medium">{member.pastoring_location}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {ledMinistries.length > 0 && (
                     <div className="col-span-2">
                       <p className="text-xs text-muted-foreground">Ministries Led</p>
@@ -1652,6 +1693,49 @@ export function MemberProfileView({
                 </div>
               </div>
             </div>
+
+            {/* Pastoral Ministry Record (If Pastor) */}
+            {(member.church_role === "Main Pastor" || member.church_role === "Mission Pastor" || member.pastoring_start_date) && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-3 border-b border-amber-500/20 pb-1 flex items-center gap-1.5">
+                  <Church className="h-4 w-4" /> Pastoral Ministry Record
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                  <div>
+                    <span className="text-muted-foreground text-xs block">
+                      Pastoral Role
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {member.church_role || "Pastor"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs block">
+                      Pastoring Start Date
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {member.pastoring_start_date || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs block">
+                      Pastoring Location
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {member.pastoring_location || member.mission_location || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs block">
+                      Pastoral Service Tenure
+                    </span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      {calculateTenureText(member.pastoring_start_date) || "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
