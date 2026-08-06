@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart, ChevronDown, Gift, RefreshCw, Network, MapPin, Target, DollarSign, Crown } from "lucide-react"
+import { Home, Users, PieChart, Shield, Church, X, Menu, HandHeart, ChevronDown, Gift, RefreshCw, Network, MapPin, Target, DollarSign, Crown, CalendarCheck } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import Image from "next/image"
 
@@ -18,6 +18,7 @@ import { useSession } from "next-auth/react"
 const adminNavItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Members", href: "/members", icon: Users },
+  { name: "Attendance", href: "/attendance", icon: CalendarCheck },
   { name: "Ministries", href: "/ministries", icon: Church },
   { name: "Missions", href: "/missions", icon: MapPin },
   { 
@@ -40,6 +41,7 @@ const adminNavItems: NavItem[] = [
 
 const memberNavItems: NavItem[] = [
   { name: "My Member Details", href: "/my-profile", icon: Users },
+  { name: "Ministry Attendance", href: "/attendance", icon: CalendarCheck },
 ]
 
 export function Sidebar({ 

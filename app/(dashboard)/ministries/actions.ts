@@ -17,6 +17,7 @@ export async function getMinistries() {
       for_everyone: ministries.for_everyone,
       parent_id: ministries.parent_id,
       leader_id: ministries.leader_id,
+      co_leader_ids: ministries.co_leader_ids,
       created_at: ministries.created_at,
     }).from(ministries).orderBy(asc(ministries.name))
     
@@ -27,7 +28,7 @@ export async function getMinistries() {
   }
 }
 
-export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null, leaderId?: string | null) {
+export async function createMinistry(name: string, forEveryone: boolean, parentId?: string | null, leaderId?: string | null, coLeaderIds?: string[]) {
   await requireAdmin()
   const parsed = ministryNameSchema.safeParse(name)
   if (!parsed.success) throw new Error(parsed.error.issues[0].message)
@@ -37,6 +38,7 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
       for_everyone: forEveryone,
       parent_id: parentId || null,
       leader_id: leaderId || null,
+      co_leader_ids: coLeaderIds || [],
     }).returning()
 
     // If marked "For Everyone", auto-enroll all existing members & commitments
@@ -51,9 +53,10 @@ export async function createMinistry(name: string, forEveryone: boolean, parentI
   revalidatePath("/ministries")
   revalidatePath("/members/new")
   revalidatePath("/commitments")
+  revalidatePath("/attendance")
 }
 
-export async function updateMinistry(id: string, name: string, forEveryone?: boolean, leaderId?: string | null) {
+export async function updateMinistry(id: string, name: string, forEveryone?: boolean, leaderId?: string | null, coLeaderIds?: string[]) {
   await requireAdmin()
   const parsed = ministryNameSchema.safeParse(name)
   if (!parsed.success) throw new Error(parsed.error.issues[0].message)
@@ -62,6 +65,7 @@ export async function updateMinistry(id: string, name: string, forEveryone?: boo
       name: parsed.data.trim(),
       ...(forEveryone !== undefined && { for_everyone: forEveryone }),
       ...(leaderId !== undefined && { leader_id: leaderId }),
+      ...(coLeaderIds !== undefined && { co_leader_ids: coLeaderIds }),
     }).where(eq(ministries.id, id))
 
     if (forEveryone) {
@@ -75,6 +79,7 @@ export async function updateMinistry(id: string, name: string, forEveryone?: boo
   revalidatePath("/ministries")
   revalidatePath("/members/new")
   revalidatePath("/commitments")
+  revalidatePath("/attendance")
 }
 
 export async function deleteMinistry(id: string) {

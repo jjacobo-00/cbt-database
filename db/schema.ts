@@ -98,6 +98,7 @@ export const ministries = pgTable('ministries', {
   for_everyone: boolean('for_everyone').default(false).notNull(),
   parent_id: uuid('parent_id'),
   leader_id: uuid('leader_id'),
+  co_leader_ids: jsonb('co_leader_ids').default([]),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -222,6 +223,22 @@ export const member_ministries = pgTable('member_ministries', {
   ministry_id: uuid('ministry_id').notNull().references(() => ministries.id, { onDelete: 'cascade' }),
 }, (t) => ({
   pk: primaryKey({ columns: [t.member_id, t.ministry_id] }),
+}))
+
+export const attendance_sessions = pgTable('attendance_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ministry_id: uuid('ministry_id').notNull().references(() => ministries.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  submitted_by: uuid('submitted_by').references(() => members.id, { onDelete: 'set null' }),
+  submitted_by_name: text('submitted_by_name'),
+  notes: text('notes'),
+  present_member_ids: jsonb('present_member_ids').default([]).notNull(),
+  present_count: integer('present_count').default(0).notNull(),
+  total_enrolled: integer('total_enrolled').default(0).notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  uniqueSession: unique().on(t.ministry_id, t.date),
 }))
 
 // ──────────────────────────────────────────────

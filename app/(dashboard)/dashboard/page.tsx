@@ -4,6 +4,7 @@ import {
   ministries,
   commitments,
   member_ministries,
+  attendance_sessions,
 } from "@/db/schema";
 import { eq, isNotNull, desc, sql, gte, count } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import {
   CheckCircle,
   TrendingUp,
   Target,
+  CalendarCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
@@ -44,6 +46,7 @@ export default async function DashboardPage() {
     ageDataQuery,
     ministryEngagementResult,
     previousYearGrowthQuery,
+    attendanceResult,
   ] = await Promise.all([
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
     db
@@ -94,12 +97,21 @@ export default async function DashboardPage() {
       .where(
         sql`${sql`COALESCE(${members.membership_date}, ${members.created_at})`} >= (date_trunc('month', current_date - interval '12 months')) AND ${sql`COALESCE(${members.membership_date}, ${members.created_at})`} < (date_trunc('month', current_date - interval '6 months'))`,
       ),
+    db
+      .select({
+        present: sql<number>`COALESCE(sum(${attendance_sessions.present_count}), 0)::int`,
+        total: sql<number>`COALESCE(sum(${attendance_sessions.total_enrolled}), 0)::int`,
+      })
+      .from(attendance_sessions),
   ]);
 
   const totalMembers = totalMembersResult[0]?.count || 0;
   const newMembersThisMonth = newMembersThisMonthResult[0]?.count || 0;
   const newBaptismsThisYear = newBaptismsResult[0]?.count || 0;
   const ministryEngagedMembers = ministryEngagementResult[0]?.count || 0;
+  const attPresent = attendanceResult[0]?.present || 0;
+  const attTotal = attendanceResult[0]?.total || 1;
+  const attPct = attendanceResult[0]?.total ? Math.min(100, Math.round((attPresent / attTotal) * 100)) : 0;
 
   // Calculate Age Demographics from birth_date
   let kids = 0,
@@ -257,7 +269,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Streamlined KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Link href="/members" className="block group">
           <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-blue-500 cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -270,6 +282,23 @@ export default async function DashboardPage() {
               <div className="text-3xl font-bold">{totalMembers}</div>
               <p className="text-xs text-muted-foreground mt-1 font-medium">
                 Total registered in database →
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/attendance" className="block group">
+          <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-emerald-500 cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium group-hover:text-emerald-600 transition-colors">Ministry Attendance</CardTitle>
+              <div className="h-8 w-8 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                <CalendarCheck className="h-4 w-4 text-emerald-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{attPct}%</div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                Recorded turnout rate →
               </p>
             </CardContent>
           </Card>
