@@ -554,8 +554,11 @@ export function AttendanceClient({
                         <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-muted-foreground mt-0.5">
                           {m.gender && <span>{m.gender}</span>}
                           {m.other_ministries && m.other_ministries.length > 0 && (
-                            <span className="px-1.5 py-0.2 rounded bg-muted font-medium text-[10px]">
-                              +{m.other_ministries.length} other
+                            <span
+                              title={`Also serving in: ${m.other_ministries.join(", ")}`}
+                              className="px-1.5 py-0.5 rounded-md bg-muted/80 font-medium text-[10px] text-muted-foreground border"
+                            >
+                              +{m.other_ministries.length} ({m.other_ministries.slice(0, 2).join(", ")}{m.other_ministries.length > 2 ? "..." : ""})
                             </span>
                           )}
                         </div>

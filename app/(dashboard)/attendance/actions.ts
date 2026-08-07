@@ -61,22 +61,27 @@ export async function getMinistryAttendanceData(ministryId: string, dateStr: str
     .where(eq(member_ministries.ministry_id, ministryId))
     .orderBy(asc(members.last_name), asc(members.first_name))
 
-  // Fetch all ministry enrollments for these members (to display multi-ministry badges)
+  // Fetch all specialized ministry enrollments for these members (excluding "For Everyone" default ministries)
   const memberIds = enrolledMembers.map((m) => m.id)
   let multiMinistryMap: Record<string, string[]> = {}
   if (memberIds.length > 0) {
     const enrollments = await db
       .select({
         member_id: member_ministries.member_id,
+        ministry_id: member_ministries.ministry_id,
         ministry_name: ministries.name,
+        for_everyone: ministries.for_everyone,
       })
       .from(member_ministries)
       .innerJoin(ministries, eq(member_ministries.ministry_id, ministries.id))
       .where(inArray(member_ministries.member_id, memberIds))
 
     enrollments.forEach((e) => {
-      if (!multiMinistryMap[e.member_id]) multiMinistryMap[e.member_id] = []
-      multiMinistryMap[e.member_id].push(e.ministry_name)
+      // Only count active specialized ministries (exclude current ministry & "For Everyone" general ministries)
+      if (e.ministry_id !== ministryId && !e.for_everyone) {
+        if (!multiMinistryMap[e.member_id]) multiMinistryMap[e.member_id] = []
+        multiMinistryMap[e.member_id].push(e.ministry_name)
+      }
     })
   }
 
@@ -89,7 +94,7 @@ export async function getMinistryAttendanceData(ministryId: string, dateStr: str
   return {
     members: enrolledMembers.map((m) => ({
       ...m,
-      other_ministries: (multiMinistryMap[m.id] || []).filter((name) => name !== ministryId),
+      other_ministries: multiMinistryMap[m.id] || [],
       ministries_count: (multiMinistryMap[m.id] || []).length,
     })),
     session: existingSession
