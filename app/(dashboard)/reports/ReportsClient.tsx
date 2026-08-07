@@ -9,6 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { ReportsDataTable } from "@/components/reports/ReportsDataTable";
 import { columns } from "./columns";
 import {
