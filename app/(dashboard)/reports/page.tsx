@@ -1,6 +1,6 @@
 import { db } from "@/db"
-import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories, missions } from "@/db/schema"
-import { eq, sql } from "drizzle-orm"
+import { members, member_ministries, ministries, commitments, commitment_offerings, offering_categories, missions, attendance_sessions } from "@/db/schema"
+import { eq, sql, desc } from "drizzle-orm"
 import { ReportsClient } from "./ReportsClient"
 
 export type ReportMember = {
@@ -29,6 +29,18 @@ export type ReportMember = {
   created_at: string | null
 }
 
+export type ReportAttendanceSession = {
+  id: string
+  ministry_id: string
+  ministry_name: string | null
+  date: string
+  submitted_by_name: string | null
+  notes: string | null
+  present_count: number
+  total_enrolled: number
+  present_member_ids: string[]
+}
+
 export const revalidate = 0 // Disable cache for fresh reports
 
 export const metadata = { title: "Reports & Analytics | CBT Database" }
@@ -52,7 +64,8 @@ export default async function ReportsPage() {
   const [
     membersData,
     ministryParticipationData,
-    faithPromiseData
+    faithPromiseData,
+    attendanceSessionsData,
   ] = await Promise.all([
     db.select({
       id: members.id,
@@ -94,7 +107,20 @@ export default async function ReportsPage() {
       is_monthly: offering_categories.is_monthly
     }).from(commitments)
       .leftJoin(commitment_offerings, eq(commitments.id, commitment_offerings.commitment_id))
-      .leftJoin(offering_categories, eq(commitment_offerings.offering_category_id, offering_categories.id))
+      .leftJoin(offering_categories, eq(commitment_offerings.offering_category_id, offering_categories.id)),
+    db.select({
+      id: attendance_sessions.id,
+      ministry_id: attendance_sessions.ministry_id,
+      ministry_name: ministries.name,
+      date: attendance_sessions.date,
+      submitted_by_name: attendance_sessions.submitted_by_name,
+      notes: attendance_sessions.notes,
+      present_count: attendance_sessions.present_count,
+      total_enrolled: attendance_sessions.total_enrolled,
+      present_member_ids: attendance_sessions.present_member_ids,
+    }).from(attendance_sessions)
+      .leftJoin(ministries, eq(attendance_sessions.ministry_id, ministries.id))
+      .orderBy(desc(attendance_sessions.date))
   ])
 
   const formattedData: ReportMember[] = membersData.map(m => ({
@@ -105,9 +131,15 @@ export default async function ReportsPage() {
     created_at: m.created_at ? (typeof m.created_at === 'object' ? (m.created_at as Date).toISOString() : m.created_at as string) : null,
   }))
 
+  const formattedAttendance: ReportAttendanceSession[] = attendanceSessionsData.map(s => ({
+    ...s,
+    present_member_ids: (s.present_member_ids as string[]) || [],
+  }))
+
   return <ReportsClient 
     initialData={formattedData} 
     ministryData={ministryParticipationData}
     faithPromiseData={faithPromiseData}
+    attendanceData={formattedAttendance}
   />
 }

@@ -39,8 +39,17 @@ import {
   GraduationCap,
   ShieldAlert,
   FileSpreadsheet,
+  CalendarCheck,
+  TrendingUp,
+  BarChart3,
+  AlertTriangle,
+  UserCheck,
+  Download,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
-import type { ReportMember } from "./page";
+import { AreaChart, Area } from "recharts";
+import type { ReportMember, ReportAttendanceSession } from "./page";
 import { normalizeCity } from "@/lib/utils/utils";
 
 export type MinistryParticipation = {
@@ -168,10 +177,12 @@ export function ReportsClient({
   initialData,
   ministryData = [],
   faithPromiseData = [],
+  attendanceData = [],
 }: {
   initialData: ReportMember[];
   ministryData?: MinistryParticipation[];
   faithPromiseData?: FaithPromiseData[];
+  attendanceData?: ReportAttendanceSession[];
 }) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -414,6 +425,99 @@ export function ReportsClient({
     };
   }, [filteredData, faithPromises]);
 
+  const attendanceStats = useMemo(() => {
+    if (attendanceData.length === 0) {
+      return {
+        totalSessions: 0,
+        avgTurnoutRate: 0,
+        totalPresent: 0,
+        totalEnrolled: 0,
+        topMinistry: "None",
+        trend: [],
+        ministryComparison: [],
+        sessionsList: [],
+      };
+    }
+
+    const totalPresent = attendanceData.reduce((acc, s) => acc + (s.present_count || 0), 0);
+    const totalEnrolled = attendanceData.reduce((acc, s) => acc + (s.total_enrolled || 0), 0);
+    const avgTurnoutRate = totalEnrolled > 0 ? Math.min(100, Math.round((totalPresent / totalEnrolled) * 100)) : 0;
+
+    // Ministry comparison
+    const ministryMap: Record<string, { present: number; enrolled: number; count: number }> = {};
+    attendanceData.forEach((s) => {
+      const name = s.ministry_name || "General Ministry";
+      if (!ministryMap[name]) ministryMap[name] = { present: 0, enrolled: 0, count: 0 };
+      ministryMap[name].present += s.present_count || 0;
+      ministryMap[name].enrolled += s.total_enrolled || 0;
+      ministryMap[name].count += 1;
+    });
+
+    const ministryComparison = Object.entries(ministryMap).map(([name, d]) => {
+      const rate = d.enrolled > 0 ? Math.min(100, Math.round((d.present / d.enrolled) * 100)) : 0;
+      return {
+        name,
+        avgPresent: Math.round(d.present / d.count),
+        rate,
+        sessionsCount: d.count,
+      };
+    }).sort((a, b) => b.rate - a.rate);
+
+    const topMinistry = ministryComparison.length > 0 ? ministryComparison[0].name : "None";
+
+    // Weekly trend (by date ascending)
+    const dateMap: Record<string, { present: number; enrolled: number }> = {};
+    attendanceData.forEach((s) => {
+      if (!dateMap[s.date]) dateMap[s.date] = { present: 0, enrolled: 0 };
+      dateMap[s.date].present += s.present_count || 0;
+      dateMap[s.date].enrolled += s.total_enrolled || 0;
+    });
+
+    const trend = Object.entries(dateMap)
+      .map(([date, d]) => ({
+        date,
+        present: d.present,
+        enrolled: d.enrolled,
+        rate: d.enrolled > 0 ? Math.min(100, Math.round((d.present / d.enrolled) * 100)) : 0,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-16);
+
+    return {
+      totalSessions: attendanceData.length,
+      avgTurnoutRate,
+      totalPresent,
+      totalEnrolled,
+      topMinistry,
+      trend,
+      ministryComparison,
+      sessionsList: attendanceData,
+    };
+  }, [attendanceData]);
+
+  const exportAttendanceCSV = () => {
+    if (attendanceData.length === 0) return;
+    const headers = ["Date", "Ministry", "Present Count", "Total Enrolled", "Turnout Rate (%)", "Submitted By", "Notes"];
+    const rows = attendanceData.map((s) => [
+      s.date,
+      `"${(s.ministry_name || "").replace(/"/g, '""')}"`,
+      s.present_count,
+      s.total_enrolled,
+      s.total_enrolled > 0 ? Math.round((s.present_count / s.total_enrolled) * 100) : 0,
+      `"${(s.submitted_by_name || "").replace(/"/g, '""')}"`,
+      `"${(s.notes || "").replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `church-attendance-report-${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const axisStyle = { fontSize: 11, fill: tickColor };
   const animProps = { animationBegin: 0, animationDuration: 700, animationEasing: "ease-out" as const };
 
@@ -423,7 +527,7 @@ export function ReportsClient({
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Reports & Analytics</h1>
           <p className="text-muted-foreground mt-1">
-            Explore church demographics, health preparedness, labor, and generate custom exports.
+            Explore church demographics, attendance turnout, health preparedness, labor, and generate custom exports.
           </p>
         </div>
         <select
@@ -440,6 +544,7 @@ export function ReportsClient({
       <Tabs defaultValue="demographics" className="w-full space-y-6">
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="demographics" className="gap-2"><Users className="h-4 w-4" /> Demographics & Locations</TabsTrigger>
+          <TabsTrigger value="attendance" className="gap-2"><CalendarCheck className="h-4 w-4" /> Attendance Analytics</TabsTrigger>
           <TabsTrigger value="health" className="gap-2"><HeartPulse className="h-4 w-4" /> Health & Emergency</TabsTrigger>
           <TabsTrigger value="labor" className="gap-2"><Briefcase className="h-4 w-4" /> Career & Education</TabsTrigger>
           <TabsTrigger value="ministry" className="gap-2"><Target className="h-4 w-4" /> Ministry & Pledges</TabsTrigger>
@@ -646,6 +751,208 @@ export function ReportsClient({
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* TAB 2: Attendance Analytics & Reports */}
+        <TabsContent value="attendance" className="space-y-6">
+          {/* Top KPI Cards */}
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <Card className="border-t-4 border-t-emerald-500 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Overall Turnout Rate</CardTitle>
+                <div className="h-8 w-8 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{attendanceStats.avgTurnoutRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1 font-medium">
+                  {attendanceStats.totalPresent} of {attendanceStats.totalEnrolled} total attendances
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-blue-500 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Sessions Recorded</CardTitle>
+                <div className="h-8 w-8 bg-blue-500/10 rounded-full flex items-center justify-center">
+                  <CalendarCheck className="h-4 w-4 text-blue-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{attendanceStats.totalSessions}</div>
+                <p className="text-xs text-muted-foreground mt-1 font-medium">Recorded ministry sessions</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-purple-500 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Top Turnout Ministry</CardTitle>
+                <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
+                  <Church className="h-4 w-4 text-purple-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold truncate">{attendanceStats.topMinistry}</div>
+                <p className="text-xs text-muted-foreground mt-1 font-medium">Highest average turnout rate</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-amber-500 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Export Attendance Report</CardTitle>
+                <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center">
+                  <Download className="h-4 w-4 text-amber-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={exportAttendanceCSV}
+                  disabled={attendanceStats.totalSessions === 0}
+                  className="w-full h-9 text-xs font-semibold gap-1.5 shadow-xs"
+                >
+                  <Download className="h-3.5 w-3.5" /> Export Attendance CSV
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid min-w-0 gap-6 md:grid-cols-2">
+            {/* Area Chart: Turnout Trend */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" /> Attendance Rate Trend (%)
+                </CardTitle>
+                <CardDescription>Turnout percentage over recent attendance dates</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[280px]">
+                {attendanceStats.trend.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                    No attendance records available for trend analysis.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={attendanceStats.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorAttTrend" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid stroke={gridColor} strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="date" tick={axisStyle} axisLine={false} tickLine={false} />
+                      <YAxis domain={[0, 100]} tick={axisStyle} axisLine={false} tickLine={false} unit="%" />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorAttTrend)" name="Turnout %" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Bar Chart: Turnout by Ministry */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" /> Turnout Rate by Ministry
+                </CardTitle>
+                <CardDescription>Average turnout percentage comparison across ministries</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[280px]">
+                {attendanceStats.ministryComparison.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                    No ministry comparison data available.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={attendanceStats.ministryComparison} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                      <defs>
+                        <linearGradient id="gradIndigoAtt" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#6366f1" stopOpacity={0.95} />
+                          <stop offset="100%" stopColor="#4338ca" stopOpacity={0.75} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid stroke={gridColor} strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" tick={axisStyle} axisLine={false} tickLine={false} angle={-15} textAnchor="end" />
+                      <YAxis domain={[0, 100]} tick={axisStyle} axisLine={false} tickLine={false} unit="%" />
+                      <Tooltip />
+                      <Bar dataKey="rate" fill="url(#gradIndigoAtt)" radius={[6, 6, 0, 0]} name="Avg Turnout %" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Detailed Attendance Sessions Log Table */}
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle className="text-base">Ministry Attendance Sessions Log</CardTitle>
+                <CardDescription className="text-xs">Historical log of all recorded ministry sessions</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportAttendanceCSV}
+                disabled={attendanceStats.totalSessions === 0}
+                className="text-xs gap-1.5 h-8"
+              >
+                <Download className="h-3.5 w-3.5" /> CSV
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {attendanceStats.sessionsList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-muted-foreground">
+                  No attendance sessions recorded in the database yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto border rounded-xl">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/50 border-b font-semibold text-muted-foreground">
+                      <tr>
+                        <th className="p-3">Date</th>
+                        <th className="p-3">Ministry</th>
+                        <th className="p-3">Present / Total</th>
+                        <th className="p-3">Turnout Rate</th>
+                        <th className="p-3">Submitted By</th>
+                        <th className="p-3">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {attendanceStats.sessionsList.map((s) => {
+                        const rate = s.total_enrolled > 0 ? Math.round((s.present_count / s.total_enrolled) * 100) : 0;
+                        return (
+                          <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="p-3 font-semibold text-foreground whitespace-nowrap">{s.date}</td>
+                            <td className="p-3 font-medium text-foreground">{s.ministry_name || "—"}</td>
+                            <td className="p-3 whitespace-nowrap">
+                              {s.present_count} / {s.total_enrolled}
+                            </td>
+                            <td className="p-3 whitespace-nowrap">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  rate >= 80
+                                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                }`}
+                              >
+                                {rate}%
+                              </span>
+                            </td>
+                            <td className="p-3 text-muted-foreground whitespace-nowrap">{s.submitted_by_name || "—"}</td>
+                            <td className="p-3 text-muted-foreground max-w-[200px] truncate">{s.notes || "—"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* TAB 2: Health & Emergency Preparedness */}

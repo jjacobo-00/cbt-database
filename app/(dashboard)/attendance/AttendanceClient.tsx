@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useTransition } from "react"
+import Link from "next/link"
 import {
   CalendarCheck,
   Users,
@@ -22,6 +23,7 @@ import {
   ChevronRight,
   UserCheck,
   AlertCircle,
+  PieChart,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,18 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { DatePicker } from "@/components/ui/date-picker"
 import { toast } from "sonner"
 import { cn, formatName } from "@/lib/utils/utils"
-import { saveAttendanceSession, getMinistryAttendanceData, getAttendanceHistory, getAttendanceAnalytics } from "./actions"
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts"
+import { saveAttendanceSession, getMinistryAttendanceData, getAttendanceHistory } from "./actions"
 
 type AuthorizedMinistry = {
   id: string
@@ -101,7 +92,7 @@ export function AttendanceClient({
   }
 
   const [selectedDate, setSelectedDate] = useState<string>(getTodayStr())
-  const [activeTab, setActiveTab] = useState<"form" | "history" | "analytics">("form")
+  const [activeTab, setActiveTab] = useState<"form" | "history">("form")
 
   // Attendance Form state
   const [members, setMembers] = useState<EnrolledMember[]>([])
@@ -159,14 +150,11 @@ export function AttendanceClient({
     }
   }, [selectedMinistryId, selectedDate])
 
-  // Load History & Analytics when tabs switch
+  // Load History when history tab is active
   useEffect(() => {
     if (!selectedMinistryId) return
-
     if (activeTab === "history") {
       getAttendanceHistory(selectedMinistryId).then((data) => setHistoryLogs(data))
-    } else if (activeTab === "analytics") {
-      getAttendanceAnalytics(selectedMinistryId).then((data) => setAnalyticsData(data))
     }
   }, [selectedMinistryId, activeTab])
 
@@ -346,17 +334,23 @@ export function AttendanceClient({
 
       {/* 📊 Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)}>
-        <TabsList className="grid w-full grid-cols-3 max-w-md bg-muted/60 p-1 rounded-xl">
-          <TabsTrigger value="form" className="rounded-lg text-xs font-semibold flex items-center gap-1.5">
-            <UserCheck className="h-4 w-4" /> Take Attendance
-          </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg text-xs font-semibold flex items-center gap-1.5">
-            <History className="h-4 w-4" /> History
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="rounded-lg text-xs font-semibold flex items-center gap-1.5">
-            <BarChart3 className="h-4 w-4" /> Analytics
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <TabsList className="grid w-full grid-cols-2 max-w-xs bg-muted/60 p-1 rounded-xl">
+            <TabsTrigger value="form" className="rounded-lg text-xs font-semibold flex items-center gap-1.5">
+              <UserCheck className="h-4 w-4" /> Take Attendance
+            </TabsTrigger>
+            <TabsTrigger value="history" className="rounded-lg text-xs font-semibold flex items-center gap-1.5">
+              <History className="h-4 w-4" /> Session History
+            </TabsTrigger>
+          </TabsList>
+
+          <Link
+            href="/reports"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 transition-colors w-fit"
+          >
+            <PieChart className="h-3.5 w-3.5" /> View Church Attendance Reports & CSV Exports <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
 
         {/* ------------------------------------------------------------- */}
         {/* TAB 1: TAKE ATTENDANCE FORM */}
@@ -704,75 +698,6 @@ export function AttendanceClient({
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* ------------------------------------------------------------- */}
-        {/* TAB 3: ATTENDANCE ANALYTICS & CHARTS */}
-        {/* ------------------------------------------------------------- */}
-        <TabsContent value="analytics" className="space-y-5 mt-4">
-          {analyticsData && (
-            <>
-              {/* Trend Area Chart */}
-              <Card className="shadow-xs">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" /> Attendance Rate Trend (%)
-                  </CardTitle>
-                  <CardDescription>Turnout percentage over recent attendance sessions</CardDescription>
-                </CardHeader>
-                <CardContent className="h-64 pt-2">
-                  {analyticsData.trend.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-                      Not enough attendance records to generate trend graph.
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={analyticsData.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
-                        <Tooltip />
-                        <Area type="monotone" dataKey="rate" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRate)" name="Turnout %" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Ministry Comparison Bar Chart */}
-              <Card className="shadow-xs">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-primary" /> Average Turnout Rate by Ministry
-                  </CardTitle>
-                  <CardDescription>Comparing attendance percentage across church ministries</CardDescription>
-                </CardHeader>
-                <CardContent className="h-64 pt-2">
-                  {analyticsData.ministryComparison.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-                      No ministry attendance data recorded yet.
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={analyticsData.ministryComparison} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
-                        <Tooltip />
-                        <Bar dataKey="rate" fill="#10b981" radius={[6, 6, 0, 0]} name="Avg Turnout %" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          )}
         </TabsContent>
       </Tabs>
     </div>
