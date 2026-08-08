@@ -267,9 +267,27 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: setPagination,
-    globalFilterFn: "includesString",
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const q = String(filterValue || "").trim().toLowerCase()
+      if (!q) return true
+      const original = row.original as any
+      const fullName = `${original.first_name || ""} ${original.middle_name || ""} ${original.last_name || ""}`.toLowerCase()
+      const missionName = (original.mission_name || "CBT Olongapo").toLowerCase()
+      const churchRole = (original.church_role || "Member").toLowerCase()
+      const city = (original.city || "").toLowerCase()
+      const occupation = (original.occupation || "").toLowerCase()
+      const contact = (original.contact_number || "").toLowerCase()
+      const email = (original.email || "").toLowerCase()
+      return (
+        fullName.includes(q) ||
+        missionName.includes(q) ||
+        churchRole.includes(q) ||
+        city.includes(q) ||
+        occupation.includes(q) ||
+        contact.includes(q) ||
+        email.includes(q)
+      )
+    },
     state: {
       sorting,
       columnFilters,
