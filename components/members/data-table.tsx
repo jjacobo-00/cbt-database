@@ -267,6 +267,7 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onPaginationChange: setPagination,
     globalFilterFn: (row, _columnId, filterValue) => {
       const q = String(filterValue || "").trim().toLowerCase()
       if (!q) return true
