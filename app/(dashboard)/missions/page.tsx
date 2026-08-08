@@ -12,8 +12,10 @@ export default async function MissionsPage() {
   const membersList = await db.select({ 
     id: members.id, 
     first_name: members.first_name, 
-    last_name: members.last_name 
-  }).from(members).orderBy(asc(members.last_name))
+    last_name: members.last_name,
+    church_role: members.church_role,
+    gender: members.gender,
+  }).from(members).orderBy(asc(members.last_name), asc(members.first_name))
 
   return (
     <div className="space-y-6">

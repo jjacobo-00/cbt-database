@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Plus,
   Edit,
@@ -16,6 +16,11 @@ import {
   ShieldCheck,
   Award,
   Sparkles,
+  Search,
+  Check,
+  ChevronDown,
+  X,
+  UserCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +39,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
 import {
   DropdownMenu,
@@ -55,6 +65,15 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DatePicker } from "@/components/ui/date-picker"
 import { toast } from "sonner"
 import { createMission, updateMission, deleteMission } from "./actions"
+import { cn, formatName } from "@/lib/utils/utils"
+
+export type MemberOption = {
+  id: string
+  first_name: string
+  last_name: string
+  church_role?: string | null
+  gender?: string | null
+}
 
 export type Mission = {
   id: string
@@ -91,7 +110,7 @@ export function MissionsClient({
   members,
 }: {
   initialMissions: Mission[]
-  members: { id: string; first_name: string; last_name: string }[]
+  members: MemberOption[]
 }) {
   const [missions, setMissions] = useState<Mission[]>(initialMissions)
   const [searchQuery, setSearchQuery] = useState("")
@@ -100,6 +119,11 @@ export function MissionsClient({
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const DRAFT_KEY = "cbt_mission_form_draft"
   const [hasRestoredDraft, setHasRestoredDraft] = useState(false)
+
+  // Designated Pastor Combobox States
+  const [pastorSelectorOpen, setPastorSelectorOpen] = useState(false)
+  const [pastorSearchQuery, setPastorSearchQuery] = useState("")
+  const [pastorFilterMode, setPastorFilterMode] = useState<"pastors" | "all">("pastors")
 
   const [formData, setFormData] = useState<{
     id?: string
@@ -120,6 +144,32 @@ export function MissionsClient({
     status: "mission_outreach",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Mission Pastors Roster
+  const missionPastors = useMemo(() => {
+    return members.filter(
+      (m) =>
+        m.church_role === "Mission Pastor" ||
+        m.church_role === "Main Pastor" ||
+        missions.some((ms) => ms.pastor_id === m.id)
+    )
+  }, [members, missions])
+
+  // Filtered list based on active mode and search query
+  const displayedPastorCandidates = useMemo(() => {
+    const baseList =
+      pastorFilterMode === "pastors" && missionPastors.length > 0
+        ? missionPastors
+        : members
+
+    if (!pastorSearchQuery.trim()) return baseList
+
+    const q = pastorSearchQuery.toLowerCase()
+    return baseList.filter((m) =>
+      `${m.first_name} ${m.last_name}`.toLowerCase().includes(q) ||
+      (m.church_role && m.church_role.toLowerCase().includes(q))
+    )
+  }, [pastorFilterMode, missionPastors, members, pastorSearchQuery])
 
   // Local draft sync for new mission
   const setFormAndDraft = (updater: (prev: typeof formData) => typeof formData) => {
@@ -606,29 +656,180 @@ export function MissionsClient({
               />
             </div>
 
+            {/* 👤 Designated Pastor Searchable Combobox */}
             <div className="space-y-2">
-              <Label htmlFor="pastor_id">Designated Pastor</Label>
-              <select
-                id="pastor_id"
-                value={formData.pastor_id}
-                onChange={(e) => {
-                  const selectedId = e.target.value
-                  const selectedMember = members.find((m) => m.id === selectedId)
-                  setFormAndDraft((prev) => ({
-                    ...prev,
-                    pastor_id: selectedId,
-                    pastor_name: selectedMember ? `${selectedMember.first_name} ${selectedMember.last_name}` : "",
-                  }))
-                }}
-                className="h-10 rounded-lg border border-input bg-card text-foreground px-3 w-full font-medium text-sm"
-              >
-                <option value="">-- Select Member / Pastor --</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.first_name} {m.last_name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="pastor_id">Designated Pastor</Label>
+                {missionPastors.length > 0 && (
+                  <span className="text-[11px] text-primary font-medium">
+                    {missionPastors.length} Mission Pastor{missionPastors.length === 1 ? "" : "s"} available
+                  </span>
+                )}
+              </div>
+
+              {formData.pastor_id ? (
+                <div className="flex items-center justify-between p-3 rounded-xl border bg-primary/5 border-primary/20 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                      {formData.pastor_name
+                        ? formData.pastor_name
+                            .split(" ")
+                            .map((w) => w[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()
+                        : "P"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{formData.pastor_name}</p>
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <UserCheck className="h-3 w-3 text-primary" /> Designated Pastor
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFormAndDraft((prev) => ({
+                        ...prev,
+                        pastor_id: "",
+                        pastor_name: "",
+                      }))
+                    }}
+                    className="h-8 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1 font-medium"
+                  >
+                    <X className="h-3.5 w-3.5" /> Remove
+                  </Button>
+                </div>
+              ) : (
+                <Popover open={pastorSelectorOpen} onOpenChange={setPastorSelectorOpen} modal={true}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between h-11 px-3 text-left font-normal bg-card"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPastorSelectorOpen(true)
+                      }}
+                    >
+                      <span className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                        <User className="h-4 w-4 text-primary shrink-0" />
+                        Search & Select Designated Pastor...
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[340px] sm:w-[420px] p-2 z-[9999] shadow-2xl rounded-2xl border bg-popover text-popover-foreground"
+                    align="start"
+                    side="bottom"
+                    sideOffset={6}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Filter Mode Pills: Mission Pastors vs All Members */}
+                    <div className="flex items-center justify-between p-1 bg-muted/60 rounded-xl text-xs mb-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPastorFilterMode("pastors")
+                        }}
+                        className={cn(
+                          "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center",
+                          pastorFilterMode === "pastors"
+                            ? "bg-background text-foreground shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Mission Pastors ({missionPastors.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPastorFilterMode("all")
+                        }}
+                        className={cn(
+                          "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center",
+                          pastorFilterMode === "all"
+                            ? "bg-background text-foreground shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        All Members ({members.length})
+                      </button>
+                    </div>
+
+                    {/* Live Search Input */}
+                    <div className="relative mb-2 px-1">
+                      <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={pastorSearchQuery}
+                        onChange={(e) => setPastorSearchQuery(e.target.value)}
+                        placeholder="Search pastor by name..."
+                        className="pl-9 h-10 bg-background text-xs sm:text-sm font-medium"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Candidates List */}
+                    <div className="max-h-[220px] overflow-y-auto space-y-1 p-1">
+                      {displayedPastorCandidates.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-muted-foreground space-y-1">
+                          <p className="font-semibold text-foreground">No pastors found</p>
+                          <p className="text-[11px]">Try switching to &quot;All Members&quot; or check search query.</p>
+                        </div>
+                      ) : (
+                        displayedPastorCandidates.map((m) => {
+                          const initials = `${m.first_name?.[0] || ""}${m.last_name?.[0] || ""}`.toUpperCase()
+                          const isSelected = formData.pastor_id === m.id
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setFormAndDraft((prev) => ({
+                                  ...prev,
+                                  pastor_id: m.id,
+                                  pastor_name: formatName(`${m.first_name} ${m.last_name}`),
+                                }))
+                                setPastorSelectorOpen(false)
+                                setPastorSearchQuery("")
+                              }}
+                              className={cn(
+                                "w-full p-2.5 rounded-xl text-left transition-all flex items-center justify-between gap-2 border select-none",
+                                isSelected
+                                  ? "bg-primary/10 border-primary text-primary font-semibold"
+                                  : "bg-card hover:bg-muted/60 border-transparent text-foreground"
+                              )}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="h-8 w-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                                  {initials}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs sm:text-sm font-semibold truncate">
+                                    {formatName(`${m.first_name} ${m.last_name}`)}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground truncate">
+                                    {m.church_role || "Member"}
+                                  </p>
+                                </div>
+                              </div>
+                              {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
+                            </button>
+                          )
+                        })
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
               <p className="text-[11px] text-muted-foreground">
                 Selecting a pastor dynamically links their personal profile & tenure to this mission branch.
               </p>
