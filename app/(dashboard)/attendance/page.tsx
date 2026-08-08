@@ -3,8 +3,9 @@ import { AttendanceClient } from "./AttendanceClient"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 
-export const metadata = { title: "Attendance | CBT Database" }
+export const dynamic = "force-dynamic"
 export const revalidate = 0
+export const metadata = { title: "Attendance | CBT Database" }
 
 export default async function AttendancePage() {
   const session = await auth()

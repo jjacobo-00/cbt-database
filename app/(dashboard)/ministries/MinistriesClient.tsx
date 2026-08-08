@@ -1,14 +1,139 @@
 "use client"
 
 import React, { useState, useTransition } from "react"
-import { Trash2, Plus, Loader2, ChurchIcon, Pencil, Check, X, Users, ChevronDown, ChevronRight, UserCheck } from "lucide-react"
+import { Trash2, Plus, Loader2, ChurchIcon, Pencil, Check, X, Users, ChevronDown, ChevronRight, UserCheck, Search } from "lucide-react"
 import { createMinistry, deleteMinistry, updateMinistry } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { formatName } from "@/lib/utils/utils"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn, formatName } from "@/lib/utils/utils"
 
 type Ministry = { id: string; name: string; for_everyone: boolean; parent_id: string | null; leader_id?: string | null; created_at: string }
 type MemberOption = { id: string; first_name: string; last_name: string }
+
+function SearchableLeaderSelect({
+  value,
+  onChange,
+  members,
+  placeholder = "Select Ministry Leader (Optional)",
+  className,
+}: {
+  value: string
+  onChange: (id: string) => void
+  members: MemberOption[]
+  placeholder?: string
+  className?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
+
+  const selectedMember = members.find((m) => m.id === value)
+
+  const filteredMembers = React.useMemo(() => {
+    if (!search.trim()) return members
+    const q = search.toLowerCase()
+    return members.filter((m) =>
+      `${m.first_name} ${m.last_name}`.toLowerCase().includes(q)
+    )
+  }, [members, search])
+
+  return (
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn(
+            "justify-between text-left font-normal bg-background text-xs sm:text-sm px-3",
+            !selectedMember && "text-muted-foreground",
+            className
+          )}
+          onClick={(e) => {
+            e.stopPropagation()
+            setOpen(true)
+          }}
+        >
+          <span className="truncate flex items-center gap-1.5 min-w-0">
+            <UserCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+            {selectedMember
+              ? formatName(`${selectedMember.first_name} ${selectedMember.last_name}`)
+              : placeholder}
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[280px] sm:w-[320px] p-2 z-[9999] shadow-2xl rounded-2xl border bg-popover text-popover-foreground"
+        align="start"
+        side="bottom"
+        sideOffset={6}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative mb-2 px-1">
+          <Search className="absolute left-3.5 top-3 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search leader by name..."
+            className="pl-8 h-9 bg-background text-xs"
+            autoFocus
+          />
+        </div>
+
+        <div className="max-h-[200px] overflow-y-auto space-y-1 p-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onChange("")
+              setOpen(false)
+              setSearch("")
+            }}
+            className={cn(
+              "w-full p-2 rounded-lg text-left text-xs font-medium transition-all flex items-center justify-between text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+              !value && "bg-primary/10 text-primary font-semibold"
+            )}
+          >
+            <span>-- No Ministry Leader --</span>
+            {!value && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+          </button>
+
+          {filteredMembers.map((m) => {
+            const isSelected = value === m.id
+            const initials = `${m.first_name?.[0] || ""}${m.last_name?.[0] || ""}`.toUpperCase()
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onChange(m.id)
+                  setOpen(false)
+                  setSearch("")
+                }}
+                className={cn(
+                  "w-full p-2 rounded-xl text-left text-xs transition-all flex items-center justify-between gap-2 border select-none",
+                  isSelected
+                    ? "bg-primary/10 border-primary text-primary font-semibold"
+                    : "bg-card hover:bg-muted/60 border-transparent text-foreground"
+                )}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 text-primary font-bold text-[10px] flex items-center justify-center shrink-0">
+                    {initials}
+                  </div>
+                  <span className="truncate font-medium">{formatName(`${m.first_name} ${m.last_name}`)}</span>
+                </div>
+                {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+              </button>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export function MinistriesClient({ 
   ministries: initial,
@@ -145,18 +270,13 @@ export function MinistriesClient({
                 <Input value={editName} onChange={e => { setEditName(e.target.value); setEditError("") }} className="h-9 flex-1 min-w-[180px]" autoFocus />
                 
                 {/* Ministry Leader Select */}
-                <select
+                <SearchableLeaderSelect
                   value={editLeaderId}
-                  onChange={e => setEditLeaderId(e.target.value)}
-                  className="h-9 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">No Ministry Leader</option>
-                  {members.map(mem => (
-                    <option key={mem.id} value={mem.id}>
-                      {formatName(`${mem.first_name} ${mem.last_name}`)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setEditLeaderId}
+                  members={members}
+                  placeholder="No Ministry Leader"
+                  className="h-9 min-w-[200px]"
+                />
 
                 <Button size="icon" variant="ghost" className="h-9 w-9 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={() => handleUpdate(m.id)} disabled={isPending}>
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -189,7 +309,7 @@ export function MinistriesClient({
                     onClick={(e) => { e.stopPropagation(); toggleExpand(m.id) }}
                   >
                     {hasChildren ? (
-                      isExpanded ? <ChevronDown className="h-4 w-4 text-primary" /> : <ChevronRight className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-primary" />
                     ) : (
                       <span className="w-4 h-4 inline-block" />
                     )}
@@ -260,18 +380,13 @@ export function MinistriesClient({
                 />
 
                 {/* Sub-ministry Leader Select */}
-                <select
+                <SearchableLeaderSelect
                   value={subLeaderId}
-                  onChange={e => setSubLeaderId(e.target.value)}
-                  className="h-9 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">No Ministry Leader</option>
-                  {members.map(mem => (
-                    <option key={mem.id} value={mem.id}>
-                      {formatName(`${mem.first_name} ${mem.last_name}`)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSubLeaderId}
+                  members={members}
+                  placeholder="No Ministry Leader"
+                  className="h-9 min-w-[200px]"
+                />
 
                 <Button size="sm" onClick={() => handleAddSub(m.id)} disabled={isPending} className="h-9 px-4 gap-1">
                   {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
@@ -310,18 +425,13 @@ export function MinistriesClient({
             />
 
             {/* Ministry Leader Selection */}
-            <select
+            <SearchableLeaderSelect
               value={leaderId}
-              onChange={e => setLeaderId(e.target.value)}
-              className="h-11 rounded-md border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary min-w-[200px]"
-            >
-              <option value="">Select Ministry Leader (Optional)</option>
-              {members.map(mem => (
-                <option key={mem.id} value={mem.id}>
-                  {formatName(`${mem.first_name} ${mem.last_name}`)}
-                </option>
-              ))}
-            </select>
+              onChange={setLeaderId}
+              members={members}
+              placeholder="Select Ministry Leader (Optional)"
+              className="h-11 min-w-[220px]"
+            />
 
             <Button onClick={handleAdd} disabled={isPending} className="h-11 px-6 gap-2">
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}

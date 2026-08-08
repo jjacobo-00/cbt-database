@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShieldCheck, UserCheck, Users, Shield } from "lucide-react"
 
-export const metadata = { title: "Users & Permissions | CBT Database" }
+export const dynamic = "force-dynamic"
 export const revalidate = 0
+export const metadata = { title: "Users & Permissions | CBT Database" }
 
 export default async function UsersPage() {
   const [users, members, permissionsList, demographicMinistries] = await Promise.all([
