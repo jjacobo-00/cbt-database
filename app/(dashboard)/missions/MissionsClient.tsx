@@ -15,6 +15,7 @@ import {
   Users,
   ShieldCheck,
   Award,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -97,6 +98,8 @@ export function MissionsClient({
   const [activeTab, setActiveTab] = useState<"all" | "outreach" | "organized">("all")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
+  const DRAFT_KEY = "cbt_mission_form_draft"
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false)
 
   const [formData, setFormData] = useState<{
     id?: string
@@ -117,6 +120,39 @@ export function MissionsClient({
     status: "mission_outreach",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Local draft sync for new mission
+  const setFormAndDraft = (updater: (prev: typeof formData) => typeof formData) => {
+    setFormData((prev) => {
+      const next = updater(prev)
+      if (!next.id && typeof window !== "undefined") {
+        const hasContent = next.name || next.location || next.pastor_id || next.established_date || next.organized_date
+        if (hasContent) {
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(next))
+        } else {
+          localStorage.removeItem(DRAFT_KEY)
+        }
+      }
+      return next
+    })
+  }
+
+  const clearDraft = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(DRAFT_KEY)
+    }
+    setHasRestoredDraft(false)
+    setFormData({
+      name: "",
+      location: "",
+      pastor_id: "",
+      pastor_name: "",
+      established_date: "",
+      organized_date: "",
+      status: "mission_outreach",
+    })
+    toast.info("Mission draft cleared")
+  }
 
   // Derived KPI Stats
   const totalMissions = missions.length
@@ -141,6 +177,21 @@ export function MissionsClient({
   })
 
   const openAddModal = () => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(DRAFT_KEY)
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          setFormData({ ...parsed, id: undefined })
+          setHasRestoredDraft(true)
+          setIsModalOpen(true)
+          return
+        } catch {
+          // ignore error
+        }
+      }
+    }
+    setHasRestoredDraft(false)
     setFormData({
       name: "",
       location: "",
@@ -154,6 +205,7 @@ export function MissionsClient({
   }
 
   const openEditModal = (mission: Mission) => {
+    setHasRestoredDraft(false)
     const isOrganized = mission.status === "organized_church" || Boolean(mission.organized_date)
     setFormData({
       id: mission.id,
@@ -187,6 +239,10 @@ export function MissionsClient({
       } else {
         const res = await createMission(formData)
         if (res.success && res.data) {
+          if (typeof window !== "undefined") {
+            localStorage.removeItem(DRAFT_KEY)
+          }
+          setHasRestoredDraft(false)
           setMissions(
             [...missions, { ...res.data, member_count: 0 } as Mission].sort((a, b) =>
               a.name.localeCompare(b.name)
@@ -483,7 +539,11 @@ export function MissionsClient({
 
       {/* 📝 Add/Edit Mission Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent
+          className="sm:max-w-[480px]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>{formData.id ? "Edit Mission Church" : "Add Mission Church"}</DialogTitle>
             <DialogDescription>
@@ -492,6 +552,23 @@ export function MissionsClient({
                 : "Enter details for the new mission church plant."}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Local Draft Restored Banner */}
+          {hasRestoredDraft && !formData.id && (
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-xs animate-in fade-in duration-200">
+              <span className="text-primary font-medium flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 shrink-0" /> Draft restored from previous session
+              </span>
+              <button
+                type="button"
+                onClick={clearDraft}
+                className="text-muted-foreground hover:text-destructive underline text-[11px] font-semibold"
+              >
+                Clear Draft
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="name">
@@ -501,7 +578,7 @@ export function MissionsClient({
                 id="name"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => setFormAndDraft((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g. CBT Olongapo - Annex"
               />
             </div>
@@ -511,7 +588,7 @@ export function MissionsClient({
               <select
                 id="status"
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => setFormAndDraft((prev) => ({ ...prev, status: e.target.value }))}
                 className="h-10 rounded-lg border border-input bg-card text-foreground px-3 w-full font-medium text-sm"
               >
                 <option value="mission_outreach">🌿 Mission Outreach (Church Plant)</option>
@@ -524,7 +601,7 @@ export function MissionsClient({
               <Input
                 id="location"
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                onChange={(e) => setFormAndDraft((prev) => ({ ...prev, location: e.target.value }))}
                 placeholder="e.g. Subic, Zambales"
               />
             </div>
@@ -537,11 +614,11 @@ export function MissionsClient({
                 onChange={(e) => {
                   const selectedId = e.target.value
                   const selectedMember = members.find((m) => m.id === selectedId)
-                  setFormData({
-                    ...formData,
+                  setFormAndDraft((prev) => ({
+                    ...prev,
                     pastor_id: selectedId,
                     pastor_name: selectedMember ? `${selectedMember.first_name} ${selectedMember.last_name}` : "",
-                  })
+                  }))
                 }}
                 className="h-10 rounded-lg border border-input bg-card text-foreground px-3 w-full font-medium text-sm"
               >
@@ -562,7 +639,7 @@ export function MissionsClient({
               <Label htmlFor="established_date">Established Date (Church Plant Started)</Label>
               <DatePicker
                 value={formData.established_date}
-                onChange={(val) => setFormData({ ...formData, established_date: val || "" })}
+                onChange={(val) => setFormAndDraft((prev) => ({ ...prev, established_date: val || "" }))}
                 placeholder="Select establishment date"
                 className="h-10 w-full"
               />
@@ -575,7 +652,7 @@ export function MissionsClient({
               </Label>
               <DatePicker
                 value={formData.organized_date}
-                onChange={(val) => setFormData({ ...formData, organized_date: val || "" })}
+                onChange={(val) => setFormAndDraft((prev) => ({ ...prev, organized_date: val || "" }))}
                 placeholder="Select charter/organized date"
                 className="h-10 w-full"
               />

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { format, parseISO, isValid, setYear, setMonth, addMonths, subMonths } from "date-fns"
-import { Calendar as CalendarIcon, Grid, CalendarDays, X, Check, Edit3, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar as CalendarIcon, Grid, CalendarDays, X, Check, Edit3, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/ui/button"
@@ -36,8 +36,7 @@ export function DatePicker({
   showClear = true,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
-  const [showYearGrid, setShowYearGrid] = React.useState(false)
-  const [showDirectInput, setShowDirectInput] = React.useState(false)
+  const [viewMode, setViewMode] = React.useState<"calendar" | "month" | "year" | "input">("calendar")
   const [manualInputValue, setManualInputValue] = React.useState("")
   const [selectedDecade, setSelectedDecade] = React.useState<number | null>(null)
   
@@ -90,7 +89,7 @@ export function DatePicker({
     triggerHaptic()
     const newDate = setYear(currentMonth, newYear)
     setCurrentMonth(newDate)
-    setShowYearGrid(false)
+    setViewMode("calendar")
   }
 
   // Handle Month Change
@@ -98,19 +97,23 @@ export function DatePicker({
     triggerHaptic()
     const newDate = setMonth(currentMonth, newMonthIndex)
     setCurrentMonth(newDate)
+    setViewMode("calendar")
   }
 
-  const handlePrevMonth = () => {
+  const handlePrevMonth = (e: React.MouseEvent) => {
+    e.stopPropagation()
     triggerHaptic()
     setCurrentMonth((prev) => subMonths(prev, 1))
   }
 
-  const handleNextMonth = () => {
+  const handleNextMonth = (e: React.MouseEvent) => {
+    e.stopPropagation()
     triggerHaptic()
     setCurrentMonth((prev) => addMonths(prev, 1))
   }
 
   const currentYear = currentMonth.getFullYear()
+  const currentMonthIndex = currentMonth.getMonth()
 
   // Generate Years list
   const yearsList = React.useMemo(() => {
@@ -125,8 +128,8 @@ export function DatePicker({
   const decadesList = React.useMemo(() => {
     const currentDecade = Math.floor(new Date().getFullYear() / 10) * 10
     const list: number[] = []
-    for (let d = currentDecade; d >= 1930; d -= 10) {
-      if (d <= maxYear && d + 9 >= minYear) {
+    for (let d = currentDecade + 10; d >= 1920; d -= 10) {
+      if (d <= maxYear + 9 && d + 9 >= minYear) {
         list.push(d)
       }
     }
@@ -134,13 +137,23 @@ export function DatePicker({
   }, [minYear, maxYear])
 
   const monthsList = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    { short: "Jan", full: "January" },
+    { short: "Feb", full: "February" },
+    { short: "Mar", full: "March" },
+    { short: "Apr", full: "April" },
+    { short: "May", full: "May" },
+    { short: "Jun", full: "June" },
+    { short: "Jul", full: "July" },
+    { short: "Aug", full: "August" },
+    { short: "Sep", full: "September" },
+    { short: "Oct", full: "October" },
+    { short: "Nov", full: "November" },
+    { short: "Dec", full: "December" },
   ]
 
   // Auto-scroll year grid to active year or selected decade
   React.useEffect(() => {
-    if (showYearGrid && yearGridRef.current) {
+    if (viewMode === "year" && yearGridRef.current) {
       const targetYear = selectedDecade ? selectedDecade + 9 : currentYear
       const activeEl = yearGridRef.current.querySelector(`[data-year="${targetYear}"]`) ||
                        yearGridRef.current.querySelector('[data-selected="true"]')
@@ -148,9 +161,10 @@ export function DatePicker({
         activeEl.scrollIntoView({ block: "center", behavior: "smooth" })
       }
     }
-  }, [showYearGrid, currentYear, selectedDecade])
+  }, [viewMode, currentYear, selectedDecade])
 
-  const handleSelectToday = () => {
+  const handleSelectToday = (e: React.MouseEvent) => {
+    e.stopPropagation()
     triggerHaptic()
     const today = new Date()
     setCurrentMonth(today)
@@ -158,17 +172,21 @@ export function DatePicker({
       onChange(format(today, "yyyy-MM-dd"))
     }
     setOpen(false)
+    setViewMode("calendar")
   }
 
-  const handleClearDate = () => {
+  const handleClearDate = (e: React.MouseEvent) => {
+    e.stopPropagation()
     triggerHaptic()
     if (onChange) {
       onChange("")
     }
     setOpen(false)
+    setViewMode("calendar")
   }
 
-  const handleManualInputSubmit = () => {
+  const handleManualInputSubmit = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (!manualInputValue) return
     const parsed = parseISO(manualInputValue)
     if (isValid(parsed)) {
@@ -176,13 +194,13 @@ export function DatePicker({
       setCurrentMonth(parsed)
       if (onChange) onChange(format(parsed, "yyyy-MM-dd"))
       setOpen(false)
-      setShowDirectInput(false)
+      setViewMode("calendar")
     }
   }
 
   // Content Component rendered inside Popover or Mobile Modal
   const DatePickerContent = (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-3 select-none" onClick={(e) => e.stopPropagation()}>
       {/* Sleek & Unified Header Bar */}
       <div className="flex items-center justify-between gap-1.5 pb-2.5 border-b">
         {/* Month Navigation Prev Button */}
@@ -192,40 +210,48 @@ export function DatePicker({
           size="icon"
           aria-label="Previous Month"
           onClick={handlePrevMonth}
-          className="h-9 w-9 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
+          className="h-8 w-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        {/* Year & Month Dropdown Selectors */}
-        <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-center">
-          {/* Year Selector Dropdown */}
-          <select
-            aria-label="Select Year"
-            value={currentYear}
-            onChange={(e) => handleYearChange(Number(e.target.value))}
-            className="h-9 rounded-lg border border-input bg-muted/80 hover:bg-muted px-2 py-1 text-xs sm:text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer transition-colors shrink-0"
+        {/* Interactive Month & Year Buttons (Radix-Safe, Never Closes on Click) */}
+        <div className="flex items-center gap-1 min-w-0 flex-1 justify-center">
+          {/* Month Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setViewMode(viewMode === "month" ? "calendar" : "month")
+            }}
+            className={cn(
+              "h-8 px-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1 border",
+              viewMode === "month"
+                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                : "bg-muted/70 hover:bg-muted border-transparent text-foreground"
+            )}
           >
-            {yearsList.map((y) => (
-              <option key={y} value={y} className="bg-popover text-popover-foreground">
-                {y}
-              </option>
-            ))}
-          </select>
+            <span>{monthsList[currentMonthIndex].short}</span>
+            <ChevronDown className={cn("h-3 w-3 opacity-60 transition-transform duration-200", viewMode === "month" && "rotate-180")} />
+          </button>
 
-          {/* Month Selector Dropdown */}
-          <select
-            aria-label="Select Month"
-            value={currentMonth.getMonth()}
-            onChange={(e) => handleMonthChange(Number(e.target.value))}
-            className="h-9 rounded-lg border border-input bg-muted/80 hover:bg-muted px-2 py-1 text-xs sm:text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer transition-colors min-w-0 truncate"
+          {/* Year Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setViewMode(viewMode === "year" ? "calendar" : "year")
+            }}
+            className={cn(
+              "h-8 px-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1 border",
+              viewMode === "year"
+                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                : "bg-muted/70 hover:bg-muted border-transparent text-foreground"
+            )}
           >
-            {monthsList.map((m, idx) => (
-              <option key={m} value={idx} className="bg-popover text-popover-foreground">
-                {m}
-              </option>
-            ))}
-          </select>
+            <span>{currentYear}</span>
+            <ChevronDown className={cn("h-3 w-3 opacity-60 transition-transform duration-200", viewMode === "year" && "rotate-180")} />
+          </button>
         </div>
 
         {/* Month Navigation Next Button */}
@@ -235,46 +261,33 @@ export function DatePicker({
           size="icon"
           aria-label="Next Month"
           onClick={handleNextMonth}
-          className="h-9 w-9 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
+          className="h-8 w-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
 
-        {/* View Toggles: Year Grid & Direct Input */}
+        {/* Direct Input Toggle */}
         <div className="flex items-center gap-1 shrink-0 border-l pl-1.5 ml-0.5">
           <Button
             type="button"
-            variant={showYearGrid ? "default" : "outline"}
-            size="sm"
-            aria-label={showYearGrid ? "Switch to Calendar view" : "Switch to Year Grid view"}
-            onClick={() => {
-              setShowYearGrid(!showYearGrid)
-              setShowDirectInput(false)
-            }}
-            className="h-9 px-2 text-xs font-semibold gap-1 shrink-0"
-          >
-            {showYearGrid ? <CalendarDays className="h-3.5 w-3.5" /> : <Grid className="h-3.5 w-3.5" />}
-            <span className="hidden sm:inline">{showYearGrid ? "Calendar" : "Years"}</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant={showDirectInput ? "default" : "ghost"}
+            variant={viewMode === "input" ? "default" : "ghost"}
             size="icon"
             aria-label="Direct Type Date"
-            onClick={() => {
-              setShowDirectInput(!showDirectInput)
-              setShowYearGrid(false)
+            onClick={(e) => {
+              e.stopPropagation()
+              setViewMode(viewMode === "input" ? "calendar" : "input")
             }}
-            className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
           >
             <Edit3 className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
 
-      {/* Direct Input Mode */}
-      {showDirectInput ? (
+      {/* ------------------------------------------------------------- */}
+      {/* VIEW 1: Direct Input Mode */}
+      {/* ------------------------------------------------------------- */}
+      {viewMode === "input" && (
         <div className="p-3 rounded-xl border bg-muted/30 space-y-3 animate-in fade-in duration-200">
           <p className="text-xs font-medium text-muted-foreground">Type date (YYYY-MM-DD):</p>
           <div className="flex gap-2">
@@ -282,15 +295,51 @@ export function DatePicker({
               type="date"
               value={manualInputValue}
               onChange={(e) => setManualInputValue(e.target.value)}
-              className="h-11 bg-background text-sm font-medium"
+              className="h-10 bg-background text-sm font-medium"
             />
-            <Button type="button" onClick={handleManualInputSubmit} className="h-11 px-4 font-semibold">
+            <Button type="button" onClick={handleManualInputSubmit} className="h-10 px-4 font-semibold text-xs">
               Apply
             </Button>
           </div>
         </div>
-      ) : showYearGrid ? (
-        /* View 1: Touch & Decadal Year Grid View */
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* VIEW 2: Month Grid View */}
+      {/* ------------------------------------------------------------- */}
+      {viewMode === "month" && (
+        <div className="space-y-2 animate-in fade-in duration-200">
+          <p className="text-[11px] font-semibold text-muted-foreground px-1">Select Month ({currentYear}):</p>
+          <div className="grid grid-cols-3 gap-1.5 p-1">
+            {monthsList.map((m, idx) => {
+              const isSelected = idx === currentMonthIndex
+              return (
+                <button
+                  key={m.short}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleMonthChange(idx)
+                  }}
+                  className={cn(
+                    "h-10 rounded-xl text-xs font-semibold transition-all flex items-center justify-center border select-none active:scale-95",
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary font-bold shadow-xs"
+                      : "bg-card hover:bg-accent border-border/60 text-foreground"
+                  )}
+                >
+                  {m.full}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* VIEW 3: Touch & Decadal Year Grid View */}
+      {/* ------------------------------------------------------------- */}
+      {viewMode === "year" && (
         <div className="space-y-2 animate-in fade-in duration-200">
           {/* Decadal Jump Pills */}
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 touch-pan-x">
@@ -298,7 +347,10 @@ export function DatePicker({
               <button
                 key={d}
                 type="button"
-                onClick={() => setSelectedDecade(d)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedDecade(d)
+                }}
                 className={cn(
                   "px-2.5 py-1 rounded-md text-[11px] font-semibold shrink-0 border transition-all",
                   selectedDecade === d
@@ -321,12 +373,15 @@ export function DatePicker({
                 type="button"
                 data-year={y}
                 data-selected={y === currentYear}
-                onClick={() => handleYearChange(y)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleYearChange(y)
+                }}
                 className={cn(
-                  "h-11 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center border select-none active:scale-95",
+                  "h-10 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center border select-none active:scale-95",
                   y === currentYear
-                    ? "bg-primary text-primary-foreground border-primary font-bold shadow-sm"
-                    : "hover:bg-accent border-transparent text-foreground"
+                    ? "bg-primary text-primary-foreground border-primary font-bold shadow-xs"
+                    : "bg-card hover:bg-accent border-border/60 text-foreground"
                 )}
               >
                 {y}
@@ -334,8 +389,12 @@ export function DatePicker({
             ))}
           </div>
         </div>
-      ) : (
-        /* View 2: Touch-Optimized Calendar View */
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* VIEW 4: Touch-Optimized Calendar Grid View */}
+      {/* ------------------------------------------------------------- */}
+      {viewMode === "calendar" && (
         <Calendar
           mode="single"
           month={currentMonth}
@@ -349,6 +408,7 @@ export function DatePicker({
               onChange("")
             }
             setOpen(false)
+            setViewMode("calendar")
           }}
           captionLayout="label"
           startMonth={new Date(minYear, 0)}
@@ -386,7 +446,11 @@ export function DatePicker({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setOpen(false)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpen(false)
+                setViewMode("calendar")
+              }}
               className="h-8 px-3 text-xs font-semibold"
             >
               Close
@@ -408,9 +472,11 @@ export function DatePicker({
         className
       )}
       disabled={disabled}
-      onClick={() => {
+      onClick={(e) => {
+        e.stopPropagation()
         triggerHaptic()
         setOpen(true)
+        setViewMode("calendar")
       }}
     >
       <CalendarIcon className="mr-2 h-4 w-4 opacity-50 shrink-0" />
@@ -422,17 +488,21 @@ export function DatePicker({
 
   return (
     <>
-      {/* RENDER MODE A: Mobile & Short Laptop Viewport Centered Modal Dialog */}
+      {/* RENDER MODE A: Mobile & Short Viewport Centered Modal Dialog */}
       {isMobileOrShort ? (
         <>
           {TriggerButton}
           {open && (
             <div
               className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-              onClick={() => setOpen(false)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpen(false)
+                setViewMode("calendar")
+              }}
             >
               <div
-                className="w-full max-w-[350px] p-4 rounded-2xl border bg-popover text-popover-foreground shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto"
+                className="w-full max-w-[340px] p-4 rounded-2xl border bg-popover text-popover-foreground shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {DatePickerContent}
@@ -441,7 +511,7 @@ export function DatePicker({
           )}
         </>
       ) : (
-        /* RENDER MODE B: Desktop / Large Display Collision-Aware Popover Anchored directly to Button */
+        /* RENDER MODE B: Desktop Popover Anchored directly to Button */
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             {TriggerButton}
@@ -450,7 +520,8 @@ export function DatePicker({
             align="start"
             side="bottom"
             sideOffset={6}
-            className="w-[350px] p-4 z-[60] shadow-xl rounded-2xl border bg-popover text-popover-foreground max-h-[var(--radix-popover-content-available-height,calc(100vh-2rem))] overflow-y-auto"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            className="w-[340px] p-4 z-[80] shadow-2xl rounded-2xl border bg-popover text-popover-foreground max-h-[var(--radix-popover-content-available-height,calc(100vh-2rem))] overflow-y-auto"
           >
             {DatePickerContent}
           </PopoverContent>
