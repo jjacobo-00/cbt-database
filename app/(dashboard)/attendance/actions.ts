@@ -7,12 +7,7 @@ import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/utils/action-helpers"
 
-export const DEMOGRAPHIC_MINISTRY_NAMES = [
-  "Men of Faith",
-  "Ladies for Christ",
-  "Kids for Jesus",
-  "Youth Christian",
-]
+import { DEMOGRAPHIC_MINISTRY_NAMES } from "@/lib/constants/demographic-ministries"
 
 export async function getAuthorizedMinistries() {
   const session = await auth()

@@ -7,13 +7,7 @@ import { eq, desc, asc, inArray } from "drizzle-orm"
 import { requireAdmin } from "@/lib/utils/action-helpers"
 import { formatName } from "@/lib/utils/utils"
 import { ensureMemberPermissionsTable } from "@/lib/utils/ensure-tables"
-
-export const DEMOGRAPHIC_MINISTRIES = [
-  { name: "Men of Faith", description: "Men's Fellowship & Demographic Ministry" },
-  { name: "Ladies for Christ", description: "Women's Fellowship & Demographic Ministry" },
-  { name: "Kids for Jesus", description: "Children's Sunday School & Demographic Ministry" },
-  { name: "Youth Christian", description: "Youth & Student Demographic Ministry" },
-]
+import { DEMOGRAPHIC_MINISTRIES_CONFIG } from "@/lib/constants/demographic-ministries"
 
 export async function getWhitelistedUsers() {
   await requireAdmin()
@@ -214,7 +208,7 @@ export async function seedDemographicMinistries() {
   const existing = await db.select({ id: ministries.id, name: ministries.name }).from(ministries)
   const existingNames = new Set(existing.map((m) => m.name.trim().toLowerCase()))
 
-  const toInsert = DEMOGRAPHIC_MINISTRIES.filter(
+  const toInsert = DEMOGRAPHIC_MINISTRIES_CONFIG.filter(
     (dm) => !existingNames.has(dm.name.trim().toLowerCase())
   )
 
@@ -250,6 +244,7 @@ export async function getDemographicMinistriesList() {
     .from(ministries)
     .orderBy(asc(ministries.name))
 
-  const demographicNames = DEMOGRAPHIC_MINISTRIES.map((m) => m.name.toLowerCase())
+  const demographicNames = DEMOGRAPHIC_MINISTRIES_CONFIG.map((m) => m.name.toLowerCase())
   return allMinistries.filter((m) => demographicNames.includes(m.name.trim().toLowerCase()))
 }
+
