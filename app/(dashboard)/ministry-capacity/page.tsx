@@ -159,61 +159,6 @@ export default async function MinistryCapacityPage() {
         </Card>
       </div>
 
-      {/* Overall Capacity KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-t-4 border-t-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Participants</CardTitle>
-            <div className="h-8 w-8 bg-blue-500/10 rounded-full flex items-center justify-center">
-              <Users className="h-4 w-4 text-blue-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{totalMinistryParticipants}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across {allMinistries.length} ministries</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-t-4 border-t-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Growing Ministries</CardTitle>
-            <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{growingMinistries}</div>
-            <p className="text-xs text-muted-foreground mt-1">With 15+ participants</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-t-4 border-t-amber-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Needs Volunteers</CardTitle>
-            <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center">
-              <AlertCircle className="h-4 w-4 text-amber-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{ministriesNeedingVolunteers}</div>
-            <p className="text-xs text-muted-foreground mt-1">With less than 5 participants</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-t-4 border-t-cyan-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg/Ministry</CardTitle>
-            <div className="h-8 w-8 bg-cyan-500/10 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 text-cyan-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{avgParticipantsPerMinistry}</div>
-            <p className="text-xs text-muted-foreground mt-1">Average participants</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Ministry Capacity Details */}
       <MinistryCapacityClient ministryData={ministryCapacityData} />
     </div>

@@ -162,3 +162,23 @@
   transform: scale(0.97);
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(from var(--muted) l c h / 0.8) 0%,
+    oklch(from var(--muted) l c h / 0.3) 50%,
+    oklch(from var(--muted) l c h / 0.8) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+

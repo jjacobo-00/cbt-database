@@ -1,20 +1,20 @@
 import React from "react"
-import { HandHeart } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { TableSkeleton } from "@/components/ui/table-skeleton"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
-export default function CommitmentsLoading() {
+export default function RecommitmentLoading() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-            <HandHeart className="h-6 w-6" />
+            <RefreshCw className="h-6 w-6" />
           </div>
           <div className="space-y-1.5">
-            <Skeleton className="h-7 w-52 rounded-xl" />
+            <Skeleton className="h-7 w-64 rounded-xl" />
             <Skeleton className="h-4 w-72 rounded-md" />
           </div>
         </div>
@@ -40,7 +40,7 @@ export default function CommitmentsLoading() {
         ))}
       </div>
 
-      {/* Commitments Table Skeleton */}
+      {/* Recommitment Status Table Skeleton */}
       <TableSkeleton rows={7} showToolbar={true} />
     </div>
   )
