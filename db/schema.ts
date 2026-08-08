@@ -287,3 +287,26 @@ export const org_chart_nodes = pgTable('org_chart_nodes', {
   sort_order: integer('sort_order').default(0),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
+
+// ──────────────────────────────────────────────
+// DELEGATED MEMBER PERMISSIONS SYSTEM
+// ──────────────────────────────────────────────
+
+export const member_permissions = pgTable('member_permissions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  member_id: uuid('member_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
+  can_manage_attendance: boolean('can_manage_attendance').default(false).notNull(),
+  attendance_ministry_ids: jsonb('attendance_ministry_ids').$type<string[]>().default([]).notNull(),
+  
+  // Future module capabilities (extensibility):
+  can_manage_members: boolean('can_manage_members').default(false).notNull(),
+  can_manage_offerings: boolean('can_manage_offerings').default(false).notNull(),
+  can_view_reports: boolean('can_view_reports').default(false).notNull(),
+  
+  notes: text('notes'),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  memberUnique: unique().on(t.member_id),
+}))
+

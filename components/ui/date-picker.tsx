@@ -494,7 +494,7 @@ export function DatePicker({
           {TriggerButton}
           {open && (
             <div
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
               onClick={(e) => {
                 e.stopPropagation()
                 setOpen(false)
@@ -504,6 +504,8 @@ export function DatePicker({
               <div
                 className="w-full max-w-[340px] p-4 rounded-2xl border bg-popover text-popover-foreground shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 {DatePickerContent}
               </div>
@@ -512,7 +514,7 @@ export function DatePicker({
         </>
       ) : (
         /* RENDER MODE B: Desktop Popover Anchored directly to Button */
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={true}>
           <PopoverTrigger asChild>
             {TriggerButton}
           </PopoverTrigger>
@@ -521,7 +523,17 @@ export function DatePicker({
             side="bottom"
             sideOffset={6}
             onOpenAutoFocus={(e) => e.preventDefault()}
-            className="w-[340px] p-4 z-[80] shadow-2xl rounded-2xl border bg-popover text-popover-foreground max-h-[var(--radix-popover-content-available-height,calc(100vh-2rem))] overflow-y-auto"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => {
+              e.stopPropagation()
+            }}
+            onInteractOutside={(e) => {
+              e.stopPropagation()
+            }}
+            className="w-[340px] p-4 z-[9999] shadow-2xl rounded-2xl border bg-popover text-popover-foreground max-h-[var(--radix-popover-content-available-height,calc(100vh-2rem))] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             {DatePickerContent}
           </PopoverContent>

@@ -28,8 +28,19 @@ export const middleware = auth((req) => {
   }
 
   // Enforce member access restriction
-  if (role === "member" && path !== "/my-profile") {
-    return Response.redirect(new URL('/my-profile', req.nextUrl))
+  if (role === "member") {
+    const hasAttendanceAccess = Boolean(
+      req.auth?.user?.permissions?.can_manage_attendance ||
+      (req.auth?.user?.permissions?.attendance_ministry_ids && req.auth.user.permissions.attendance_ministry_ids.length > 0)
+    )
+
+    if (path === "/attendance" && hasAttendanceAccess) {
+      return
+    }
+
+    if (path !== "/my-profile") {
+      return Response.redirect(new URL('/my-profile', req.nextUrl))
+    }
   }
 
   return

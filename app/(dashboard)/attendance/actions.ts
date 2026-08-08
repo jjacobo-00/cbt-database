@@ -1,11 +1,18 @@
 "use server"
 
 import { db } from "@/db"
-import { ministries, members, member_ministries, attendance_sessions } from "@/db/schema"
+import { ministries, members, member_ministries, attendance_sessions, member_permissions } from "@/db/schema"
 import { eq, and, desc, inArray, sql, asc } from "drizzle-orm"
 import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/utils/action-helpers"
+
+export const DEMOGRAPHIC_MINISTRY_NAMES = [
+  "Men of Faith",
+  "Ladies for Christ",
+  "Kids for Jesus",
+  "Youth Christian",
+]
 
 export async function getAuthorizedMinistries() {
   const session = await auth()
@@ -26,16 +33,36 @@ export async function getAuthorizedMinistries() {
     .from(ministries)
     .orderBy(asc(ministries.name))
 
+  // Filter strictly to core demographic ministries
+  const demographicMinistries = allMinistries.filter((m) =>
+    DEMOGRAPHIC_MINISTRY_NAMES.some((dn) => dn.toLowerCase() === m.name.trim().toLowerCase())
+  )
+
   if (isAdmin) {
-    return allMinistries
+    return demographicMinistries
   }
 
   if (!memberId) return []
 
-  // Filter for member: primary leader or co-leader
-  return allMinistries.filter((m) => {
+  // Check member_permissions for delegated attendance access
+  let delegatedMinistryIds: string[] = []
+  try {
+    const [perms] = await db
+      .select()
+      .from(member_permissions)
+      .where(eq(member_permissions.member_id, memberId))
+    if (perms && perms.can_manage_attendance && Array.isArray(perms.attendance_ministry_ids)) {
+      delegatedMinistryIds = perms.attendance_ministry_ids as string[]
+    }
+  } catch {
+    // Non-fatal fallback
+  }
+
+  // Filter for member: primary leader, co-leader, OR explicitly delegated
+  return demographicMinistries.filter((m) => {
     if (m.leader_id === memberId) return true
     if (Array.isArray(m.co_leader_ids) && m.co_leader_ids.includes(memberId)) return true
+    if (delegatedMinistryIds.includes(m.id)) return true
     return false
   })
 }
@@ -125,20 +152,48 @@ export async function saveAttendanceSession(payload: {
   const { ministryId, date, presentMemberIds, notes } = payload
   if (!ministryId || !date) throw new Error("Ministry and Date are required.")
 
-  // Verify access: Admin or Leader/Co-leader
   const isAdmin = session.user.role === "admin"
   const memberId = session.user.memberId
 
+  // Fetch ministry info
+  const [min] = await db
+    .select({
+      id: ministries.id,
+      name: ministries.name,
+      leader_id: ministries.leader_id,
+      co_leader_ids: ministries.co_leader_ids,
+    })
+    .from(ministries)
+    .where(eq(ministries.id, ministryId))
+
+  if (!min) {
+    throw new Error("Ministry not found.")
+  }
+
+  // Strict check: only demographic ministries allow attendance recording
+  const isDemographic = DEMOGRAPHIC_MINISTRY_NAMES.some(
+    (dn) => dn.toLowerCase() === min.name.trim().toLowerCase()
+  )
+  if (!isDemographic) {
+    throw new Error("Attendance recording is only authorized for core demographic ministries (Men of Faith, Ladies for Christ, Kids for Jesus, Youth Christian).")
+  }
+
   if (!isAdmin) {
-    const [min] = await db
-      .select({ leader_id: ministries.leader_id, co_leader_ids: ministries.co_leader_ids })
-      .from(ministries)
-      .where(eq(ministries.id, ministryId))
+    const isPrimary = min.leader_id === memberId
+    const isCoLeader = Array.isArray(min.co_leader_ids) && min.co_leader_ids.includes(memberId || "")
 
-    const isPrimary = min?.leader_id === memberId
-    const isCoLeader = Array.isArray(min?.co_leader_ids) && min.co_leader_ids.includes(memberId || "")
+    let isDelegated = false
+    if (memberId) {
+      const [perms] = await db
+        .select()
+        .from(member_permissions)
+        .where(eq(member_permissions.member_id, memberId))
+      if (perms?.can_manage_attendance && Array.isArray(perms.attendance_ministry_ids)) {
+        isDelegated = (perms.attendance_ministry_ids as string[]).includes(ministryId)
+      }
+    }
 
-    if (!isPrimary && !isCoLeader) {
+    if (!isPrimary && !isCoLeader && !isDelegated) {
       throw new Error("You are not authorized to submit attendance for this ministry.")
     }
   }

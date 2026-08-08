@@ -4,7 +4,7 @@ import Credentials from "next-auth/providers/credentials"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import { db } from "@/db"
 import { eq, and, ilike } from "drizzle-orm"
-import { whitelisted_users, users, accounts, sessions, verificationTokens, members } from "@/db/schema"
+import { whitelisted_users, users, accounts, sessions, verificationTokens, members, member_permissions } from "@/db/schema"
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.SESSION_SECRET || "build_fallback_secret_do_not_use_in_prod",
   adapter: DrizzleAdapter(db, {
@@ -187,6 +187,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
+      // Fetch active member permissions if member
+      if (token.memberId) {
+        try {
+          const [perms] = await db
+            .select()
+            .from(member_permissions)
+            .where(eq(member_permissions.member_id, token.memberId as string))
+
+          if (perms) {
+            token.permissions = {
+              can_manage_attendance: perms.can_manage_attendance,
+              attendance_ministry_ids: (perms.attendance_ministry_ids as string[]) || [],
+              can_manage_members: perms.can_manage_members,
+              can_manage_offerings: perms.can_manage_offerings,
+              can_view_reports: perms.can_view_reports,
+            }
+          }
+        } catch {
+          // Table might not exist or error, non-fatal
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -198,6 +220,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       if (token?.memberId) {
         session.user.memberId = token.memberId as string
+      }
+      if (token?.permissions) {
+        session.user.permissions = token.permissions
       }
       return session
     },

@@ -57,6 +57,16 @@ export function Sidebar({
   const [openSubMenu, setOpenSubMenu] = useState<string | null>("Commitments")
 
   const isMember = session?.user?.role === "member"
+  const hasAttendanceAccess = Boolean(
+    session?.user?.permissions?.can_manage_attendance ||
+    (session?.user?.permissions?.attendance_ministry_ids && session.user.permissions.attendance_ministry_ids.length > 0)
+  )
+
+  const memberNavItems: NavItem[] = [
+    { name: "My Member Details", href: "/my-profile", icon: Users },
+    ...(hasAttendanceAccess ? [{ name: "Ministry Attendance", href: "/attendance", icon: CalendarCheck }] : []),
+  ]
+
   const navItems = isMember ? memberNavItems : adminNavItems
 
   // Lock body scroll when mobile drawer is open
