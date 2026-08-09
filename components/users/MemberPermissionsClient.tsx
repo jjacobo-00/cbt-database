@@ -68,7 +68,7 @@ type MinistryOption = {
   description?: string | null
 }
 
-const CATEGORY_COLORS: Record<"men" | "ladies" | "kids" | "youth", { bg: string; text: string; border: string; iconBg: string }> = {
+const CATEGORY_COLORS: Record<"men" | "ladies" | "youth", { bg: string; text: string; border: string; iconBg: string }> = {
   men: {
     bg: "bg-blue-500/10 dark:bg-blue-500/20",
     text: "text-blue-700 dark:text-blue-300",
@@ -80,12 +80,6 @@ const CATEGORY_COLORS: Record<"men" | "ladies" | "kids" | "youth", { bg: string;
     text: "text-rose-700 dark:text-rose-300",
     border: "border-rose-500/30",
     iconBg: "bg-rose-600 text-white",
-  },
-  kids: {
-    bg: "bg-amber-500/10 dark:bg-amber-500/20",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-500/30",
-    iconBg: "bg-amber-600 text-white",
   },
   youth: {
     bg: "bg-purple-500/10 dark:bg-purple-500/20",

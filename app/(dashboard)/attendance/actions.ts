@@ -181,7 +181,7 @@ export async function saveAttendanceSession(payload: {
   // Strict check: only demographic ministries allow attendance recording
   const isDemographic = isDemographicMinistry(min.name)
   if (!isDemographic) {
-    throw new Error("Attendance recording is only authorized for core demographic ministries (Men of Faith, Ladies for Christ, Kids for Jesus Ministry, Youth Christian Ministry).")
+    throw new Error("Attendance recording is only authorized for core demographic fellowships (Men of Faith, Ladies for Christ, Youth Christian Ministry).")
   }
 
   if (!isAdmin) {
