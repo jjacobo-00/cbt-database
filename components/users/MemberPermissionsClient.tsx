@@ -48,6 +48,7 @@ import {
   removeMemberPermission,
   seedDemographicMinistries,
 } from "@/app/(dashboard)/users/actions"
+import { getDemographicCategory } from "@/lib/constants/demographic-ministries"
 
 type MemberOption = {
   id: string
@@ -67,26 +68,26 @@ type MinistryOption = {
   description?: string | null
 }
 
-const DEMOGRAPHIC_COLORS: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
-  "men of faith": {
+const CATEGORY_COLORS: Record<"men" | "ladies" | "kids" | "youth", { bg: string; text: string; border: string; iconBg: string }> = {
+  men: {
     bg: "bg-blue-500/10 dark:bg-blue-500/20",
     text: "text-blue-700 dark:text-blue-300",
     border: "border-blue-500/30",
     iconBg: "bg-blue-600 text-white",
   },
-  "ladies for christ": {
+  ladies: {
     bg: "bg-rose-500/10 dark:bg-rose-500/20",
     text: "text-rose-700 dark:text-rose-300",
     border: "border-rose-500/30",
     iconBg: "bg-rose-600 text-white",
   },
-  "kids for jesus": {
+  kids: {
     bg: "bg-amber-500/10 dark:bg-amber-500/20",
     text: "text-amber-700 dark:text-amber-300",
     border: "border-amber-500/30",
     iconBg: "bg-amber-600 text-white",
   },
-  "youth christian": {
+  youth: {
     bg: "bg-purple-500/10 dark:bg-purple-500/20",
     text: "text-purple-700 dark:text-purple-300",
     border: "border-purple-500/30",
@@ -99,6 +100,11 @@ const DEFAULT_COLOR = {
   text: "text-primary",
   border: "border-primary/20",
   iconBg: "bg-primary text-primary-foreground",
+}
+
+function getMinistryStyling(name: string) {
+  const cat = getDemographicCategory(name)
+  return cat ? CATEGORY_COLORS[cat] : DEFAULT_COLOR
 }
 
 export function MemberPermissionsClient({
@@ -323,8 +329,7 @@ export function MemberPermissionsClient({
       {/* 🟢 DEMOGRAPHIC MINISTRIES MATRIX CARDS */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {demographicMinistries.map((dm) => {
-          const key = dm.name.toLowerCase().trim()
-          const styling = DEMOGRAPHIC_COLORS[key] || DEFAULT_COLOR
+          const styling = getMinistryStyling(dm.name)
           const assignedCount = getAssignedCountForMinistry(dm.id)
           const assignedMembers = getAssignedMembersForMinistry(dm.id)
           const isTargetReached = assignedCount >= 4
@@ -535,8 +540,7 @@ export function MemberPermissionsClient({
                                 p.attendance_ministry_ids.map((minId) => {
                                   const min = demographicMinistries.find((dm) => dm.id === minId)
                                   const minName = min?.name || "Ministry"
-                                  const key = minName.toLowerCase().trim()
-                                  const styling = DEMOGRAPHIC_COLORS[key] || DEFAULT_COLOR
+                                  const styling = getMinistryStyling(minName)
 
                                   return (
                                     <Badge
@@ -622,8 +626,7 @@ export function MemberPermissionsClient({
                         {p.attendance_ministry_ids.map((minId) => {
                           const min = demographicMinistries.find((dm) => dm.id === minId)
                           const minName = min?.name || "Ministry"
-                          const key = minName.toLowerCase().trim()
-                          const styling = DEMOGRAPHIC_COLORS[key] || DEFAULT_COLOR
+                          const styling = getMinistryStyling(minName)
 
                           return (
                             <Badge
@@ -816,8 +819,7 @@ export function MemberPermissionsClient({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {demographicMinistries.map((dm) => {
                     const isSelected = selectedMinistryIds.includes(dm.id)
-                    const key = dm.name.toLowerCase().trim()
-                    const styling = DEMOGRAPHIC_COLORS[key] || DEFAULT_COLOR
+                    const styling = getMinistryStyling(dm.name)
 
                     return (
                       <div

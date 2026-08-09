@@ -7,7 +7,7 @@ import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/utils/action-helpers"
 
-import { DEMOGRAPHIC_MINISTRY_NAMES } from "@/lib/constants/demographic-ministries"
+import { isDemographicMinistry } from "@/lib/constants/demographic-ministries"
 
 export async function getAuthorizedMinistries() {
   const session = await auth()
@@ -30,7 +30,7 @@ export async function getAuthorizedMinistries() {
 
   // Filter strictly to core demographic ministries
   const demographicMinistries = allMinistries.filter((m) =>
-    DEMOGRAPHIC_MINISTRY_NAMES.some((dn) => dn.toLowerCase() === m.name.trim().toLowerCase())
+    isDemographicMinistry(m.name)
   )
 
   if (isAdmin) {
@@ -166,11 +166,9 @@ export async function saveAttendanceSession(payload: {
   }
 
   // Strict check: only demographic ministries allow attendance recording
-  const isDemographic = DEMOGRAPHIC_MINISTRY_NAMES.some(
-    (dn) => dn.toLowerCase() === min.name.trim().toLowerCase()
-  )
+  const isDemographic = isDemographicMinistry(min.name)
   if (!isDemographic) {
-    throw new Error("Attendance recording is only authorized for core demographic ministries (Men of Faith, Ladies for Christ, Kids for Jesus, Youth Christian).")
+    throw new Error("Attendance recording is only authorized for core demographic ministries (Men of Faith, Ladies for Christ, Kids for Jesus Ministry, Youth Christian Ministry).")
   }
 
   if (!isAdmin) {
