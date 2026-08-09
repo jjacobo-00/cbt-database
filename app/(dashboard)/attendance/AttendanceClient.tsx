@@ -167,11 +167,11 @@ export function AttendanceClient({
     }
   }
 
-  // Load weather for selected date
+  // Load weather for selected date and service schedule slot (AM: 8-11am vs PM: 2-5pm)
   useEffect(() => {
     let isMounted = true
     setIsWeatherLoading(true)
-    getOlongapoWeatherAction(selectedDate)
+    getOlongapoWeatherAction(selectedDate, selectedServiceTime === "PM" ? "PM" : "AM")
       .then((data) => {
         if (isMounted) setCurrentWeather(data)
       })
@@ -185,7 +185,7 @@ export function AttendanceClient({
     return () => {
       isMounted = false
     }
-  }, [selectedDate])
+  }, [selectedDate, selectedServiceTime])
 
   // Attendance Form state
   const [members, setMembers] = useState<EnrolledMember[]>([])
@@ -232,6 +232,25 @@ export function AttendanceClient({
           })
           setPresentMap(map)
           setInitialPresentMap(map)
+
+          if (res.session.weather_summary && res.session.weather_condition) {
+            setCurrentWeather({
+              date: res.session.date,
+              serviceTime: (res.session.service_time as any) || selectedServiceTime,
+              condition: (res.session.weather_condition as any) || "good",
+              conditionLabel:
+                res.session.weather_condition === "stormy"
+                  ? "Thunderstorm / Severe"
+                  : res.session.weather_condition === "rainy"
+                  ? "Rainy / Wet"
+                  : "Fair Weather",
+              summary: res.session.weather_summary,
+              temperatureC: res.session.weather_temp_c ? Number(res.session.weather_temp_c) : null,
+              precipitationMm: 0,
+              weatherCode: null,
+              icon: (res.session.weather_icon as any) || "sun",
+            })
+          }
         } else {
           setExistingSessionInfo(null)
           setNotes("")

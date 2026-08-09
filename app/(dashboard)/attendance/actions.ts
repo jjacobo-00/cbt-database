@@ -10,8 +10,8 @@ import { requireAdmin } from "@/lib/utils/action-helpers"
 import { isDemographicMinistry } from "@/lib/constants/demographic-ministries"
 import { fetchOlongapoWeather } from "@/lib/services/weather"
 
-export async function getOlongapoWeatherAction(dateStr: string) {
-  return await fetchOlongapoWeather(dateStr)
+export async function getOlongapoWeatherAction(dateStr: string, serviceTime: "AM" | "PM" = "AM") {
+  return await fetchOlongapoWeather(dateStr, serviceTime)
 }
 
 export async function getAuthorizedMinistries() {
@@ -227,23 +227,24 @@ export async function saveAttendanceSession(payload: {
     }
   }
 
-  // Resolve Weather automatically if not provided
+  // Resolve Weather automatically with slot awareness (AM: 8-11am vs PM: 2-5pm) if not provided
   let finalWeatherCondition = weatherCondition
   let finalWeatherSummary = weatherSummary
   let finalWeatherTempC = weatherTempC
   let finalWeatherIcon = weatherIcon
 
   if (!finalWeatherCondition || !finalWeatherSummary) {
+    const targetSlot: "AM" | "PM" = serviceTime === "PM" ? "PM" : "AM"
     try {
-      const w = await fetchOlongapoWeather(date)
+      const w = await fetchOlongapoWeather(date, targetSlot)
       finalWeatherCondition = w.condition
       finalWeatherSummary = w.summary
       finalWeatherTempC = w.temperatureC !== null ? String(w.temperatureC) : null
       finalWeatherIcon = w.icon
     } catch {
       finalWeatherCondition = "good"
-      finalWeatherSummary = "Fair Weather"
-      finalWeatherTempC = "28"
+      finalWeatherSummary = targetSlot === "PM" ? "Fair Weather (2pm-5pm)" : "Fair Weather (8am-11am)"
+      finalWeatherTempC = targetSlot === "PM" ? "29" : "27"
       finalWeatherIcon = "sun"
     }
   }
