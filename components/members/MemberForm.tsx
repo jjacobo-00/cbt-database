@@ -252,7 +252,7 @@ export function MemberForm({
         birth_date: s.birth_date || s.age || "",
         sibling_is_member: !!s.sibling_member_id,
         sibling_member_id: s.sibling_member_id || ""
-      })) : [{ name: "", birth_date: "", sibling_is_member: false, sibling_member_id: "" }],
+      })) : [],
       children: initialData?.children?.length ? initialData.children.map((c: any) => ({
         id: c.id,
         name: c.name,
@@ -518,6 +518,24 @@ export function MemberForm({
       toast.error("An error occurred while saving member profile.")
       setIsSubmitting(false)
     }
+  }
+
+  const handleFormSubmit = () => {
+    // Pre-sanitize any empty sibling cards before running schema validation
+    const currentSiblings = form.getValues("siblings") || []
+    const validSiblings = currentSiblings.filter(s => s.name && s.name.trim() !== "")
+    if (validSiblings.length !== currentSiblings.length) {
+      form.setValue("siblings", validSiblings)
+    }
+
+    // Pre-sanitize any empty children cards
+    const currentChildren = form.getValues("children") || []
+    const validChildren = currentChildren.filter(c => c.name && c.name.trim() !== "")
+    if (validChildren.length !== currentChildren.length) {
+      form.setValue("children", validChildren)
+    }
+
+    return form.handleSubmit(onSubmit, onInvalid)()
   }
 
   const employmentStatus = form.watch("employment_status")
@@ -930,7 +948,7 @@ export function MemberForm({
         {initialData && (
           <Button 
             type="button"
-            onClick={() => form.handleSubmit(onSubmit, onInvalid)()}
+            onClick={handleFormSubmit}
             disabled={isSubmitting}
             className="h-11 px-6 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
           >
@@ -1029,7 +1047,10 @@ export function MemberForm({
 
       <form 
         ref={formRef}
-        onSubmit={form.handleSubmit(onSubmit, onInvalid)} 
+        onSubmit={(e) => {
+          e.preventDefault()
+          handleFormSubmit()
+        }} 
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             const target = e.target as HTMLElement
@@ -2640,7 +2661,7 @@ export function MemberForm({
               <Button 
                 type="button"
                 variant="outline"
-                onClick={() => form.handleSubmit(onSubmit, onInvalid)()}
+                onClick={handleFormSubmit}
                 disabled={isSubmitting}
                 className="h-11 px-5 gap-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-semibold"
               >
@@ -2663,12 +2684,12 @@ export function MemberForm({
               <Button 
                 key="btn-save-member"
                 type="button" 
-                onClick={() => form.handleSubmit(onSubmit, onInvalid)()}
+                onClick={handleFormSubmit}
                 disabled={isSubmitting}
                 className="h-11 px-8 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
               >
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                Save Member Record
+                <span>Save Member Record</span>
               </Button>
             )}
           </div>
