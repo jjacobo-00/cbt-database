@@ -27,6 +27,10 @@ import {
   Sun,
   Moon,
   Clock,
+  Trash2,
+  Undo2,
+  AlertTriangle,
+  Edit3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,9 +38,24 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { DatePicker } from "@/components/ui/date-picker"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { cn, formatName } from "@/lib/utils/utils"
-import { saveAttendanceSession, getMinistryAttendanceData, getAttendanceHistory } from "./actions"
+import {
+  saveAttendanceSession,
+  getMinistryAttendanceData,
+  getAttendanceHistory,
+  deleteAttendanceSession,
+} from "./actions"
 import {
   getAvailableServiceSlots,
   getDefaultServiceSlot,
@@ -76,6 +95,7 @@ type AttendanceSession = {
   present_count: number
   total_enrolled: number
   submitted_by_name: string
+  last_edited_by_name?: string | null
   updated_at: string
 }
 
@@ -136,16 +156,22 @@ export function AttendanceClient({
   // Attendance Form state
   const [members, setMembers] = useState<EnrolledMember[]>([])
   const [presentMap, setPresentMap] = useState<Record<string, boolean>>({})
+  const [initialPresentMap, setInitialPresentMap] = useState<Record<string, boolean>>({})
   const [notes, setNotes] = useState<string>("")
+  const [initialNotes, setInitialNotes] = useState<string>("")
   const [existingSessionInfo, setExistingSessionInfo] = useState<AttendanceSession | null>(null)
 
   // Filtering & Search
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "present" | "absent">("all")
 
-  // History & Analytics state
+  // History & Delete state
   const [historyLogs, setHistoryLogs] = useState<any[]>([])
-  const [analyticsData, setAnalyticsData] = useState<any>(null)
+  const [sessionToDelete, setSessionToDelete] = useState<{
+    id: string
+    date: string
+    schedule: string
+  } | null>(null)
 
   const [isLoading, setIsLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -165,15 +191,19 @@ export function AttendanceClient({
         if (res.session) {
           setExistingSessionInfo(res.session)
           setNotes(res.session.notes || "")
+          setInitialNotes(res.session.notes || "")
           const map: Record<string, boolean> = {}
           res.session.present_member_ids.forEach((id) => {
             map[id] = true
           })
           setPresentMap(map)
+          setInitialPresentMap(map)
         } else {
           setExistingSessionInfo(null)
           setNotes("")
+          setInitialNotes("")
           setPresentMap({})
+          setInitialPresentMap({})
         }
       })
       .catch((err) => {
@@ -221,11 +251,25 @@ export function AttendanceClient({
     toast.info("Cleared present checklist")
   }
 
+  // Revert unsaved edits back to database version
+  const handleRevertToSaved = () => {
+    if (!existingSessionInfo) return
+    setPresentMap({ ...initialPresentMap })
+    setNotes(initialNotes)
+    toast.info("Reverted changes to last saved session.")
+  }
+
   // Calculated Stats
   const totalEnrolled = members.length
   const presentCount = Object.values(presentMap).filter(Boolean).length
   const absentCount = totalEnrolled - presentCount
   const turnoutRatePct = totalEnrolled > 0 ? Math.round((presentCount / totalEnrolled) * 100) : 0
+
+  // Live Change Diff when editing
+  const addedCount = members.filter((m) => presentMap[m.id] && !initialPresentMap[m.id]).length
+  const removedCount = members.filter((m) => !presentMap[m.id] && initialPresentMap[m.id]).length
+  const notesChanged = notes !== initialNotes
+  const isDirty = Boolean(existingSessionInfo && (addedCount > 0 || removedCount > 0 || notesChanged))
 
   // Filtered members by search & status pill
   const filteredMembers = members.filter((m) => {
@@ -239,7 +283,7 @@ export function AttendanceClient({
     return matchesSearch
   })
 
-  // Submit Attendance Handler
+  // Submit / Update Attendance Handler
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!selectedMinistryId || !selectedDate) return
@@ -250,6 +294,8 @@ export function AttendanceClient({
           .filter(([_, isPresent]) => isPresent)
           .map(([id]) => id)
 
+        const isEditing = Boolean(existingSessionInfo)
+
         const res = await saveAttendanceSession({
           ministryId: selectedMinistryId,
           date: selectedDate,
@@ -259,8 +305,12 @@ export function AttendanceClient({
         })
 
         if (res.success) {
-          toast.success(`Attendance saved successfully! (${presentIds.length}/${totalEnrolled} Present)`)
-          setExistingSessionInfo({
+          toast.success(
+            isEditing
+              ? `Attendance changes saved! (${presentIds.length}/${totalEnrolled} Present)`
+              : `Attendance submitted successfully! (${presentIds.length}/${totalEnrolled} Present)`
+          )
+          const updatedSession: AttendanceSession = {
             id: res.data.id,
             ministry_id: res.data.ministry_id,
             date: res.data.date,
@@ -269,13 +319,46 @@ export function AttendanceClient({
             present_member_ids: presentIds,
             present_count: presentIds.length,
             total_enrolled: totalEnrolled,
-            submitted_by_name: res.data.submitted_by_name || "You",
+            submitted_by_name: res.data.submitted_by_name || existingSessionInfo?.submitted_by_name || "You",
+            last_edited_by_name: res.data.last_edited_by_name || "You",
             updated_at: new Date().toISOString(),
-          })
+          }
+          setExistingSessionInfo(updatedSession)
+          setInitialPresentMap({ ...presentMap })
+          setInitialNotes(notes)
         }
       } catch (err: any) {
         console.error("Attendance submission failed:", err)
         toast.error(err.message || "Failed to save attendance session.")
+      }
+    })
+  }
+
+  // Delete Attendance Session Handler
+  const handleDeleteSession = async () => {
+    if (!sessionToDelete) return
+    const targetId = sessionToDelete.id
+    setSessionToDelete(null)
+
+    startTransition(async () => {
+      try {
+        const res = await deleteAttendanceSession(targetId)
+        if (res.success) {
+          toast.success("Attendance session deleted successfully.")
+          if (existingSessionInfo?.id === targetId) {
+            setExistingSessionInfo(null)
+            setNotes("")
+            setInitialNotes("")
+            setPresentMap({})
+            setInitialPresentMap({})
+          }
+          if (selectedMinistryId) {
+            getAttendanceHistory(selectedMinistryId).then((data) => setHistoryLogs(data))
+          }
+        }
+      } catch (err: any) {
+        console.error("Error deleting session:", err)
+        toast.error(err.message || "Failed to delete attendance session.")
       }
     })
   }
@@ -310,7 +393,7 @@ export function AttendanceClient({
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Record, track, and analyze member turnout for church ministries across Sunday & Wednesday services.
+            Record, edit, and analyze member turnout for church ministries across Sunday & Wednesday services.
           </p>
         </div>
 
@@ -430,7 +513,16 @@ export function AttendanceClient({
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Icon className={cn("h-3.5 w-3.5", isSelected ? (slot.icon === "sun" ? "text-amber-500 fill-amber-500/20" : "text-indigo-500 fill-indigo-500/20") : "opacity-70")} />
+                    <Icon
+                      className={cn(
+                        "h-3.5 w-3.5",
+                        isSelected
+                          ? slot.icon === "sun"
+                            ? "text-amber-500 fill-amber-500/20"
+                            : "text-indigo-500 fill-indigo-500/20"
+                          : "opacity-70"
+                      )}
+                    />
                     <span>{slot.label}</span>
                   </button>
                 )
@@ -519,22 +611,73 @@ export function AttendanceClient({
             </Card>
           </div>
 
-          {/* Session Banner if already recorded */}
+          {/* 🌟 EDIT MODE BANNER (Shown when viewing an existing submitted session) */}
           {existingSessionInfo && (
-            <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span>
-                  Attendance for <strong className="text-foreground">{selectedDate}</strong> (
-                  <strong className="text-primary font-semibold">
-                    {formatServiceSlotBadge(selectedDate, selectedServiceTime).label}
-                  </strong>
-                  ) was submitted by <strong>{existingSessionInfo.submitted_by_name}</strong>. You are currently editing this record.
-                </span>
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 dark:bg-amber-500/15 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-xs">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-white shadow-xs flex items-center gap-1">
+                    <Edit3 className="h-3 w-3" /> Edit Mode
+                  </span>
+                  <span className="font-bold text-foreground">
+                    {selectedDate} • {formatServiceSlotBadge(selectedDate, selectedServiceTime).label}
+                  </span>
+                  {isDirty && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                      Unsaved Changes ({addedCount > 0 ? `+${addedCount} present` : ""}
+                      {removedCount > 0 ? ` -${removedCount} absent` : ""}
+                      {notesChanged ? " • notes modified" : ""})
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground">
+                  Submitted by <strong className="text-foreground">{existingSessionInfo.submitted_by_name}</strong>
+                  {existingSessionInfo.last_edited_by_name &&
+                    existingSessionInfo.last_edited_by_name !== existingSessionInfo.submitted_by_name && (
+                      <>
+                        {" "}• Last edited by{" "}
+                        <strong className="text-foreground">{existingSessionInfo.last_edited_by_name}</strong>
+                      </>
+                    )}
+                  {" "}on {new Date(existingSessionInfo.updated_at).toLocaleDateString([], { month: "short", day: "numeric" })} at{" "}
+                  {new Date(existingSessionInfo.updated_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
-              <span className="text-[10px] text-muted-foreground shrink-0">
-                Last updated: {new Date(existingSessionInfo.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {isDirty && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRevertToSaved}
+                    className="h-8 text-xs gap-1.5 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
+                  >
+                    <Undo2 className="h-3.5 w-3.5" /> Revert
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setSessionToDelete({
+                      id: existingSessionInfo.id,
+                      date: existingSessionInfo.date,
+                      schedule: formatServiceSlotBadge(
+                        existingSessionInfo.date,
+                        existingSessionInfo.service_time
+                      ).label,
+                    })
+                  }
+                  className="h-8 text-xs text-destructive hover:bg-destructive/10 gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </Button>
+              </div>
             </div>
           )}
 
@@ -649,39 +792,40 @@ export function AttendanceClient({
                       {/* Avatar initials */}
                       <div
                         className={cn(
-                          "h-10 w-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors",
+                          "h-10 w-10 rounded-full font-bold text-xs flex items-center justify-center shrink-0 border",
                           isPresent
-                            ? "bg-emerald-600 text-white"
-                            : "bg-primary/10 text-primary"
+                            ? "bg-emerald-500 text-white border-emerald-600 shadow-xs"
+                            : "bg-muted text-muted-foreground border-border"
                         )}
                       >
                         {initials}
                       </div>
 
-                      <div className="min-w-0">
-                        <p className={cn("font-semibold text-sm truncate", isPresent && "text-emerald-950 dark:text-emerald-200")}>
-                          {formatName(`${m.first_name} ${m.last_name}`)}
+                      <div className="min-w-0 space-y-0.5">
+                        <p className="font-semibold text-sm text-foreground truncate">
+                          {formatName(`${m.last_name}, ${m.first_name}`)}
                         </p>
-                        <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-muted-foreground mt-0.5">
-                          {m.gender && <span>{m.gender}</span>}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {m.church_role && (
+                            <span className="text-[10px] text-muted-foreground font-medium">
+                              {m.church_role}
+                            </span>
+                          )}
                           {m.other_ministries && m.other_ministries.length > 0 && (
-                            <span
-                              title={`Also serving in: ${m.other_ministries.join(", ")}`}
-                              className="px-1.5 py-0.5 rounded-md bg-muted/80 font-medium text-[10px] text-muted-foreground border"
-                            >
-                              +{m.other_ministries.length} ({m.other_ministries.slice(0, 2).join(", ")}{m.other_ministries.length > 2 ? "..." : ""})
+                            <span className="text-[10px] text-primary/80 bg-primary/10 px-1.5 py-0.2 rounded font-medium truncate max-w-[120px]">
+                              +{m.other_ministries.length} other{m.other_ministries.length > 1 ? "s" : ""}
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Touch Toggle Checkbox */}
+                    {/* Checkbox Indicator */}
                     <div
                       className={cn(
-                        "h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 transition-all",
+                        "h-6 w-6 rounded-lg flex items-center justify-center transition-all shrink-0 border",
                         isPresent
-                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                          ? "bg-emerald-500 text-white border-emerald-600 shadow-xs"
                           : "border-input bg-background"
                       )}
                     >
@@ -704,47 +848,91 @@ export function AttendanceClient({
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. Sunday Youth Fellowship - Topic: Walking by Faith"
+                placeholder="e.g. Sunday Fellowship - Topic: Walking by Faith"
                 className="h-10 text-xs bg-background"
               />
             </CardContent>
           </Card>
 
-          {/* Always-Visible In-Page Submit Section */}
+          {/* Always-Visible In-Page Submit / Save Section */}
           <div className="p-4 rounded-2xl border bg-card/80 backdrop-blur-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-0.5">
-              <p className="text-xs font-semibold text-foreground">Turnout Summary</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-semibold text-foreground">Turnout Summary</p>
+                {existingSessionInfo && (
+                  <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                    Edit Mode
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
-                <strong className="text-primary font-bold">{presentCount} of {totalEnrolled}</strong> members marked present ({turnoutRatePct}% turnout).
+                <strong className="text-primary font-bold">
+                  {presentCount} of {totalEnrolled}
+                </strong>{" "}
+                members marked present ({turnoutRatePct}% turnout).
               </p>
             </div>
-            <Button
-              type="button"
-              onClick={() => handleSubmit()}
-              disabled={isPending || isLoading}
-              className="h-12 w-full sm:w-auto px-8 rounded-xl font-bold text-sm shadow-md gap-2 active:scale-[0.98] transition-transform"
-            >
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Submit Attendance ({presentCount}/{totalEnrolled})
-            </Button>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {isDirty && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRevertToSaved}
+                  className="h-12 px-4 rounded-xl text-xs font-semibold gap-1.5"
+                >
+                  <Undo2 className="h-4 w-4" /> Revert
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={() => handleSubmit()}
+                disabled={isPending || isLoading}
+                className={cn(
+                  "h-12 flex-1 sm:flex-initial px-8 rounded-xl font-bold text-sm shadow-md gap-2 active:scale-[0.98] transition-transform",
+                  existingSessionInfo
+                    ? "bg-amber-600 hover:bg-amber-700 text-white"
+                    : "bg-primary text-primary-foreground"
+                )}
+              >
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {existingSessionInfo
+                  ? `Save Changes (${presentCount}/${totalEnrolled})`
+                  : `Submit Attendance (${presentCount}/${totalEnrolled})`}
+              </Button>
+            </div>
           </div>
 
           {/* 📱 STICKY MOBILE ACTION BAR (Floats directly above the h-16 MobileBottomNav) */}
           <div className="sm:hidden fixed bottom-16 inset-x-0 z-30 p-3 bg-background/95 backdrop-blur-md border-t shadow-2xl flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] text-muted-foreground font-medium">Turnout Roster</p>
+              <p className="text-[11px] text-muted-foreground font-medium">
+                {existingSessionInfo ? "Editing Roster" : "Turnout Roster"}
+              </p>
               <p className="text-sm font-bold text-primary">
-                {presentCount} / {totalEnrolled} <span className="text-[11px] font-semibold text-muted-foreground">({turnoutRatePct}%)</span>
+                {presentCount} / {totalEnrolled}{" "}
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  ({turnoutRatePct}%)
+                </span>
               </p>
             </div>
             <Button
               type="button"
               onClick={() => handleSubmit()}
               disabled={isPending || isLoading}
-              className="h-10 px-5 rounded-xl font-bold text-xs shadow-md gap-1.5 active:scale-95 transition-transform"
+              className={cn(
+                "h-10 px-5 rounded-xl font-bold text-xs shadow-md gap-1.5 active:scale-95 transition-transform",
+                existingSessionInfo
+                  ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-primary text-primary-foreground"
+              )}
             >
               {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              Submit
+              {existingSessionInfo ? "Save Changes" : "Submit"}
             </Button>
           </div>
         </TabsContent>
@@ -770,7 +958,7 @@ export function AttendanceClient({
                   {historyLogs.map((log) => (
                     <div
                       key={log.id}
-                      className="p-3.5 rounded-xl border bg-card flex items-center justify-between gap-4 text-sm shadow-xs"
+                      className="p-3.5 rounded-xl border bg-card flex items-center justify-between gap-4 text-sm shadow-xs hover:border-primary/30 transition-colors"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -798,12 +986,15 @@ export function AttendanceClient({
                         </div>
                         {log.notes && <p className="text-xs text-muted-foreground italic">{log.notes}</p>}
                         <p className="text-[11px] text-muted-foreground">
-                          Submitted by {log.submitted_by_name || "Leader"}
+                          Submitted by <strong className="text-foreground">{log.submitted_by_name || "Leader"}</strong>
+                          {log.last_edited_by_name && log.last_edited_by_name !== log.submitted_by_name && (
+                            <> • Edited by <strong className="text-foreground">{log.last_edited_by_name}</strong></>
+                          )}
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="text-right mr-1">
                           <p className="font-bold text-primary">
                             {log.present_count} / {log.total_enrolled}
                           </p>
@@ -811,16 +1002,32 @@ export function AttendanceClient({
                         </div>
                         <Button
                           type="button"
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => {
                             handleDateChange(log.date)
                             setSelectedServiceTime(log.service_time || "AM")
                             setActiveTab("form")
+                            toast.info(`Editing attendance for ${log.date} (${log.service_time})`)
                           }}
-                          className="h-8 text-xs text-primary gap-1"
+                          className="h-8 text-xs text-primary gap-1 border-primary/20 hover:bg-primary/10"
                         >
-                          Edit <ChevronRight className="h-3.5 w-3.5" />
+                          <Edit3 className="h-3 w-3" /> Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setSessionToDelete({
+                              id: log.id,
+                              date: log.date,
+                              schedule: formatServiceSlotBadge(log.date, log.service_time).label,
+                            })
+                          }
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>
@@ -831,6 +1038,35 @@ export function AttendanceClient({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* ⚠️ Delete Confirmation Dialog */}
+      <AlertDialog
+        open={Boolean(sessionToDelete)}
+        onOpenChange={(open) => !open && setSessionToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> Delete Attendance Record?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the attendance record for{" "}
+              <strong>{sessionToDelete?.date}</strong> (
+              <strong>{sessionToDelete?.schedule}</strong>)? This action cannot be undone and will
+              remove this session from church attendance reports.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSession}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold"
+            >
+              Delete Record
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

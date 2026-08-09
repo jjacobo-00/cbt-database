@@ -140,6 +140,7 @@ export async function getMinistryAttendanceData(
           present_count: existingSession.present_count,
           total_enrolled: existingSession.total_enrolled,
           submitted_by_name: existingSession.submitted_by_name || "",
+          last_edited_by_name: existingSession.last_edited_by_name || existingSession.submitted_by_name || "",
           updated_at: existingSession.updated_at?.toISOString() || "",
         }
       : null,
@@ -222,6 +223,8 @@ export async function saveAttendanceSession(payload: {
       service_time: serviceTime,
       submitted_by: memberId || null,
       submitted_by_name: submitterName,
+      last_edited_by: memberId || null,
+      last_edited_by_name: submitterName,
       notes: notes || null,
       present_member_ids: presentMemberIds,
       present_count: presentMemberIds.length,
@@ -235,8 +238,8 @@ export async function saveAttendanceSession(payload: {
         attendance_sessions.service_time,
       ],
       set: {
-        submitted_by: memberId || null,
-        submitted_by_name: submitterName,
+        last_edited_by: memberId || null,
+        last_edited_by_name: submitterName,
         notes: notes || null,
         present_member_ids: presentMemberIds,
         present_count: presentMemberIds.length,
@@ -253,6 +256,66 @@ export async function saveAttendanceSession(payload: {
   return { success: true, data: upserted }
 }
 
+export async function deleteAttendanceSession(sessionId: string) {
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+
+  if (!sessionId) throw new Error("Session ID is required.")
+
+  const isAdmin = session.user.role === "admin"
+  const memberId = session.user.memberId
+
+  // Fetch session to check ownership
+  const [attSession] = await db
+    .select({
+      id: attendance_sessions.id,
+      ministry_id: attendance_sessions.ministry_id,
+    })
+    .from(attendance_sessions)
+    .where(eq(attendance_sessions.id, sessionId))
+
+  if (!attSession) {
+    throw new Error("Attendance session not found.")
+  }
+
+  if (!isAdmin) {
+    const [min] = await db
+      .select({
+        id: ministries.id,
+        leader_id: ministries.leader_id,
+        co_leader_ids: ministries.co_leader_ids,
+      })
+      .from(ministries)
+      .where(eq(ministries.id, attSession.ministry_id))
+
+    const isPrimary = min?.leader_id === memberId
+    const isCoLeader = Array.isArray(min?.co_leader_ids) && min?.co_leader_ids.includes(memberId || "")
+
+    let isDelegated = false
+    if (memberId) {
+      const [perms] = await db
+        .select()
+        .from(member_permissions)
+        .where(eq(member_permissions.member_id, memberId))
+      if (perms?.can_manage_attendance && Array.isArray(perms.attendance_ministry_ids)) {
+        isDelegated = (perms.attendance_ministry_ids as string[]).includes(attSession.ministry_id)
+      }
+    }
+
+    if (!isPrimary && !isCoLeader && !isDelegated) {
+      throw new Error("You are not authorized to delete attendance for this ministry.")
+    }
+  }
+
+  await db.delete(attendance_sessions).where(eq(attendance_sessions.id, sessionId))
+
+  revalidatePath("/attendance")
+  revalidatePath("/dashboard")
+  revalidatePath("/reports")
+
+  return { success: true }
+}
+
 export async function getAttendanceHistory(ministryId: string) {
   const session = await auth()
   if (!session?.user) return []
@@ -267,6 +330,7 @@ export async function getAttendanceHistory(ministryId: string) {
   return history.map((s) => ({
     ...s,
     service_time: s.service_time || "AM",
+    last_edited_by_name: s.last_edited_by_name || s.submitted_by_name || "",
     created_at: s.created_at?.toISOString() || "",
     updated_at: s.updated_at?.toISOString() || "",
     present_member_ids: (s.present_member_ids as string[]) || [],
