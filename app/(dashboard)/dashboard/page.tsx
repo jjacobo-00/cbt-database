@@ -26,6 +26,7 @@ import Link from "next/link";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable";
 import { UpcomingBirthdaysCard } from "@/components/dashboard/UpcomingBirthdaysCard";
+import { RecentAttendanceCard, LatestServiceAttendance } from "@/components/dashboard/RecentAttendanceCard";
 
 export const revalidate = 0
 
@@ -49,6 +50,7 @@ export default async function DashboardPage() {
     ministryEngagementResult,
     previousYearGrowthQuery,
     attendanceResult,
+    recentSessionsResult,
   ] = await Promise.all([
     db.select({ count: sql<number>`cast(count(*) as int)` }).from(members),
     db
@@ -111,6 +113,24 @@ export default async function DashboardPage() {
         total: sql<number>`COALESCE(sum(${attendance_sessions.total_enrolled}), 0)::int`,
       })
       .from(attendance_sessions),
+    db
+      .select({
+        id: attendance_sessions.id,
+        ministry_id: attendance_sessions.ministry_id,
+        ministry_name: ministries.name,
+        date: attendance_sessions.date,
+        service_time: attendance_sessions.service_time,
+        present_count: attendance_sessions.present_count,
+        total_enrolled: attendance_sessions.total_enrolled,
+        weather_condition: attendance_sessions.weather_condition,
+        weather_summary: attendance_sessions.weather_summary,
+        weather_temp_c: attendance_sessions.weather_temp_c,
+        weather_icon: attendance_sessions.weather_icon,
+      })
+      .from(attendance_sessions)
+      .innerJoin(ministries, eq(attendance_sessions.ministry_id, ministries.id))
+      .orderBy(desc(attendance_sessions.date), desc(attendance_sessions.created_at))
+      .limit(10),
   ]);
 
   const totalMembers = totalMembersResult[0]?.count || 0;
@@ -120,6 +140,41 @@ export default async function DashboardPage() {
   const attPresent = attendanceResult[0]?.present || 0;
   const attTotal = attendanceResult[0]?.total || 1;
   const attPct = attendanceResult[0]?.total ? Math.min(100, Math.round((attPresent / attTotal) * 100)) : 0;
+
+  // Process Latest Service Attendance Snapshot
+  let latestServiceData: LatestServiceAttendance | null = null;
+  if (recentSessionsResult && recentSessionsResult.length > 0) {
+    const latestSession = recentSessionsResult[0];
+    const targetDate = latestSession.date;
+    const targetSlot = latestSession.service_time || "AM";
+
+    const matchingSessions = recentSessionsResult.filter(
+      (s) => s.date === targetDate && (s.service_time || "AM") === targetSlot
+    );
+
+    const totalPresent = matchingSessions.reduce((sum, s) => sum + (s.present_count || 0), 0);
+    const totalEnrolled = matchingSessions.reduce((sum, s) => sum + (s.total_enrolled || 0), 0);
+    const percentage = totalEnrolled > 0 ? Math.min(100, Math.round((totalPresent / totalEnrolled) * 100)) : 0;
+
+    latestServiceData = {
+      date: targetDate,
+      serviceTime: targetSlot,
+      weatherCondition: latestSession.weather_condition,
+      weatherSummary: latestSession.weather_summary,
+      weatherTempC: latestSession.weather_temp_c,
+      weatherIcon: latestSession.weather_icon,
+      totalPresent,
+      totalEnrolled,
+      percentage,
+      fellowships: matchingSessions.map((s) => ({
+        ministryId: s.ministry_id,
+        ministryName: s.ministry_name,
+        presentCount: s.present_count || 0,
+        totalEnrolled: s.total_enrolled || 0,
+        percentage: s.total_enrolled > 0 ? Math.min(100, Math.round(((s.present_count || 0) / s.total_enrolled) * 100)) : 0,
+      })),
+    };
+  }
 
   // Birthday Celebrants calculation
   const now = new Date();
@@ -308,8 +363,20 @@ export default async function DashboardPage() {
                 <UserPlus className="mr-2 h-4 w-4" /> Add Member
               </Link>
             </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              asChild
+              className="bg-background/50 backdrop-blur-sm"
+            >
+              <Link href="/reports">
+                <FileText className="mr-2 h-4 w-4" /> Reports
+              </Link>
+            </Button>
           </div>
         </div>
+        {/* Decorative background blob */}
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       </div>
 
       {/* Streamlined KPI Stats Cards */}
@@ -390,21 +457,24 @@ export default async function DashboardPage() {
         ageData={ageDemographicsData}
       />
 
-      {/* Recent Members & Upcoming Celebrants Grid */}
+      {/* Attendance Snapshot & Upcoming Celebrants Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentMembersTable
-          recentMembers={recentMembers.map((m) => ({
-            ...m,
-            membership_date: m.membership_date
-              ? new Date(m.membership_date as any)
-              : null,
-          }))}
-        />
+        <RecentAttendanceCard latestService={latestServiceData} />
         <UpcomingBirthdaysCard
           celebrantsThisMonth={celebrantsThisMonth}
           upcoming30Days={upcoming30Days}
         />
       </div>
+
+      {/* Recent Members Table */}
+      <RecentMembersTable
+        recentMembers={recentMembers.map((m) => ({
+          ...m,
+          membership_date: m.membership_date
+            ? new Date(m.membership_date as any)
+            : null,
+        }))}
+      />
     </div>
   );
 }
