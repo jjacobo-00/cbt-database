@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { formatName, normalizeCity } from "@/lib/utils/utils"
+import { formatName, normalizeCity, formatBirthday } from "@/lib/utils/utils"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -19,7 +19,7 @@ import { GenerateInviteLinkButton } from "./GenerateInviteLinkButton"
 import { AGE_GROUPS, GENDER_OPTIONS, MARITAL_OPTIONS, JOINED_OPTIONS } from "@/lib/constants/directory"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw, Phone, Mail } from "lucide-react"
+import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw, Phone, Mail, Cake } from "lucide-react"
 import { TablePagination } from "@/components/ui/table-pagination"
 import {
   Popover,
@@ -55,6 +55,21 @@ const EDUCATION_OPTIONS = ["Elementary", "High School", "Senior High School", "V
 const BLOOD_TYPES = ["A+", "A-", "A", "B+", "B-", "B", "AB+", "AB-", "AB", "O+", "O-", "O"]
 const EMPLOYMENT_OPTIONS = ["Employed", "Self-employed", "Unemployed", "Student", "Retired"]
 
+const BIRTH_MONTH_OPTIONS = [
+  { id: "1", label: "January" },
+  { id: "2", label: "February" },
+  { id: "3", label: "March" },
+  { id: "4", label: "April" },
+  { id: "5", label: "May" },
+  { id: "6", label: "June" },
+  { id: "7", label: "July" },
+  { id: "8", label: "August" },
+  { id: "9", label: "September" },
+  { id: "10", label: "October" },
+  { id: "11", label: "November" },
+  { id: "12", label: "December" },
+]
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -81,6 +96,8 @@ export function DataTable<TData, TValue>({
   const activeHasAllergies = searchParams.get("has_allergies") || ""
   const activeEmployment = searchParams.get("employment") || ""
   const activeCity = searchParams.get("city") || ""
+  const activeBirthMonth = searchParams.get("birth_month") || ""
+  const activeBirthdayPreset = searchParams.get("birthday_preset") || ""
 
   // Helper to update URL search parameters
   const updateFilters = (newParams: Record<string, string | null>) => {
@@ -113,11 +130,68 @@ export function DataTable<TData, TValue>({
     activeHasAllergies,
     activeEmployment,
     activeCity,
+    activeBirthMonth,
+    activeBirthdayPreset,
   ].filter(Boolean).length
 
   // Filter dataset based on active smart filters
   const filteredData = React.useMemo(() => {
     return data.filter((member: any) => {
+      // Birth Month & Birthday Preset Filter
+      if (activeBirthMonth || activeBirthdayPreset) {
+        const bDateStr = member.birth_date
+        if (!bDateStr) return false
+
+        const parts = String(bDateStr).split("T")[0].split("-")
+        let bMonth = -1
+        let bDay = -1
+        if (parts.length === 3) {
+          bMonth = parseInt(parts[1], 10)
+          bDay = parseInt(parts[2], 10)
+        } else {
+          const d = new Date(bDateStr)
+          if (!isNaN(d.getTime())) {
+            bMonth = d.getMonth() + 1
+            bDay = d.getDate()
+          }
+        }
+        if (bMonth === -1) return false
+
+        const now = new Date()
+        const currentMonth = now.getMonth() + 1
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1
+
+        if (activeBirthMonth) {
+          if (activeBirthMonth === "this_month" && bMonth !== currentMonth) return false
+          else if (activeBirthMonth === "next_month" && bMonth !== nextMonth) return false
+          else if (!isNaN(Number(activeBirthMonth)) && bMonth !== Number(activeBirthMonth)) return false
+        }
+
+        if (activeBirthdayPreset) {
+          if (activeBirthdayPreset === "this_month" && bMonth !== currentMonth) return false
+          if (activeBirthdayPreset === "next_month" && bMonth !== nextMonth) return false
+
+          if (activeBirthdayPreset === "next_30_days") {
+            const thisYearBday = new Date(now.getFullYear(), bMonth - 1, bDay)
+            if (thisYearBday < now && Math.abs(now.getDate() - bDay) > 1) {
+              thisYearBday.setFullYear(now.getFullYear() + 1)
+            }
+            const diffTime = thisYearBday.getTime() - now.getTime()
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+            if (diffDays < 0 || diffDays > 30) return false
+          }
+
+          if (activeBirthdayPreset === "today_this_week") {
+            const thisYearBday = new Date(now.getFullYear(), bMonth - 1, bDay)
+            if (thisYearBday < now && Math.abs(now.getDate() - bDay) > 1) {
+              thisYearBday.setFullYear(now.getFullYear() + 1)
+            }
+            const diffTime = thisYearBday.getTime() - now.getTime()
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+            if (diffDays < 0 || diffDays > 7) return false
+          }
+        }
+      }
       // Age Group Filter
       if (activeAgeGroup) {
         let age = member.age
@@ -256,6 +330,8 @@ export function DataTable<TData, TValue>({
     activeHasAllergies,
     activeEmployment,
     activeCity,
+    activeBirthMonth,
+    activeBirthdayPreset,
   ])
 
   const table = useReactTable({
@@ -300,6 +376,26 @@ export function DataTable<TData, TValue>({
   // Filter Form Inputs UI Component
   const FilterControls = () => (
     <div className="space-y-4 py-2">
+      {/* Birth Month Filter */}
+      <div className="space-y-1.5 p-3 rounded-xl bg-pink-500/5 border border-pink-500/20">
+        <div className="flex items-center gap-1.5">
+          <Cake className="h-4 w-4 text-pink-500" />
+          <Label className="text-xs font-bold text-pink-700 dark:text-pink-300">Birth Month & Celebrations</Label>
+        </div>
+        <select
+          value={activeBirthMonth}
+          onChange={(e) => updateFilters({ birth_month: e.target.value, birthday_preset: null })}
+          className="w-full h-10 px-3 rounded-lg border bg-background text-sm font-medium focus:ring-1 focus:ring-primary"
+        >
+          <option value="">All Birth Months</option>
+          <option value="this_month">🎂 This Month ({new Date().toLocaleString('default', { month: 'long' })})</option>
+          <option value="next_month">🎂 Next Month ({new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleString('default', { month: 'long' })})</option>
+          {BIRTH_MONTH_OPTIONS.map((m) => (
+            <option key={m.id} value={m.id}>{m.label}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Age Group */}
       <div className="space-y-1.5">
         <Label className="text-xs font-semibold text-muted-foreground">Age Demographic</Label>
@@ -556,6 +652,32 @@ export function DataTable<TData, TValue>({
         </button>
 
         <button
+          onClick={() => updateFilters({ birth_month: activeBirthMonth === "this_month" ? null : "this_month", birthday_preset: null })}
+          className={cn(
+            "h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all border flex items-center gap-1.5",
+            activeBirthMonth === "this_month"
+              ? "bg-pink-600 text-white border-pink-600 shadow-sm"
+              : "bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-500/30 hover:bg-pink-500/20"
+          )}
+        >
+          <Cake className="h-3.5 w-3.5" />
+          Birthdays This Month ({new Date().toLocaleString('default', { month: 'short' })})
+        </button>
+
+        <button
+          onClick={() => updateFilters({ birthday_preset: activeBirthdayPreset === "next_30_days" ? null : "next_30_days", birth_month: null })}
+          className={cn(
+            "h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all border flex items-center gap-1.5",
+            activeBirthdayPreset === "next_30_days"
+              ? "bg-pink-600 text-white border-pink-600 shadow-sm"
+              : "bg-card text-muted-foreground border-border hover:bg-muted"
+          )}
+        >
+          <Cake className="h-3.5 w-3.5" />
+          Next 30 Days
+        </button>
+
+        <button
           onClick={() => updateFilters({ age_group: activeAgeGroup === "young_adults" ? null : "young_adults" })}
           className={cn(
             "h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all border flex items-center gap-1",
@@ -610,6 +732,26 @@ export function DataTable<TData, TValue>({
           <span className="text-xs font-bold text-primary flex items-center gap-1">
             <Filter className="h-3.5 w-3.5" /> Active ({filteredData.length} matching):
           </span>
+
+          {activeBirthMonth && (
+            <span className="inline-flex items-center gap-1 text-xs bg-pink-500/10 text-pink-700 dark:text-pink-300 border border-pink-500/30 px-2.5 py-1 rounded-full font-medium">
+              <Cake className="h-3 w-3 text-pink-500" />
+              Birth Month: {activeBirthMonth === "this_month" ? `This Month (${new Date().toLocaleString('default', { month: 'short' })})` : activeBirthMonth === "next_month" ? "Next Month" : (BIRTH_MONTH_OPTIONS.find((m) => m.id === activeBirthMonth)?.label || activeBirthMonth)}
+              <button onClick={() => updateFilters({ birth_month: null })} className="hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {activeBirthdayPreset && (
+            <span className="inline-flex items-center gap-1 text-xs bg-pink-500/10 text-pink-700 dark:text-pink-300 border border-pink-500/30 px-2.5 py-1 rounded-full font-medium">
+              <Cake className="h-3 w-3 text-pink-500" />
+              Celebrations: {activeBirthdayPreset === "next_30_days" ? "Next 30 Days" : activeBirthdayPreset === "today_this_week" ? "This Week" : activeBirthdayPreset}
+              <button onClick={() => updateFilters({ birthday_preset: null })} className="hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
 
           {activeAgeGroup && (
             <span className="inline-flex items-center gap-1 text-xs bg-card border px-2.5 py-1 rounded-full font-medium">
@@ -792,6 +934,12 @@ export function DataTable<TData, TValue>({
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
                         {missionName}
                       </span>
+                      {(row.original as any).birth_date && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-pink-500/10 text-pink-700 dark:text-pink-300 shrink-0 flex items-center gap-1">
+                          <Cake className="h-3 w-3" />
+                          {formatBirthday((row.original as any).birth_date)}
+                        </span>
+                      )}
                       {lastLoginAt && (
                         <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shrink-0">
                           Login: {new Date(lastLoginAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}

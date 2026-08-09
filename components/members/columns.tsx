@@ -2,26 +2,34 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, MoreHorizontal, Pencil, Eye } from "lucide-react"
+import { ArrowUpDown, Pencil, Eye, Cake } from "lucide-react"
 import Link from "next/link"
-import { formatName } from "@/lib/utils/utils"
+import { formatName, formatBirthday } from "@/lib/utils/utils"
+import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 
 export type MemberType = {
   id: string
   first_name: string
   last_name: string
+  middle_name?: string | null
+  suffix?: string | null
   church_role?: string | null
   contact_number: string | null
   city: string | null
   occupation: string | null
+  birth_date?: string | null
+  age?: number | null
+  gender?: string | null
+  sex?: string | null
+  marital_status?: string | null
+  mission_id?: string | null
   mission_name?: string | null
   date_baptized?: string | null
   baptism_date?: string | null
+  membership_date?: string | null
   last_login_at?: string | null
   created_at: string
 }
-
-import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 
 export const columns: ColumnDef<MemberType>[] = [
   {
@@ -61,7 +69,6 @@ export const columns: ColumnDef<MemberType>[] = [
         </Button>
       )
     },
-    // We add a custom global filter accessor
     accessorFn: (row) => formatName(`${row.first_name} ${row.last_name}`),
     cell: ({ row }) => {
       const fullName = formatName(`${row.original.first_name} ${row.original.last_name}`)
@@ -85,20 +92,45 @@ export const columns: ColumnDef<MemberType>[] = [
     },
   },
   {
-    accessorKey: "church_role",
-    header: "Role",
+    accessorKey: "birth_date",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+        >
+          <Cake className="mr-1.5 h-3.5 w-3.5 text-pink-500" />
+          Birthday
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    sortingFn: (rowA, rowB) => {
+      const getDayOfYear = (dStr?: string | null) => {
+        if (!dStr) return 9999
+        const parts = String(dStr).split("T")[0].split("-")
+        if (parts.length === 3) {
+          const m = parseInt(parts[1], 10)
+          const d = parseInt(parts[2], 10)
+          if (!isNaN(m) && !isNaN(d)) return m * 100 + d
+        }
+        const d = new Date(dStr)
+        if (isNaN(d.getTime())) return 9999
+        return (d.getMonth() + 1) * 100 + d.getDate()
+      }
+      return getDayOfYear(rowA.original.birth_date) - getDayOfYear(rowB.original.birth_date)
+    },
     cell: ({ row }) => {
-      const role = row.original.church_role || "Member"
-      if (role === "Main Pastor") {
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">Main Pastor</span>
-      }
-      if (role === "Mission Pastor") {
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">Mission Pastor</span>
-      }
-      if (role === "Ministry Leader") {
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-500/30">Ministry Leader</span>
-      }
-      return <span className="text-muted-foreground text-xs">{role}</span>
+      const bDate = row.original.birth_date
+      if (!bDate) return <span className="text-muted-foreground text-xs italic">-</span>
+      const formatted = formatBirthday(bDate)
+      return (
+        <div className="flex items-center gap-1.5 text-sm font-medium">
+          <Cake className="h-3.5 w-3.5 text-pink-500/80 shrink-0" />
+          <span>{formatted}</span>
+        </div>
+      )
     },
   },
   {
@@ -110,11 +142,6 @@ export const columns: ColumnDef<MemberType>[] = [
     accessorKey: "occupation",
     header: "Occupation",
     cell: ({ row }) => <div>{row.getValue("occupation") || "-"}</div>,
-  },
-  {
-    accessorKey: "city",
-    header: "City",
-    cell: ({ row }) => <div>{row.getValue("city") || "-"}</div>,
   },
   {
     accessorKey: "last_login_at",

@@ -20,10 +20,12 @@ import {
   TrendingUp,
   Target,
   CalendarCheck,
+  Cake,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable";
+import { UpcomingBirthdaysCard } from "@/components/dashboard/UpcomingBirthdaysCard";
 
 export const revalidate = 0
 
@@ -43,7 +45,7 @@ export default async function DashboardPage() {
     newBaptismsResult,
     recentMembers,
     growthDataQuery,
-    ageDataQuery,
+    birthdayMembersQuery,
     ministryEngagementResult,
     previousYearGrowthQuery,
     attendanceResult,
@@ -83,7 +85,13 @@ export default async function DashboardPage() {
         ),
       ),
     db
-      .select({ birth_date: members.birth_date })
+      .select({
+        id: members.id,
+        first_name: members.first_name,
+        last_name: members.last_name,
+        birth_date: members.birth_date,
+        contact_number: members.contact_number,
+      })
       .from(members)
       .where(isNotNull(members.birth_date)),
     db
@@ -113,49 +121,93 @@ export default async function DashboardPage() {
   const attTotal = attendanceResult[0]?.total || 1;
   const attPct = attendanceResult[0]?.total ? Math.min(100, Math.round((attPresent / attTotal) * 100)) : 0;
 
-  // Calculate Age Demographics from birth_date
-  let kids = 0,
-    youth = 0,
-    youngAdults = 0,
-    adults = 0,
-    seniors = 0;
-  ageDataQuery.forEach((member) => {
+  // Birthday Celebrants calculation
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+
+  const validBirthdayMembers = birthdayMembersQuery.filter((m) => Boolean(m.birth_date)) as {
+    id: string;
+    first_name: string;
+    last_name: string;
+    birth_date: string;
+    contact_number: string | null;
+  }[];
+
+  const celebrantsThisMonth = validBirthdayMembers.filter((m) => {
+    const parts = String(m.birth_date).split("T")[0].split("-");
+    if (parts.length === 3) {
+      return parseInt(parts[1], 10) === currentMonth;
+    }
+    const d = new Date(m.birth_date);
+    return !isNaN(d.getTime()) && d.getMonth() + 1 === currentMonth;
+  });
+
+  const upcoming30Days = validBirthdayMembers
+    .map((m) => {
+      const parts = String(m.birth_date).split("T")[0].split("-");
+      let bMonth = -1;
+      let bDay = -1;
+      if (parts.length === 3) {
+        bMonth = parseInt(parts[1], 10);
+        bDay = parseInt(parts[2], 10);
+      } else {
+        const d = new Date(m.birth_date);
+        if (!isNaN(d.getTime())) {
+          bMonth = d.getMonth() + 1;
+          bDay = d.getDate();
+        }
+      }
+      if (bMonth === -1) return null;
+
+      const thisYearBday = new Date(now.getFullYear(), bMonth - 1, bDay);
+      if (thisYearBday < now && Math.abs(now.getDate() - bDay) > 0) {
+        thisYearBday.setFullYear(now.getFullYear() + 1);
+      }
+      const diffTime = thisYearBday.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0 && diffDays <= 30) {
+        return { ...m, diffDays };
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.diffDays - b.diffDays) as {
+      id: string;
+      first_name: string;
+      last_name: string;
+      birth_date: string;
+      contact_number: string | null;
+    }[];
+
+  // Process age demographics
+  const ageDemographics = {
+    kids: 0,
+    teens: 0,
+    youngAdults: 0,
+    adults: 0,
+    seniors: 0,
+  };
+
+  validBirthdayMembers.forEach((member) => {
     if (member.birth_date) {
       const birthDate = new Date(member.birth_date);
-      const today = new Date();
       if (!isNaN(birthDate.getTime())) {
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate())
-        ) {
-          age--;
-        }
-
-        if (age >= 0) {
-          if (age <= 12) kids++;
-          else if (age <= 17) youth++;
-          else if (age <= 35) youngAdults++;
-          else if (age <= 60) adults++;
-          else seniors++;
-        }
+        const age = new Date().getFullYear() - birthDate.getFullYear();
+        if (age <= 12) ageDemographics.kids++;
+        else if (age <= 17) ageDemographics.teens++;
+        else if (age <= 35) ageDemographics.youngAdults++;
+        else if (age <= 59) ageDemographics.adults++;
+        else ageDemographics.seniors++;
       }
     }
   });
 
   const ageDemographicsData = [
-    { name: "Kids (0-12)", value: kids },
-    { name: "Youth (13-17)", value: youth },
-    { name: "Young Adults (18-35)", value: youngAdults },
-    { name: "Adults (36-55)", value: adults },
-    { name: "Seniors (60+)", value: seniors },
-  ];
-
-  // Ministry Volunteer Engagement Data
-  const membershipStatusData = [
-    { name: "Serving in Ministries", value: ministryEngagedMembers },
-    { name: "Not Yet Serving", value: Math.max(0, totalMembers - ministryEngagedMembers) },
+    { name: "Kids (0-12)", value: ageDemographics.kids },
+    { name: "Teens (13-17)", value: ageDemographics.teens },
+    { name: "Young Adults (18-35)", value: ageDemographics.youngAdults },
+    { name: "Adults (36-59)", value: ageDemographics.adults },
+    { name: "Seniors (60+)", value: ageDemographics.seniors },
   ];
 
   // Format Monthly Growth Data for Area Chart with Year-over-Year Comparison
@@ -221,51 +273,43 @@ export default async function DashboardPage() {
     }
   });
 
-  // Format Current Date for Hero Section
-  const currentDate = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const membershipStatusData = [
+    { name: "Engaged in Ministry", value: ministryEngagedMembers },
+    {
+      name: "Not Yet Engaged",
+      value: Math.max(0, totalMembers - ministryEngagedMembers),
+    },
+  ];
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-10 border shadow-sm">
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+    <div className="space-y-6">
+      {/* Hero Welcome Banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-6 md:p-8 shadow-xs">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Welcome Back! 👋
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <Activity className="h-3.5 w-3.5" />
+              <span>Church Overview & Health</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Welcome back to CBT Database
             </h1>
-            <p className="text-muted-foreground font-medium">
-              Today is {currentDate}. Here's what's happening in your church.
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl">
+              Monitor church demographics, ministry involvement, discipleship growth, and member engagement at a glance.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-3 w-full md:w-auto">
             <Button
-              asChild
               size="lg"
-              className="shadow-md hover:shadow-lg transition-all"
+              asChild
+              className="shadow-sm"
             >
               <Link href="/members/new">
                 <UserPlus className="mr-2 h-4 w-4" /> Add Member
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              asChild
-              className="bg-background/50 backdrop-blur-sm"
-            >
-              <Link href="/reports">
-                <FileText className="mr-2 h-4 w-4" /> Reports
-              </Link>
-            </Button>
           </div>
         </div>
-        {/* Decorative background blob */}
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       </div>
 
       {/* Streamlined KPI Stats Cards */}
@@ -321,18 +365,18 @@ export default async function DashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/members?baptized=this_year" className="block group">
-          <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-green-500 cursor-pointer h-full">
+        <Link href="/members?birth_month=this_month" className="block group">
+          <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-pink-500 cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium group-hover:text-green-600 transition-colors">Baptized This Year</CardTitle>
-              <div className="h-8 w-8 bg-green-500/10 rounded-full flex items-center justify-center">
-                <Droplets className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium group-hover:text-pink-600 transition-colors">Birthdays This Month</CardTitle>
+              <div className="h-8 w-8 bg-pink-500/10 rounded-full flex items-center justify-center">
+                <Cake className="h-4 w-4 text-pink-500" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{newBaptismsThisYear}</div>
+              <div className="text-3xl font-bold">{celebrantsThisMonth.length}</div>
               <p className="text-xs text-muted-foreground mt-1 font-medium">
-                Baptized in {currentYear} →
+                Celebrants in {new Date().toLocaleString("default", { month: "long" })} →
               </p>
             </CardContent>
           </Card>
@@ -346,15 +390,21 @@ export default async function DashboardPage() {
         ageData={ageDemographicsData}
       />
 
-      {/* Recent Members Table */}
-      <RecentMembersTable
-        recentMembers={recentMembers.map((m) => ({
-          ...m,
-          membership_date: m.membership_date
-            ? new Date(m.membership_date as any)
-            : null,
-        }))}
-      />
+      {/* Recent Members & Upcoming Celebrants Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentMembersTable
+          recentMembers={recentMembers.map((m) => ({
+            ...m,
+            membership_date: m.membership_date
+              ? new Date(m.membership_date as any)
+              : null,
+          }))}
+        />
+        <UpcomingBirthdaysCard
+          celebrantsThisMonth={celebrantsThisMonth}
+          upcoming30Days={upcoming30Days}
+        />
+      </div>
     </div>
   );
 }

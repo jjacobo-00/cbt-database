@@ -60,3 +60,35 @@ export function normalizeCity(city?: string | null): string {
   // Title Case fallback for unknown cities
   return formatName(trimmed)
 }
+
+/**
+ * Formats a date string into church standard birthday format: "Jan. 1, 2026".
+ * Abbreviations: Jan., Feb., Mar., Apr., May, Jun., Jul., Aug., Sept., Oct., Nov., Dec.
+ */
+export function formatBirthday(dateStr?: string | null): string {
+  if (!dateStr) return "-"
+  // Support YYYY-MM-DD or ISO strings without timezone shift
+  const cleanStr = String(dateStr).split("T")[0]
+  const parts = cleanStr.split("-")
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10)
+    const monthIndex = parseInt(parts[1], 10) - 1
+    const day = parseInt(parts[2], 10)
+    if (!isNaN(year) && !isNaN(monthIndex) && !isNaN(day) && monthIndex >= 0 && monthIndex <= 11) {
+      const monthNames = [
+        "Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.",
+        "Jul.", "Aug.", "Sept.", "Oct.", "Nov.", "Dec."
+      ]
+      return `${monthNames[monthIndex]} ${day}, ${year}`
+    }
+  }
+
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return "-"
+  const monthNames = [
+    "Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.",
+    "Jul.", "Aug.", "Sept.", "Oct.", "Nov.", "Dec."
+  ]
+  return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+}
+
