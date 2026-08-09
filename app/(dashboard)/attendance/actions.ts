@@ -62,11 +62,15 @@ export async function getAuthorizedMinistries() {
   })
 }
 
-export async function getMinistryAttendanceData(ministryId: string, dateStr: string) {
+export async function getMinistryAttendanceData(
+  ministryId: string,
+  dateStr: string,
+  serviceTime: string = "AM"
+) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 
-  // 1. Fetch Members Enrolled in this Ministry
+  // 1. Fetch all members currently enrolled in this ministry
   const enrolledMembers = await db
     .select({
       id: members.id,
@@ -107,11 +111,17 @@ export async function getMinistryAttendanceData(ministryId: string, dateStr: str
     })
   }
 
-  // 2. Fetch existing session for target date if recorded
+  // 2. Fetch existing session for target date & service time if recorded
   const [existingSession] = await db
     .select()
     .from(attendance_sessions)
-    .where(and(eq(attendance_sessions.ministry_id, ministryId), eq(attendance_sessions.date, dateStr)))
+    .where(
+      and(
+        eq(attendance_sessions.ministry_id, ministryId),
+        eq(attendance_sessions.date, dateStr),
+        eq(attendance_sessions.service_time, serviceTime)
+      )
+    )
 
   return {
     members: enrolledMembers.map((m) => ({
@@ -124,6 +134,7 @@ export async function getMinistryAttendanceData(ministryId: string, dateStr: str
           id: existingSession.id,
           ministry_id: existingSession.ministry_id,
           date: existingSession.date,
+          service_time: existingSession.service_time || serviceTime,
           notes: existingSession.notes || "",
           present_member_ids: (existingSession.present_member_ids as string[]) || [],
           present_count: existingSession.present_count,
@@ -138,13 +149,14 @@ export async function getMinistryAttendanceData(ministryId: string, dateStr: str
 export async function saveAttendanceSession(payload: {
   ministryId: string
   date: string
+  serviceTime?: string
   presentMemberIds: string[]
   notes?: string
 }) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 
-  const { ministryId, date, presentMemberIds, notes } = payload
+  const { ministryId, date, serviceTime = "AM", presentMemberIds, notes } = payload
   if (!ministryId || !date) throw new Error("Ministry and Date are required.")
 
   const isAdmin = session.user.role === "admin"
@@ -207,6 +219,7 @@ export async function saveAttendanceSession(payload: {
     .values({
       ministry_id: ministryId,
       date,
+      service_time: serviceTime,
       submitted_by: memberId || null,
       submitted_by_name: submitterName,
       notes: notes || null,
@@ -216,7 +229,11 @@ export async function saveAttendanceSession(payload: {
       updated_at: new Date(),
     })
     .onConflictDoUpdate({
-      target: [attendance_sessions.ministry_id, attendance_sessions.date],
+      target: [
+        attendance_sessions.ministry_id,
+        attendance_sessions.date,
+        attendance_sessions.service_time,
+      ],
       set: {
         submitted_by: memberId || null,
         submitted_by_name: submitterName,
@@ -244,11 +261,12 @@ export async function getAttendanceHistory(ministryId: string) {
     .select()
     .from(attendance_sessions)
     .where(eq(attendance_sessions.ministry_id, ministryId))
-    .orderBy(desc(attendance_sessions.date))
-    .limit(30)
+    .orderBy(desc(attendance_sessions.date), desc(attendance_sessions.service_time))
+    .limit(40)
 
   return history.map((s) => ({
     ...s,
+    service_time: s.service_time || "AM",
     created_at: s.created_at?.toISOString() || "",
     updated_at: s.updated_at?.toISOString() || "",
     present_member_ids: (s.present_member_ids as string[]) || [],

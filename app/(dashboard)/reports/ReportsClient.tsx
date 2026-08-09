@@ -52,6 +52,7 @@ import {
 import { AreaChart, Area } from "recharts";
 import type { ReportMember, ReportAttendanceSession } from "./page";
 import { normalizeCity } from "@/lib/utils/utils";
+import { formatServiceSlotBadge } from "@/lib/constants/church-schedule";
 
 export type MinistryParticipation = {
   member_id: string;
@@ -498,16 +499,20 @@ export function ReportsClient({
 
   const exportAttendanceCSV = () => {
     if (attendanceData.length === 0) return;
-    const headers = ["Date", "Ministry", "Present Count", "Total Enrolled", "Turnout Rate (%)", "Submitted By", "Notes"];
-    const rows = attendanceData.map((s) => [
-      s.date,
-      `"${(s.ministry_name || "").replace(/"/g, '""')}"`,
-      s.present_count,
-      s.total_enrolled,
-      s.total_enrolled > 0 ? Math.round((s.present_count / s.total_enrolled) * 100) : 0,
-      `"${(s.submitted_by_name || "").replace(/"/g, '""')}"`,
-      `"${(s.notes || "").replace(/"/g, '""')}"`,
-    ]);
+    const headers = ["Date", "Schedule", "Ministry", "Present Count", "Total Enrolled", "Turnout Rate (%)", "Submitted By", "Notes"];
+    const rows = attendanceData.map((s) => {
+      const scheduleLabel = formatServiceSlotBadge(s.date, s.service_time).label;
+      return [
+        s.date,
+        `"${scheduleLabel}"`,
+        `"${(s.ministry_name || "").replace(/"/g, '""')}"`,
+        s.present_count,
+        s.total_enrolled,
+        s.total_enrolled > 0 ? Math.round((s.present_count / s.total_enrolled) * 100) : 0,
+        `"${(s.submitted_by_name || "").replace(/"/g, '""')}"`,
+        `"${(s.notes || "").replace(/"/g, '""')}"`,
+      ];
+    });
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);

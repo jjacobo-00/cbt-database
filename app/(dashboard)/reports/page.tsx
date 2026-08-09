@@ -34,6 +34,7 @@ export type ReportAttendanceSession = {
   ministry_id: string
   ministry_name: string | null
   date: string
+  service_time: string
   submitted_by_name: string | null
   notes: string | null
   present_count: number
@@ -113,6 +114,7 @@ export default async function ReportsPage() {
       ministry_id: attendance_sessions.ministry_id,
       ministry_name: ministries.name,
       date: attendance_sessions.date,
+      service_time: attendance_sessions.service_time,
       submitted_by_name: attendance_sessions.submitted_by_name,
       notes: attendance_sessions.notes,
       present_count: attendance_sessions.present_count,
@@ -133,6 +135,7 @@ export default async function ReportsPage() {
 
   const formattedAttendance: ReportAttendanceSession[] = attendanceSessionsData.map(s => ({
     ...s,
+    service_time: s.service_time || 'AM',
     present_member_ids: (s.present_member_ids as string[]) || [],
   }))
 

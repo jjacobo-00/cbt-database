@@ -24,6 +24,9 @@ import {
   UserCheck,
   AlertCircle,
   PieChart,
+  Sun,
+  Moon,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +37,12 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { toast } from "sonner"
 import { cn, formatName } from "@/lib/utils/utils"
 import { saveAttendanceSession, getMinistryAttendanceData, getAttendanceHistory } from "./actions"
+import {
+  getAvailableServiceSlots,
+  getDefaultServiceSlot,
+  formatServiceSlotBadge,
+  ServiceTimeSlot,
+} from "@/lib/constants/church-schedule"
 
 type AuthorizedMinistry = {
   id: string
@@ -61,6 +70,7 @@ type AttendanceSession = {
   id: string
   ministry_id: string
   date: string
+  service_time: string
   notes: string
   present_member_ids: string[]
   present_count: number
@@ -76,23 +86,52 @@ export function AttendanceClient({
   authorizedMinistries: AuthorizedMinistry[]
   userRole: "admin" | "member"
 }) {
-  // Selected Ministry & Date state
+  // Selected Ministry, Date & Service Slot state
   const [selectedMinistryId, setSelectedMinistryId] = useState<string>(
     authorizedMinistries.length > 0 ? authorizedMinistries[0].id : ""
   )
 
   const getTodayStr = () => new Date().toISOString().split("T")[0]
 
+  const getThisSundayStr = () => {
+    const d = new Date()
+    const day = d.getDay()
+    const diff = d.getDate() - day + (day === 0 ? 0 : 7 - day)
+    const sunday = new Date(d.setDate(diff))
+    return sunday.toISOString().split("T")[0]
+  }
+
+  const getThisWednesdayStr = () => {
+    const d = new Date()
+    const day = d.getDay()
+    const diff = d.getDate() - day + 3
+    const wed = new Date(d.setDate(diff))
+    return wed.toISOString().split("T")[0]
+  }
+
   const getPreviousSundayStr = () => {
     const d = new Date()
     const day = d.getDay()
-    const diff = d.getDate() - day
+    const diff = d.getDate() - (day === 0 ? 7 : day)
     const prevSunday = new Date(d.setDate(diff))
     return prevSunday.toISOString().split("T")[0]
   }
 
   const [selectedDate, setSelectedDate] = useState<string>(getTodayStr())
+  const [selectedServiceTime, setSelectedServiceTime] = useState<ServiceTimeSlot>(
+    getDefaultServiceSlot(getTodayStr())
+  )
   const [activeTab, setActiveTab] = useState<"form" | "history">("form")
+
+  // Handle Date Change: automatically align service slot
+  const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate)
+    const availableSlots = getAvailableServiceSlots(newDate)
+    const isValidSlot = availableSlots.some((s) => s.value === selectedServiceTime)
+    if (!isValidSlot) {
+      setSelectedServiceTime(availableSlots[0].value)
+    }
+  }
 
   // Attendance Form state
   const [members, setMembers] = useState<EnrolledMember[]>([])
@@ -111,14 +150,14 @@ export function AttendanceClient({
   const [isLoading, setIsLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  // Load Attendance Form Data when Ministry or Date changes
+  // Load Attendance Form Data when Ministry, Date, or Service Time changes
   useEffect(() => {
-    if (!selectedMinistryId || !selectedDate) return
+    if (!selectedMinistryId || !selectedDate || !selectedServiceTime) return
 
     let isMounted = true
     setIsLoading(true)
 
-    getMinistryAttendanceData(selectedMinistryId, selectedDate)
+    getMinistryAttendanceData(selectedMinistryId, selectedDate, selectedServiceTime)
       .then((res) => {
         if (!isMounted) return
         setMembers(res.members)
@@ -148,7 +187,7 @@ export function AttendanceClient({
     return () => {
       isMounted = false
     }
-  }, [selectedMinistryId, selectedDate])
+  }, [selectedMinistryId, selectedDate, selectedServiceTime])
 
   // Load History when history tab is active
   useEffect(() => {
@@ -214,6 +253,7 @@ export function AttendanceClient({
         const res = await saveAttendanceSession({
           ministryId: selectedMinistryId,
           date: selectedDate,
+          serviceTime: selectedServiceTime,
           presentMemberIds: presentIds,
           notes,
         })
@@ -224,6 +264,7 @@ export function AttendanceClient({
             id: res.data.id,
             ministry_id: res.data.ministry_id,
             date: res.data.date,
+            service_time: res.data.service_time || selectedServiceTime,
             notes: res.data.notes || "",
             present_member_ids: presentIds,
             present_count: presentIds.length,
@@ -269,14 +310,14 @@ export function AttendanceClient({
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Record, track, and analyze member turnout for church ministries.
+            Record, track, and analyze member turnout for church ministries across Sunday & Wednesday services.
           </p>
         </div>
 
-        {/* Controls: Ministry Select & Date Picker */}
+        {/* Controls: Ministry Select, Date Picker & Service Slot */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Ministry Switcher */}
-          <div className="grid gap-1 min-w-[200px] flex-1 sm:flex-initial">
+          <div className="grid gap-1 min-w-[180px] flex-1 sm:flex-initial">
             <Label className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1">
               <Church className="h-3.5 w-3.5 text-primary" /> Active Ministry
             </Label>
@@ -302,10 +343,10 @@ export function AttendanceClient({
               <div className="flex items-center gap-1.5 text-[10px]">
                 <button
                   type="button"
-                  onClick={() => setSelectedDate(getTodayStr())}
+                  onClick={() => handleDateChange(getTodayStr())}
                   className={cn(
                     "hover:underline font-semibold",
-                    selectedDate === getTodayStr() ? "text-primary" : "text-muted-foreground"
+                    selectedDate === getTodayStr() ? "text-primary font-bold" : "text-muted-foreground"
                   )}
                 >
                   Today
@@ -313,21 +354,88 @@ export function AttendanceClient({
                 <span className="text-muted-foreground">•</span>
                 <button
                   type="button"
-                  onClick={() => setSelectedDate(getPreviousSundayStr())}
+                  onClick={() => {
+                    handleDateChange(getThisSundayStr())
+                    setSelectedServiceTime("AM")
+                  }}
                   className={cn(
                     "hover:underline font-semibold",
-                    selectedDate === getPreviousSundayStr() ? "text-primary" : "text-muted-foreground"
+                    selectedDate === getThisSundayStr() && selectedServiceTime === "AM"
+                      ? "text-primary font-bold"
+                      : "text-muted-foreground"
                   )}
                 >
-                  Last Sunday
+                  Sunday AM
+                </button>
+                <span className="text-muted-foreground">•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleDateChange(getThisSundayStr())
+                    setSelectedServiceTime("PM")
+                  }}
+                  className={cn(
+                    "hover:underline font-semibold",
+                    selectedDate === getThisSundayStr() && selectedServiceTime === "PM"
+                      ? "text-primary font-bold"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  Sunday PM
+                </button>
+                <span className="text-muted-foreground">•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleDateChange(getThisWednesdayStr())
+                    setSelectedServiceTime("PM")
+                  }}
+                  className={cn(
+                    "hover:underline font-semibold",
+                    selectedDate === getThisWednesdayStr()
+                      ? "text-primary font-bold"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  Wednesday
                 </button>
               </div>
             </div>
             <DatePicker
               value={selectedDate}
-              onChange={(val) => setSelectedDate(val || getTodayStr())}
+              onChange={(val) => handleDateChange(val || getTodayStr())}
               className="h-10 min-w-[150px]"
             />
+          </div>
+
+          {/* ☀️ / 🌙 Service Schedule Slot Selector */}
+          <div className="grid gap-1 min-w-[160px] flex-1 sm:flex-initial">
+            <Label className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5 text-primary" /> Service Schedule
+            </Label>
+            <div className="flex items-center bg-muted/60 p-1 rounded-xl h-10 border border-input shadow-xs">
+              {getAvailableServiceSlots(selectedDate).map((slot) => {
+                const isSelected = selectedServiceTime === slot.value
+                const Icon = slot.icon === "sun" ? Sun : Moon
+
+                return (
+                  <button
+                    key={slot.value}
+                    type="button"
+                    onClick={() => setSelectedServiceTime(slot.value)}
+                    className={cn(
+                      "flex-1 h-full rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 px-3 select-none",
+                      isSelected
+                        ? "bg-background text-primary shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Icon className={cn("h-3.5 w-3.5", isSelected ? (slot.icon === "sun" ? "text-amber-500 fill-amber-500/20" : "text-indigo-500 fill-indigo-500/20") : "opacity-70")} />
+                    <span>{slot.label}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -417,8 +525,11 @@ export function AttendanceClient({
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
                 <span>
-                  Attendance for <strong className="text-foreground">{selectedDate}</strong> was submitted by{" "}
-                  <strong>{existingSessionInfo.submitted_by_name}</strong>. You are currently editing this record.
+                  Attendance for <strong className="text-foreground">{selectedDate}</strong> (
+                  <strong className="text-primary font-semibold">
+                    {formatServiceSlotBadge(selectedDate, selectedServiceTime).label}
+                  </strong>
+                  ) was submitted by <strong>{existingSessionInfo.submitted_by_name}</strong>. You are currently editing this record.
                 </span>
               </div>
               <span className="text-[10px] text-muted-foreground shrink-0">
@@ -662,8 +773,18 @@ export function AttendanceClient({
                       className="p-3.5 rounded-xl border bg-card flex items-center justify-between gap-4 text-sm shadow-xs"
                     >
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-foreground">{log.date}</span>
+                          {/* Service Schedule Slot Badge */}
+                          {(() => {
+                            const badge = formatServiceSlotBadge(log.date, log.service_time)
+                            const Icon = badge.icon === "sun" ? Sun : Moon
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                                <Icon className="h-3 w-3" /> {badge.label}
+                              </span>
+                            )
+                          })()}
                           <span
                             className={cn(
                               "px-2 py-0.5 rounded-full text-[11px] font-semibold border",
@@ -693,7 +814,8 @@ export function AttendanceClient({
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setSelectedDate(log.date)
+                            handleDateChange(log.date)
+                            setSelectedServiceTime(log.service_time || "AM")
                             setActiveTab("form")
                           }}
                           className="h-8 text-xs text-primary gap-1"

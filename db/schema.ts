@@ -229,6 +229,7 @@ export const attendance_sessions = pgTable('attendance_sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   ministry_id: uuid('ministry_id').notNull().references(() => ministries.id, { onDelete: 'cascade' }),
   date: date('date').notNull(),
+  service_time: text('service_time').default('AM').notNull(), // 'AM' | 'PM'
   submitted_by: uuid('submitted_by').references(() => members.id, { onDelete: 'set null' }),
   submitted_by_name: text('submitted_by_name'),
   notes: text('notes'),
@@ -238,7 +239,7 @@ export const attendance_sessions = pgTable('attendance_sessions', {
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
-  uniqueSession: unique().on(t.ministry_id, t.date),
+  uniqueSession: unique().on(t.ministry_id, t.date, t.service_time),
 }))
 
 // ──────────────────────────────────────────────
