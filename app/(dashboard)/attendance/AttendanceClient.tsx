@@ -326,6 +326,12 @@ export function AttendanceClient({
           setExistingSessionInfo(updatedSession)
           setInitialPresentMap({ ...presentMap })
           setInitialNotes(notes)
+
+          // Refresh history logs and navigate back to Session History if this was an edit
+          getAttendanceHistory(selectedMinistryId).then((data) => setHistoryLogs(data))
+          if (isEditing) {
+            setActiveTab("history")
+          }
         }
       } catch (err: any) {
         console.error("Attendance submission failed:", err)
