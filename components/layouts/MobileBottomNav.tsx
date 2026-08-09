@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, HandHeart, Menu } from "lucide-react"
+import { Home, Users, HandHeart, Menu, CalendarCheck } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 
 import { useSession } from "next-auth/react"
@@ -18,15 +18,22 @@ export function MobileBottomNav({
   const { data: session } = useSession()
 
   const isMember = session?.user?.role === "member"
+  const userPermissions = (session?.user as any)?.permissions
+  const hasAttendancePermission = Boolean(
+    userPermissions?.can_manage_attendance || 
+    (Array.isArray(userPermissions?.attendance_ministry_ids) && userPermissions.attendance_ministry_ids.length > 0)
+  )
 
   const adminNavItems = [
     { name: "Home", href: "/dashboard", icon: Home },
     { name: "Members", href: "/members", icon: Users },
+    { name: "Attendance", href: "/attendance", icon: CalendarCheck },
     { name: "Commitments", href: "/commitments", icon: HandHeart },
   ]
 
   const memberNavItems = [
     { name: "My Profile", href: "/my-profile", icon: Users },
+    ...(hasAttendancePermission ? [{ name: "Attendance", href: "/attendance", icon: CalendarCheck }] : []),
   ]
 
   const navItems = isMember ? memberNavItems : adminNavItems

@@ -256,7 +256,7 @@ export function AttendanceClient({
   }
 
   return (
-    <div className="space-y-6 pb-24 sm:pb-8">
+    <div className="space-y-6 pb-40 sm:pb-8">
       {/* 🟢 Top Header Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-5 rounded-2xl border shadow-xs">
         <div className="space-y-1">
@@ -599,34 +599,40 @@ export function AttendanceClient({
             </CardContent>
           </Card>
 
-          {/* Desktop Submit Button */}
-          <div className="hidden sm:flex items-center justify-end">
-            <Button
-              type="button"
-              onClick={() => handleSubmit()}
-              disabled={isPending || isLoading}
-              className="h-12 px-8 rounded-xl font-bold text-sm shadow-md gap-2"
-            >
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Submit Attendance ({presentCount}/{totalEnrolled} Present)
-            </Button>
-          </div>
-
-          {/* 📱 STICKY MOBILE ACTION BAR */}
-          <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 p-3 bg-background/95 backdrop-blur-md border-t shadow-2xl flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Turnout Roster</p>
-              <p className="text-base font-bold text-primary">
-                {presentCount} / {totalEnrolled} <span className="text-xs font-semibold">({turnoutRatePct}%)</span>
+          {/* Always-Visible In-Page Submit Section */}
+          <div className="p-4 rounded-2xl border bg-card/80 backdrop-blur-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-foreground">Turnout Summary</p>
+              <p className="text-xs text-muted-foreground">
+                <strong className="text-primary font-bold">{presentCount} of {totalEnrolled}</strong> members marked present ({turnoutRatePct}% turnout).
               </p>
             </div>
             <Button
               type="button"
               onClick={() => handleSubmit()}
               disabled={isPending || isLoading}
-              className="h-11 px-5 rounded-xl font-bold text-xs shadow-md gap-1.5"
+              className="h-12 w-full sm:w-auto px-8 rounded-xl font-bold text-sm shadow-md gap-2 active:scale-[0.98] transition-transform"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Submit Attendance ({presentCount}/{totalEnrolled})
+            </Button>
+          </div>
+
+          {/* 📱 STICKY MOBILE ACTION BAR (Floats directly above the h-16 MobileBottomNav) */}
+          <div className="sm:hidden fixed bottom-16 inset-x-0 z-30 p-3 bg-background/95 backdrop-blur-md border-t shadow-2xl flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] text-muted-foreground font-medium">Turnout Roster</p>
+              <p className="text-sm font-bold text-primary">
+                {presentCount} / {totalEnrolled} <span className="text-[11px] font-semibold text-muted-foreground">({turnoutRatePct}%)</span>
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => handleSubmit()}
+              disabled={isPending || isLoading}
+              className="h-10 px-5 rounded-xl font-bold text-xs shadow-md gap-1.5 active:scale-95 transition-transform"
+            >
+              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Submit
             </Button>
           </div>
