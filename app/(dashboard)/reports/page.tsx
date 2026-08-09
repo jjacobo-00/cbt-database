@@ -35,6 +35,10 @@ export type ReportAttendanceSession = {
   ministry_name: string | null
   date: string
   service_time: string
+  weather_condition: string | null
+  weather_summary: string | null
+  weather_temp_c: string | null
+  weather_icon: string | null
   submitted_by_name: string | null
   notes: string | null
   present_count: number
@@ -115,6 +119,10 @@ export default async function ReportsPage() {
       ministry_name: ministries.name,
       date: attendance_sessions.date,
       service_time: attendance_sessions.service_time,
+      weather_condition: attendance_sessions.weather_condition,
+      weather_summary: attendance_sessions.weather_summary,
+      weather_temp_c: attendance_sessions.weather_temp_c,
+      weather_icon: attendance_sessions.weather_icon,
       submitted_by_name: attendance_sessions.submitted_by_name,
       notes: attendance_sessions.notes,
       present_count: attendance_sessions.present_count,
@@ -136,6 +144,10 @@ export default async function ReportsPage() {
   const formattedAttendance: ReportAttendanceSession[] = attendanceSessionsData.map(s => ({
     ...s,
     service_time: s.service_time || 'AM',
+    weather_condition: s.weather_condition || null,
+    weather_summary: s.weather_summary || null,
+    weather_temp_c: s.weather_temp_c || null,
+    weather_icon: s.weather_icon || null,
     present_member_ids: (s.present_member_ids as string[]) || [],
   }))
 

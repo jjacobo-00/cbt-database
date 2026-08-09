@@ -234,6 +234,10 @@ export const attendance_sessions = pgTable('attendance_sessions', {
   submitted_by_name: text('submitted_by_name'),
   last_edited_by: uuid('last_edited_by').references(() => members.id, { onDelete: 'set null' }),
   last_edited_by_name: text('last_edited_by_name'),
+  weather_condition: text('weather_condition'), // 'good' | 'rainy' | 'stormy'
+  weather_summary: text('weather_summary'),     // e.g. "Thunderstorm (26.8°C, 68mm rain)"
+  weather_temp_c: text('weather_temp_c'),       // e.g. "26.8"
+  weather_icon: text('weather_icon'),           // e.g. "cloud-lightning" | "sun" | "cloud-rain" | "cloud"
   notes: text('notes'),
   present_member_ids: jsonb('present_member_ids').default([]).notNull(),
   present_count: integer('present_count').default(0).notNull(),

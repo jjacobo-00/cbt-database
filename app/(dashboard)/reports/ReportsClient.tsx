@@ -48,6 +48,11 @@ import {
   Download,
   CheckCircle2,
   XCircle,
+  SunMedium,
+  CloudRain,
+  CloudLightning,
+  Cloud,
+  Sparkles,
 } from "lucide-react";
 import { AreaChart, Area } from "recharts";
 import type { ReportMember, ReportAttendanceSession } from "./page";
@@ -427,6 +432,8 @@ export function ReportsClient({
     };
   }, [filteredData, faithPromises]);
 
+  const [attendanceWeatherFilter, setAttendanceWeatherFilter] = useState<"all" | "good" | "rainy" | "stormy">("all");
+
   const attendanceStats = useMemo(() => {
     if (attendanceData.length === 0) {
       return {
@@ -435,6 +442,11 @@ export function ReportsClient({
         totalPresent: 0,
         totalEnrolled: 0,
         topMinistry: "None",
+        goodWeatherTurnoutRate: 0,
+        goodWeatherCount: 0,
+        badWeatherTurnoutRate: 0,
+        badWeatherCount: 0,
+        weatherSensitivityDelta: null as number | null,
         trend: [],
         ministryComparison: [],
         sessionsList: [],
@@ -444,6 +456,32 @@ export function ReportsClient({
     const totalPresent = attendanceData.reduce((acc, s) => acc + (s.present_count || 0), 0);
     const totalEnrolled = attendanceData.reduce((acc, s) => acc + (s.total_enrolled || 0), 0);
     const avgTurnoutRate = totalEnrolled > 0 ? Math.min(100, Math.round((totalPresent / totalEnrolled) * 100)) : 0;
+
+    // Weather correlation stats
+    const goodWeatherSessions = attendanceData.filter((s) => !s.weather_condition || s.weather_condition === "good");
+    const badWeatherSessions = attendanceData.filter((s) => s.weather_condition === "rainy" || s.weather_condition === "stormy");
+
+    const goodPresent = goodWeatherSessions.reduce((acc, s) => acc + (s.present_count || 0), 0);
+    const goodEnrolled = goodWeatherSessions.reduce((acc, s) => acc + (s.total_enrolled || 0), 0);
+    const goodWeatherTurnoutRate = goodEnrolled > 0 ? Math.round((goodPresent / goodEnrolled) * 100) : avgTurnoutRate;
+
+    const badPresent = badWeatherSessions.reduce((acc, s) => acc + (s.present_count || 0), 0);
+    const badEnrolled = badWeatherSessions.reduce((acc, s) => acc + (s.total_enrolled || 0), 0);
+    const badWeatherTurnoutRate = badEnrolled > 0 ? Math.round((badPresent / badEnrolled) * 100) : 0;
+
+    const weatherSensitivityDelta =
+      goodWeatherSessions.length > 0 && badWeatherSessions.length > 0
+        ? goodWeatherTurnoutRate - badWeatherTurnoutRate
+        : null;
+
+    // Filter sessions by selected weather pill
+    const filteredSessions = attendanceData.filter((s) => {
+      if (attendanceWeatherFilter === "all") return true;
+      if (attendanceWeatherFilter === "good") return !s.weather_condition || s.weather_condition === "good";
+      if (attendanceWeatherFilter === "rainy") return s.weather_condition === "rainy";
+      if (attendanceWeatherFilter === "stormy") return s.weather_condition === "stormy";
+      return true;
+    });
 
     // Ministry comparison
     const ministryMap: Record<string, { present: number; enrolled: number; count: number }> = {};
@@ -491,21 +529,41 @@ export function ReportsClient({
       totalPresent,
       totalEnrolled,
       topMinistry,
+      goodWeatherTurnoutRate,
+      goodWeatherCount: goodWeatherSessions.length,
+      badWeatherTurnoutRate,
+      badWeatherCount: badWeatherSessions.length,
+      weatherSensitivityDelta,
       trend,
       ministryComparison,
-      sessionsList: attendanceData,
+      sessionsList: filteredSessions,
     };
-  }, [attendanceData]);
+  }, [attendanceData, attendanceWeatherFilter]);
 
   const exportAttendanceCSV = () => {
     if (attendanceData.length === 0) return;
-    const headers = ["Date", "Schedule", "Ministry", "Present Count", "Total Enrolled", "Turnout Rate (%)", "Submitted By", "Notes"];
+    const headers = [
+      "Date",
+      "Schedule",
+      "Ministry",
+      "Weather Summary",
+      "Weather Category",
+      "Temperature (C)",
+      "Present Count",
+      "Total Enrolled",
+      "Turnout Rate (%)",
+      "Submitted By",
+      "Notes",
+    ];
     const rows = attendanceData.map((s) => {
       const scheduleLabel = formatServiceSlotBadge(s.date, s.service_time).label;
       return [
         s.date,
         `"${scheduleLabel}"`,
         `"${(s.ministry_name || "").replace(/"/g, '""')}"`,
+        `"${(s.weather_summary || "Fair Weather").replace(/"/g, '""')}"`,
+        `"${s.weather_condition || "good"}"`,
+        `"${s.weather_temp_c || ""}"`,
         s.present_count,
         s.total_enrolled,
         s.total_enrolled > 0 ? Math.round((s.present_count / s.total_enrolled) * 100) : 0,
@@ -823,6 +881,74 @@ export function ReportsClient({
             </Card>
           </div>
 
+          {/* Weather Correlation Analytics Row */}
+          <div className="grid min-w-0 gap-4 sm:grid-cols-3">
+            <Card className="border-t-4 border-t-amber-400 bg-amber-500/5 dark:bg-amber-500/10 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+                  <SunMedium className="h-4 w-4 text-amber-500" /> Fair / Sunny Weather
+                </CardTitle>
+                <div className="h-7 w-7 bg-amber-500/20 text-amber-600 rounded-full flex items-center justify-center">
+                  <Sparkles className="h-3.5 w-3.5" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">{attendanceStats.goodWeatherTurnoutRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Average turnout on dry/clear services ({attendanceStats.goodWeatherCount} sessions)
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-blue-500 bg-blue-500/5 dark:bg-blue-500/10 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+                  <CloudRain className="h-4 w-4 text-blue-500" /> Rainy / Stormy Weather
+                </CardTitle>
+                <div className="h-7 w-7 bg-blue-500/20 text-blue-600 rounded-full flex items-center justify-center">
+                  <CloudRain className="h-3.5 w-3.5" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {attendanceStats.badWeatherCount > 0 ? `${attendanceStats.badWeatherTurnoutRate}%` : "—"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {attendanceStats.badWeatherCount > 0
+                    ? `Average turnout on wet services (${attendanceStats.badWeatherCount} sessions)`
+                    : "No rainy/stormy sessions recorded yet"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-purple-500 bg-purple-500/5 dark:bg-purple-500/10 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+                  <CloudLightning className="h-4 w-4 text-purple-500" /> Weather Impact Delta
+                </CardTitle>
+                <div className="h-7 w-7 bg-purple-500/20 text-purple-600 rounded-full flex items-center justify-center">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {attendanceStats.weatherSensitivityDelta !== null
+                    ? attendanceStats.weatherSensitivityDelta > 0
+                      ? `-${attendanceStats.weatherSensitivityDelta}%`
+                      : `+${Math.abs(attendanceStats.weatherSensitivityDelta)}%`
+                    : "0%"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {attendanceStats.weatherSensitivityDelta !== null
+                    ? attendanceStats.weatherSensitivityDelta > 0
+                      ? "Turnout drop during heavy rain / storms"
+                      : "Turnout remains resilient in all weather"
+                    : "Weather sensitivity baseline building"}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Charts Row */}
           <div className="grid min-w-0 gap-6 md:grid-cols-2">
             {/* Area Chart: Turnout Trend */}
@@ -894,25 +1020,67 @@ export function ReportsClient({
 
           {/* Detailed Attendance Sessions Log Table */}
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
               <div>
                 <CardTitle className="text-base">Ministry Attendance Sessions Log</CardTitle>
                 <CardDescription className="text-xs">Historical log of all recorded ministry sessions</CardDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportAttendanceCSV}
-                disabled={attendanceStats.totalSessions === 0}
-                className="text-xs gap-1.5 h-8"
-              >
-                <Download className="h-3.5 w-3.5" /> CSV
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Weather Filter Pills */}
+                <div className="flex items-center bg-muted/60 p-1 rounded-lg text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setAttendanceWeatherFilter("all")}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      attendanceWeatherFilter === "all" ? "bg-background text-foreground shadow-xs font-bold" : "text-muted-foreground"
+                    }`}
+                  >
+                    All Weather
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAttendanceWeatherFilter("good")}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      attendanceWeatherFilter === "good" ? "bg-amber-500 text-white shadow-xs font-bold" : "text-muted-foreground"
+                    }`}
+                  >
+                    ☀️ Good
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAttendanceWeatherFilter("rainy")}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      attendanceWeatherFilter === "rainy" ? "bg-blue-500 text-white shadow-xs font-bold" : "text-muted-foreground"
+                    }`}
+                  >
+                    🌧️ Rainy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAttendanceWeatherFilter("stormy")}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      attendanceWeatherFilter === "stormy" ? "bg-purple-600 text-white shadow-xs font-bold" : "text-muted-foreground"
+                    }`}
+                  >
+                    ⛈️ Stormy
+                  </button>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportAttendanceCSV}
+                  disabled={attendanceStats.totalSessions === 0}
+                  className="text-xs gap-1.5 h-8"
+                >
+                  <Download className="h-3.5 w-3.5" /> CSV
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {attendanceStats.sessionsList.length === 0 ? (
                 <div className="p-8 text-center text-xs text-muted-foreground">
-                  No attendance sessions recorded in the database yet.
+                  No attendance sessions match the selected weather filter.
                 </div>
               ) : (
                 <div className="overflow-x-auto border rounded-xl">
@@ -920,7 +1088,9 @@ export function ReportsClient({
                     <thead className="bg-muted/50 border-b font-semibold text-muted-foreground">
                       <tr>
                         <th className="p-3">Date</th>
+                        <th className="p-3">Schedule</th>
                         <th className="p-3">Ministry</th>
+                        <th className="p-3">Weather</th>
                         <th className="p-3">Present / Total</th>
                         <th className="p-3">Turnout Rate</th>
                         <th className="p-3">Submitted By</th>
@@ -930,11 +1100,31 @@ export function ReportsClient({
                     <tbody className="divide-y">
                       {attendanceStats.sessionsList.map((s) => {
                         const rate = s.total_enrolled > 0 ? Math.round((s.present_count / s.total_enrolled) * 100) : 0;
+                        const schedule = formatServiceSlotBadge(s.date, s.service_time);
+
                         return (
                           <tr key={s.id} className="hover:bg-muted/30 transition-colors">
                             <td className="p-3 font-semibold text-foreground whitespace-nowrap">{s.date}</td>
+                            <td className="p-3 whitespace-nowrap">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                                {schedule.label}
+                              </span>
+                            </td>
                             <td className="p-3 font-medium text-foreground">{s.ministry_name || "—"}</td>
                             <td className="p-3 whitespace-nowrap">
+                              {s.weather_summary ? (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground border">
+                                  {s.weather_icon === "cloud-lightning" && <CloudLightning className="h-3 w-3 text-purple-500" />}
+                                  {s.weather_icon === "cloud-rain" && <CloudRain className="h-3 w-3 text-blue-500" />}
+                                  {s.weather_icon === "cloud" && <Cloud className="h-3 w-3 text-slate-500" />}
+                                  {s.weather_icon === "sun" && <SunMedium className="h-3 w-3 text-amber-500" />}
+                                  <span className="truncate max-w-[130px]">{s.weather_summary}</span>
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-[11px]">Fair Weather</span>
+                              )}
+                            </td>
+                            <td className="p-3 whitespace-nowrap font-medium">
                               {s.present_count} / {s.total_enrolled}
                             </td>
                             <td className="p-3 whitespace-nowrap">

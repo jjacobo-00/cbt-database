@@ -8,6 +8,11 @@ import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/utils/action-helpers"
 
 import { isDemographicMinistry } from "@/lib/constants/demographic-ministries"
+import { fetchOlongapoWeather } from "@/lib/services/weather"
+
+export async function getOlongapoWeatherAction(dateStr: string) {
+  return await fetchOlongapoWeather(dateStr)
+}
 
 export async function getAuthorizedMinistries() {
   const session = await auth()
@@ -135,6 +140,10 @@ export async function getMinistryAttendanceData(
           ministry_id: existingSession.ministry_id,
           date: existingSession.date,
           service_time: existingSession.service_time || serviceTime,
+          weather_condition: existingSession.weather_condition || null,
+          weather_summary: existingSession.weather_summary || null,
+          weather_temp_c: existingSession.weather_temp_c || null,
+          weather_icon: existingSession.weather_icon || null,
           notes: existingSession.notes || "",
           present_member_ids: (existingSession.present_member_ids as string[]) || [],
           present_count: existingSession.present_count,
@@ -151,13 +160,27 @@ export async function saveAttendanceSession(payload: {
   ministryId: string
   date: string
   serviceTime?: string
+  weatherCondition?: string | null
+  weatherSummary?: string | null
+  weatherTempC?: string | null
+  weatherIcon?: string | null
   presentMemberIds: string[]
   notes?: string
 }) {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 
-  const { ministryId, date, serviceTime = "AM", presentMemberIds, notes } = payload
+  const {
+    ministryId,
+    date,
+    serviceTime = "AM",
+    weatherCondition,
+    weatherSummary,
+    weatherTempC,
+    weatherIcon,
+    presentMemberIds,
+    notes,
+  } = payload
   if (!ministryId || !date) throw new Error("Ministry and Date are required.")
 
   const isAdmin = session.user.role === "admin"
@@ -204,6 +227,27 @@ export async function saveAttendanceSession(payload: {
     }
   }
 
+  // Resolve Weather automatically if not provided
+  let finalWeatherCondition = weatherCondition
+  let finalWeatherSummary = weatherSummary
+  let finalWeatherTempC = weatherTempC
+  let finalWeatherIcon = weatherIcon
+
+  if (!finalWeatherCondition || !finalWeatherSummary) {
+    try {
+      const w = await fetchOlongapoWeather(date)
+      finalWeatherCondition = w.condition
+      finalWeatherSummary = w.summary
+      finalWeatherTempC = w.temperatureC !== null ? String(w.temperatureC) : null
+      finalWeatherIcon = w.icon
+    } catch {
+      finalWeatherCondition = "good"
+      finalWeatherSummary = "Fair Weather"
+      finalWeatherTempC = "28"
+      finalWeatherIcon = "sun"
+    }
+  }
+
   // Count total enrolled members currently
   const [countRes] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -225,6 +269,10 @@ export async function saveAttendanceSession(payload: {
       submitted_by_name: submitterName,
       last_edited_by: memberId || null,
       last_edited_by_name: submitterName,
+      weather_condition: finalWeatherCondition || null,
+      weather_summary: finalWeatherSummary || null,
+      weather_temp_c: finalWeatherTempC || null,
+      weather_icon: finalWeatherIcon || null,
       notes: notes || null,
       present_member_ids: presentMemberIds,
       present_count: presentMemberIds.length,
@@ -240,6 +288,10 @@ export async function saveAttendanceSession(payload: {
       set: {
         last_edited_by: memberId || null,
         last_edited_by_name: submitterName,
+        weather_condition: finalWeatherCondition || null,
+        weather_summary: finalWeatherSummary || null,
+        weather_temp_c: finalWeatherTempC || null,
+        weather_icon: finalWeatherIcon || null,
         notes: notes || null,
         present_member_ids: presentMemberIds,
         present_count: presentMemberIds.length,
@@ -330,6 +382,10 @@ export async function getAttendanceHistory(ministryId: string) {
   return history.map((s) => ({
     ...s,
     service_time: s.service_time || "AM",
+    weather_condition: s.weather_condition || "good",
+    weather_summary: s.weather_summary || "",
+    weather_temp_c: s.weather_temp_c || null,
+    weather_icon: s.weather_icon || "sun",
     last_edited_by_name: s.last_edited_by_name || s.submitted_by_name || "",
     created_at: s.created_at?.toISOString() || "",
     updated_at: s.updated_at?.toISOString() || "",

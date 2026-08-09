@@ -31,6 +31,10 @@ import {
   Undo2,
   AlertTriangle,
   Edit3,
+  CloudRain,
+  CloudLightning,
+  Cloud,
+  SunMedium,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,6 +59,7 @@ import {
   getMinistryAttendanceData,
   getAttendanceHistory,
   deleteAttendanceSession,
+  getOlongapoWeatherAction,
 } from "./actions"
 import {
   getAvailableServiceSlots,
@@ -62,6 +67,7 @@ import {
   formatServiceSlotBadge,
   ServiceTimeSlot,
 } from "@/lib/constants/church-schedule"
+import { WeatherData } from "@/lib/services/weather"
 
 type AuthorizedMinistry = {
   id: string
@@ -90,6 +96,10 @@ type AttendanceSession = {
   ministry_id: string
   date: string
   service_time: string
+  weather_condition?: string | null
+  weather_summary?: string | null
+  weather_temp_c?: string | null
+  weather_icon?: string | null
   notes: string
   present_member_ids: string[]
   present_count: number
@@ -143,6 +153,10 @@ export function AttendanceClient({
   )
   const [activeTab, setActiveTab] = useState<"form" | "history">("form")
 
+  // Automated Weather State for Gordon Heights, Olongapo City
+  const [currentWeather, setCurrentWeather] = useState<WeatherData | null>(null)
+  const [isWeatherLoading, setIsWeatherLoading] = useState(false)
+
   // Handle Date Change: automatically align service slot
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate)
@@ -152,6 +166,26 @@ export function AttendanceClient({
       setSelectedServiceTime(availableSlots[0].value)
     }
   }
+
+  // Load weather for selected date
+  useEffect(() => {
+    let isMounted = true
+    setIsWeatherLoading(true)
+    getOlongapoWeatherAction(selectedDate)
+      .then((data) => {
+        if (isMounted) setCurrentWeather(data)
+      })
+      .catch((err) => {
+        console.warn("Weather load error", err)
+      })
+      .finally(() => {
+        if (isMounted) setIsWeatherLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedDate])
 
   // Attendance Form state
   const [members, setMembers] = useState<EnrolledMember[]>([])
@@ -300,6 +334,10 @@ export function AttendanceClient({
           ministryId: selectedMinistryId,
           date: selectedDate,
           serviceTime: selectedServiceTime,
+          weatherCondition: currentWeather?.condition || "good",
+          weatherSummary: currentWeather?.summary || "Fair Weather",
+          weatherTempC: currentWeather?.temperatureC !== null ? String(currentWeather?.temperatureC) : null,
+          weatherIcon: currentWeather?.icon || "sun",
           presentMemberIds: presentIds,
           notes,
         })
@@ -315,6 +353,10 @@ export function AttendanceClient({
             ministry_id: res.data.ministry_id,
             date: res.data.date,
             service_time: res.data.service_time || selectedServiceTime,
+            weather_condition: res.data.weather_condition || currentWeather?.condition || null,
+            weather_summary: res.data.weather_summary || currentWeather?.summary || null,
+            weather_temp_c: res.data.weather_temp_c || (currentWeather?.temperatureC ? String(currentWeather.temperatureC) : null),
+            weather_icon: res.data.weather_icon || currentWeather?.icon || null,
             notes: res.data.notes || "",
             present_member_ids: presentIds,
             present_count: presentIds.length,
@@ -401,10 +443,10 @@ export function AttendanceClient({
           </p>
         </div>
 
-        {/* Controls: Ministry Select, Date Picker & Service Slot */}
+        {/* Controls: Ministry Select, Date Picker, Service Slot & Weather Widget */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Ministry Switcher */}
-          <div className="grid gap-1 min-w-[180px] flex-1 sm:flex-initial">
+          <div className="grid gap-1 min-w-[170px] flex-1 sm:flex-initial">
             <Label className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1">
               <Church className="h-3.5 w-3.5 text-primary" /> Active Ministry
             </Label>
@@ -491,14 +533,14 @@ export function AttendanceClient({
             <DatePicker
               value={selectedDate}
               onChange={(val) => handleDateChange(val || getTodayStr())}
-              className="h-10 min-w-[150px]"
+              className="h-10 min-w-[140px]"
             />
           </div>
 
           {/* ☀️ / 🌙 Service Schedule Slot Selector */}
-          <div className="grid gap-1 min-w-[160px] flex-1 sm:flex-initial">
+          <div className="grid gap-1 min-w-[150px] flex-1 sm:flex-initial">
             <Label className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5 text-primary" /> Service Schedule
+              <Clock className="h-3.5 w-3.5 text-primary" /> Schedule
             </Label>
             <div className="flex items-center bg-muted/60 p-1 rounded-xl h-10 border border-input shadow-xs">
               {getAvailableServiceSlots(selectedDate).map((slot) => {
@@ -511,7 +553,7 @@ export function AttendanceClient({
                     type="button"
                     onClick={() => setSelectedServiceTime(slot.value)}
                     className={cn(
-                      "flex-1 h-full rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 px-3 select-none",
+                      "flex-1 h-full rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 px-2.5 select-none",
                       isSelected
                         ? "bg-background text-primary shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
@@ -531,6 +573,45 @@ export function AttendanceClient({
                   </button>
                 )
               })}
+            </div>
+          </div>
+
+          {/* 🌦️ Live Automated Weather Indicator (Gordon Heights, Olongapo City) */}
+          <div className="grid gap-1 flex-1 sm:flex-initial min-w-[150px]">
+            <Label className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-amber-500" /> Weather (Gordon H.)
+            </Label>
+            <div className="h-10 px-3 rounded-xl border bg-muted/40 flex items-center gap-2 text-xs font-semibold shadow-xs">
+              {isWeatherLoading ? (
+                <div className="flex items-center gap-1.5 text-muted-foreground text-[11px]">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Scanning...
+                </div>
+              ) : currentWeather ? (
+                <div className="flex items-center gap-1.5">
+                  {currentWeather.icon === "cloud-lightning" && (
+                    <CloudLightning className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                  )}
+                  {currentWeather.icon === "cloud-rain" && (
+                    <CloudRain className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  )}
+                  {currentWeather.icon === "cloud" && (
+                    <Cloud className="h-4 w-4 text-slate-500 shrink-0" />
+                  )}
+                  {currentWeather.icon === "sun" && (
+                    <SunMedium className="h-4 w-4 text-amber-500 shrink-0" />
+                  )}
+                  <div className="truncate text-left">
+                    <span className="font-bold text-foreground">
+                      {currentWeather.temperatureC !== null ? `${currentWeather.temperatureC}°C ` : ""}
+                    </span>
+                    <span className="text-muted-foreground text-[11px] font-medium truncate">
+                      {currentWeather.conditionLabel}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-[11px]">Fair Weather</span>
+              )}
             </div>
           </div>
         </div>
@@ -626,6 +707,11 @@ export function AttendanceClient({
                   <span className="font-bold text-foreground">
                     {selectedDate} • {formatServiceSlotBadge(selectedDate, selectedServiceTime).label}
                   </span>
+                  {existingSessionInfo.weather_summary && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border">
+                      {existingSessionInfo.weather_summary}
+                    </span>
+                  )}
                   {isDirty && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                       Unsaved Changes ({addedCount > 0 ? `+${addedCount} present` : ""}
@@ -861,11 +947,20 @@ export function AttendanceClient({
           {/* Always-Visible In-Page Submit / Save Section */}
           <div className="p-4 rounded-2xl border bg-card/80 backdrop-blur-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-xs font-semibold text-foreground">Turnout Summary</p>
                 {existingSessionInfo && (
                   <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300">
                     Edit Mode
+                  </span>
+                )}
+                {currentWeather && (
+                  <span className="px-2 py-0.2 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border flex items-center gap-1">
+                    {currentWeather.icon === "cloud-lightning" && <CloudLightning className="h-3 w-3 text-purple-500" />}
+                    {currentWeather.icon === "cloud-rain" && <CloudRain className="h-3 w-3 text-blue-500" />}
+                    {currentWeather.icon === "cloud" && <Cloud className="h-3 w-3 text-slate-500" />}
+                    {currentWeather.icon === "sun" && <SunMedium className="h-3 w-3 text-amber-500" />}
+                    {currentWeather.summary}
                   </span>
                 )}
               </div>
@@ -977,6 +1072,26 @@ export function AttendanceClient({
                               </span>
                             )
                           })()}
+
+                          {/* Weather Badge */}
+                          {log.weather_summary && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border">
+                              {log.weather_icon === "cloud-lightning" && (
+                                <CloudLightning className="h-3 w-3 text-purple-500" />
+                              )}
+                              {log.weather_icon === "cloud-rain" && (
+                                <CloudRain className="h-3 w-3 text-blue-500" />
+                              )}
+                              {log.weather_icon === "cloud" && (
+                                <Cloud className="h-3 w-3 text-slate-500" />
+                              )}
+                              {log.weather_icon === "sun" && (
+                                <SunMedium className="h-3 w-3 text-amber-500" />
+                              )}
+                              <span className="truncate max-w-[140px]">{log.weather_summary}</span>
+                            </span>
+                          )}
+
                           <span
                             className={cn(
                               "px-2 py-0.5 rounded-full text-[11px] font-semibold border",
