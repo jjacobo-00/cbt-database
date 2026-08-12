@@ -53,10 +53,13 @@ import {
   CloudLightning,
   Cloud,
   Sparkles,
+  Cake,
+  Heart,
+  Search,
 } from "lucide-react";
 import { AreaChart, Area } from "recharts";
 import type { ReportMember, ReportAttendanceSession } from "./page";
-import { normalizeCity } from "@/lib/utils/utils";
+import { normalizeCity, formatBirthday, formatAnniversaryMilestone, formatName } from "@/lib/utils/utils";
 import { formatServiceSlotBadge } from "@/lib/constants/church-schedule";
 
 export type MinistryParticipation = {
@@ -582,6 +585,225 @@ export function ReportsClient({
     document.body.removeChild(link);
   };
 
+  // Celebrations & Anniversaries State & Calculations
+  const [celebrationMonth, setCelebrationMonth] = useState("all");
+  const [celebrationType, setCelebrationType] = useState<"all" | "birthdays" | "anniversaries">("all");
+  const [celebrationSearch, setCelebrationSearch] = useState("");
+
+  type CelebrationItem = {
+    id: string;
+    type: "birthday" | "anniversary";
+    name: string;
+    date: string;
+    formattedDate: string;
+    month: number;
+    day: number;
+    sortKey: number;
+    milestoneOrAge: string;
+    contact: string;
+    location: string;
+  };
+
+  const celebrationsAnalytics = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+
+    // 1. Process Birthdays
+    const birthdays: CelebrationItem[] = data
+      .filter((m) => Boolean(m.birth_date))
+      .map((m) => {
+        const parts = String(m.birth_date).split("T")[0].split("-");
+        let month = -1;
+        let day = -1;
+        if (parts.length === 3) {
+          month = parseInt(parts[1], 10);
+          day = parseInt(parts[2], 10);
+        } else {
+          const d = new Date(m.birth_date!);
+          if (!isNaN(d.getTime())) {
+            month = d.getMonth() + 1;
+            day = d.getDate();
+          }
+        }
+
+        const age = m.age ? `${m.age} yrs old` : "-";
+        const fullName = formatName(`${m.first_name} ${m.last_name}`);
+        return {
+          id: m.id,
+          type: "birthday" as const,
+          name: fullName,
+          date: m.birth_date!,
+          formattedDate: formatBirthday(m.birth_date),
+          month,
+          day,
+          sortKey: month * 100 + day,
+          milestoneOrAge: age,
+          contact: m.emergency_contact_number || "-",
+          location: m.city ? normalizeCity(m.city) : m.mission_name || "-",
+        };
+      });
+
+    // 2. Process Wedding Anniversaries with couple deduplication
+    const anniversaryMembers = data.filter((m) => Boolean(m.anniversary_date));
+    const processedCoupleIds = new Set<string>();
+    const anniversaries: CelebrationItem[] = [];
+
+    anniversaryMembers.forEach((member) => {
+      if (processedCoupleIds.has(member.id)) return;
+
+      let coupleName = "";
+      const memberName = formatName(`${member.first_name} ${member.last_name}`);
+
+      if (member.spouse_member_id) {
+        const spouse = anniversaryMembers.find((m) => m.id === member.spouse_member_id);
+        if (spouse) {
+          processedCoupleIds.add(spouse.id);
+          const spouseFormatted = formatName(`${spouse.first_name} ${spouse.last_name}`);
+          if (member.last_name && spouse.last_name && member.last_name.toLowerCase().trim() === spouse.last_name.toLowerCase().trim()) {
+            coupleName = `${formatName(member.first_name)} & ${formatName(spouse.first_name)} ${formatName(member.last_name)}`;
+          } else {
+            coupleName = `${memberName} & ${spouseFormatted}`;
+          }
+        }
+      }
+
+      if (!coupleName) {
+        if (member.spouse_name && member.spouse_name.trim()) {
+          const spouseFormatted = formatName(member.spouse_name);
+          if (member.last_name && spouseFormatted.toLowerCase().includes(member.last_name.toLowerCase())) {
+            coupleName = `${formatName(member.first_name)} & ${spouseFormatted}`;
+          } else {
+            coupleName = `${memberName} & ${spouseFormatted}`;
+          }
+        } else {
+          coupleName = `${memberName} & Spouse`;
+        }
+      }
+
+      processedCoupleIds.add(member.id);
+      const milestone = formatAnniversaryMilestone(member.anniversary_date);
+
+      const parts = String(member.anniversary_date).split("T")[0].split("-");
+      let month = -1;
+      let day = -1;
+      if (parts.length === 3) {
+        month = parseInt(parts[1], 10);
+        day = parseInt(parts[2], 10);
+      } else {
+        const d = new Date(member.anniversary_date!);
+        if (!isNaN(d.getTime())) {
+          month = d.getMonth() + 1;
+          day = d.getDate();
+        }
+      }
+
+      anniversaries.push({
+        id: member.id,
+        type: "anniversary" as const,
+        name: coupleName,
+        date: member.anniversary_date!,
+        formattedDate: formatBirthday(member.anniversary_date),
+        month,
+        day,
+        sortKey: month * 100 + day,
+        milestoneOrAge: milestone || "Anniversary",
+        contact: member.emergency_contact_number || "-",
+        location: member.city ? normalizeCity(member.city) : member.mission_name || "-",
+      });
+    });
+
+    // Summary metrics
+    const birthdaysThisMonth = birthdays.filter((b) => b.month === currentMonth).length;
+    const anniversariesThisMonth = anniversaries.filter((a) => a.month === currentMonth).length;
+    const totalMarriedCouples = anniversaries.length;
+
+    // Find longest standing marriage
+    let longestMarriage = { name: "N/A", years: 0 };
+    anniversaries.forEach((a) => {
+      const startYear = parseInt(String(a.date).split("-")[0], 10);
+      if (!isNaN(startYear)) {
+        const yrs = now.getFullYear() - startYear;
+        if (yrs > longestMarriage.years) {
+          longestMarriage = { name: a.name, years: yrs };
+        }
+      }
+    });
+
+    // Combined list sorted by calendar day of year
+    const allCelebrations = [...birthdays, ...anniversaries].sort((a, b) => a.sortKey - b.sortKey);
+
+    return {
+      birthdaysThisMonth,
+      anniversariesThisMonth,
+      totalMarriedCouples,
+      longestMarriage,
+      allCelebrations,
+      birthdays,
+      anniversaries,
+    };
+  }, [data]);
+
+  const filteredCelebrations = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+
+    let items = celebrationsAnalytics.allCelebrations;
+
+    if (celebrationType === "birthdays") {
+      items = items.filter((i) => i.type === "birthday");
+    } else if (celebrationType === "anniversaries") {
+      items = items.filter((i) => i.type === "anniversary");
+    }
+
+    if (celebrationMonth === "this_month") {
+      items = items.filter((i) => i.month === currentMonth);
+    } else if (celebrationMonth === "next_month") {
+      items = items.filter((i) => i.month === nextMonth);
+    } else if (celebrationMonth !== "all") {
+      const m = parseInt(celebrationMonth, 10);
+      items = items.filter((i) => i.month === m);
+    }
+
+    if (celebrationSearch.trim()) {
+      const q = celebrationSearch.toLowerCase().trim();
+      items = items.filter(
+        (i) => i.name.toLowerCase().includes(q) || i.location.toLowerCase().includes(q) || i.formattedDate.toLowerCase().includes(q)
+      );
+    }
+
+    return items;
+  }, [celebrationsAnalytics, celebrationMonth, celebrationType, celebrationSearch]);
+
+  const exportCelebrationsCSV = () => {
+    if (filteredCelebrations.length === 0) return;
+    const headers = [
+      "Type",
+      "Celebrant / Couple",
+      "Date",
+      "Milestone / Age",
+      "Contact Number",
+      "Location / Mission",
+    ];
+    const rows = filteredCelebrations.map((c) => [
+      c.type === "birthday" ? "Birthday" : "Wedding Anniversary",
+      `"${c.name.replace(/"/g, '""')}"`,
+      `"${c.formattedDate}"`,
+      `"${c.milestoneOrAge.replace(/"/g, '""')}"`,
+      `"${c.contact.replace(/"/g, '""')}"`,
+      `"${c.location.replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `church-celebrations-report-${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const axisStyle = { fontSize: 11, fill: tickColor };
   const animProps = { animationBegin: 0, animationDuration: 700, animationEasing: "ease-out" as const };
 
@@ -608,6 +830,7 @@ export function ReportsClient({
       <Tabs defaultValue="demographics" className="w-full space-y-6">
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="demographics" className="gap-2"><Users className="h-4 w-4" /> Demographics & Locations</TabsTrigger>
+          <TabsTrigger value="celebrations" className="gap-2"><Cake className="h-4 w-4 text-pink-500" /> Celebrations & Anniversaries</TabsTrigger>
           <TabsTrigger value="attendance" className="gap-2"><CalendarCheck className="h-4 w-4" /> Attendance Analytics</TabsTrigger>
           <TabsTrigger value="health" className="gap-2"><HeartPulse className="h-4 w-4" /> Health & Emergency</TabsTrigger>
           <TabsTrigger value="labor" className="gap-2"><Briefcase className="h-4 w-4" /> Career & Education</TabsTrigger>
@@ -1425,6 +1648,230 @@ export function ReportsClient({
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* TAB: Celebrations & Anniversaries */}
+        <TabsContent value="celebrations" className="space-y-6">
+          {/* Summary KPI Cards */}
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-t-4 border-t-pink-500 shadow-sm hover:shadow-md transition-all h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Birthdays This Month</CardTitle>
+                <div className="h-8 w-8 bg-pink-500/10 rounded-full flex items-center justify-center">
+                  <Cake className="h-4 w-4 text-pink-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{celebrationsAnalytics.birthdaysThisMonth}</div>
+                <p className="text-xs text-muted-foreground mt-1 font-medium">
+                  {new Date().toLocaleString("default", { month: "long" })} celebrants
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-rose-500 shadow-sm hover:shadow-md transition-all h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Anniversaries This Month</CardTitle>
+                <div className="h-8 w-8 bg-rose-500/10 rounded-full flex items-center justify-center">
+                  <Heart className="h-4 w-4 text-rose-500 fill-rose-500/20" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{celebrationsAnalytics.anniversariesThisMonth}</div>
+                <p className="text-xs text-muted-foreground mt-1 font-medium">
+                  Couples celebrating in {new Date().toLocaleString("default", { month: "long" })}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-purple-500 shadow-sm hover:shadow-md transition-all h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Married Couples</CardTitle>
+                <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
+                  <Users className="h-4 w-4 text-purple-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{celebrationsAnalytics.totalMarriedCouples}</div>
+                <p className="text-xs text-muted-foreground mt-1 font-medium">
+                  Couples with recorded anniversaries
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-4 border-t-amber-500 shadow-sm hover:shadow-md transition-all h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Longest Marriage Milestone</CardTitle>
+                <div className="h-8 w-8 bg-amber-500/10 rounded-full flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 truncate">
+                  {celebrationsAnalytics.longestMarriage.years > 0 ? `${celebrationsAnalytics.longestMarriage.years} Years` : "N/A"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 font-medium truncate">
+                  {celebrationsAnalytics.longestMarriage.name}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Interactive Filtering & Celebrations Roster Card */}
+          <Card className="shadow-sm overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b pb-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Cake className="h-5 w-5 text-pink-500" />
+                    <span>Church Celebrations & Anniversaries Roster</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1">
+                    Showing {filteredCelebrations.length} records • Filter by month, event type, or search by name.
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={exportCelebrationsCSV}
+                  disabled={filteredCelebrations.length === 0}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 shadow-xs"
+                >
+                  <Download className="h-4 w-4" /> Export CSV (Bulletin List)
+                </Button>
+              </div>
+
+              {/* Filter Controls Row */}
+              <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 pt-3">
+                {/* Month Dropdown */}
+                <select
+                  value={celebrationMonth}
+                  onChange={(e) => setCelebrationMonth(e.target.value)}
+                  className="h-9 text-xs rounded-lg border border-input bg-card text-foreground px-3 shadow-xs font-medium w-full sm:w-auto"
+                >
+                  <option value="all">All Months</option>
+                  <option value="this_month">🎂 This Month ({new Date().toLocaleString("default", { month: "long" })})</option>
+                  <option value="next_month">🎂 Next Month</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+
+                {/* Event Type Filter Pills */}
+                <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-lg border w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setCelebrationType("all")}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                      celebrationType === "all" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All ({celebrationsAnalytics.allCelebrations.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCelebrationType("birthdays")}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 ${
+                      celebrationType === "birthdays" ? "bg-card text-pink-600 shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Cake className="h-3 w-3" /> Birthdays ({celebrationsAnalytics.birthdays.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCelebrationType("anniversaries")}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 ${
+                      celebrationType === "anniversaries" ? "bg-card text-rose-600 shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Heart className="h-3 w-3" /> Anniversaries ({celebrationsAnalytics.anniversaries.length})
+                  </button>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative flex-1 min-w-[200px] w-full sm:w-auto">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={celebrationSearch}
+                    onChange={(e) => setCelebrationSearch(e.target.value)}
+                    placeholder="Search celebrant or location..."
+                    className="h-9 w-full rounded-lg border border-input bg-card pl-8 pr-3 text-xs shadow-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              {filteredCelebrations.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center space-y-2">
+                  <Cake className="h-10 w-10 text-muted-foreground/30" />
+                  <p className="text-sm font-semibold">No celebrations found for the selected filters.</p>
+                  <p className="text-xs text-muted-foreground">Try selecting a different month or clearing your search.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-muted/40 text-muted-foreground text-xs uppercase font-semibold border-b">
+                      <tr>
+                        <th className="py-3 px-4">Event Type</th>
+                        <th className="py-3 px-4">Celebrant(s)</th>
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Milestone / Age</th>
+                        <th className="py-3 px-4">Location / Mission</th>
+                        <th className="py-3 px-4">Contact</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {filteredCelebrations.map((item) => (
+                        <tr key={`${item.type}-${item.id}`} className="hover:bg-muted/30 transition-colors">
+                          <td className="py-3 px-4">
+                            {item.type === "birthday" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-500/15 text-pink-700 dark:text-pink-300">
+                                <Cake className="h-3 w-3" /> Birthday
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-300">
+                                <Heart className="h-3 w-3 fill-rose-500/30" /> Anniversary
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-foreground">
+                            <Link href={`/members/${item.id}`} className="hover:underline hover:text-primary transition-colors">
+                              {item.name}
+                            </Link>
+                          </td>
+                          <td className="py-3 px-4 text-xs font-medium text-foreground whitespace-nowrap">
+                            {item.formattedDate}
+                          </td>
+                          <td className="py-3 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                            <span className="px-2 py-0.5 rounded-md bg-muted font-semibold text-foreground">
+                              {item.milestoneOrAge}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-xs text-muted-foreground">
+                            {item.location}
+                          </td>
+                          <td className="py-3 px-4 text-xs text-muted-foreground font-mono">
+                            {item.contact}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* TAB 5: Raw Data & Custom CSV Export */}

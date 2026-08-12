@@ -92,3 +92,39 @@ export function formatBirthday(dateStr?: string | null): string {
   return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
 }
 
+/**
+ * Returns ordinal string e.g. 1 -> "1st", 2 -> "2nd", 3 -> "3rd", 25 -> "25th"
+ */
+export function getOrdinalSuffix(n: number): string {
+  const s = ["th", "st", "nd", "rd"]
+  const v = n % 100
+  return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
+
+/**
+ * Calculates and formats wedding anniversary milestone e.g. "3rd Anniversary (3 yrs)" or "25th Anniversary (Silver)"
+ */
+export function formatAnniversaryMilestone(anniversaryDateStr?: string | null): string {
+  if (!anniversaryDateStr) return ""
+  const parts = String(anniversaryDateStr).split("T")[0].split("-")
+  let startYear = -1
+  if (parts.length === 3) {
+    startYear = parseInt(parts[0], 10)
+  } else {
+    const d = new Date(anniversaryDateStr)
+    if (!isNaN(d.getTime())) startYear = d.getFullYear()
+  }
+  if (startYear <= 0) return ""
+
+  const currentYear = new Date().getFullYear()
+  const years = currentYear - startYear
+  if (years <= 0) return "1st Year Anniversary"
+
+  const ordinal = getOrdinalSuffix(years)
+  if (years === 25) return `${ordinal} Anniversary (Silver)`
+  if (years === 50) return `${ordinal} Anniversary (Golden)`
+  if (years === 60) return `${ordinal} Anniversary (Diamond)`
+  return `${ordinal} Anniversary (${years} yrs)`
+}
+
+

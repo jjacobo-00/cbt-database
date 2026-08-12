@@ -16,6 +16,9 @@ export type ReportMember = {
   mission_name?: string | null
   mission_location?: string | null
   marital_status: string | null
+  spouse_name?: string | null
+  spouse_member_id?: string | null
+  anniversary_date?: string | null
   occupation: string | null
   employment_status: string | null
   highest_educational_attainment: string | null
@@ -85,6 +88,9 @@ export default async function ReportsPage() {
       mission_name: missions.name,
       mission_location: missions.location,
       marital_status: members.marital_status,
+      spouse_name: members.spouse_name,
+      spouse_member_id: members.spouse_member_id,
+      anniversary_date: members.anniversary_date,
       occupation: members.occupation,
       employment_status: members.employment_status,
       highest_educational_attainment: members.highest_educational_attainment,
@@ -136,6 +142,9 @@ export default async function ReportsPage() {
   const formattedData: ReportMember[] = membersData.map(m => ({
     ...m,
     age: m.age || calculateAge(m.birth_date),
+    spouse_name: m.spouse_name || null,
+    spouse_member_id: m.spouse_member_id || null,
+    anniversary_date: m.anniversary_date || null,
     date_baptized: m.date_baptized ? (typeof m.date_baptized === 'object' ? (m.date_baptized as Date).toISOString() : m.date_baptized as string) : null,
     membership_date: m.membership_date ? (typeof m.membership_date === 'object' ? (m.membership_date as Date).toISOString() : m.membership_date as string) : null,
     created_at: m.created_at ? (typeof m.created_at === 'object' ? (m.created_at as Date).toISOString() : m.created_at as string) : null,

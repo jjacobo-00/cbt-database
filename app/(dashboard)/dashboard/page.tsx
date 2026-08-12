@@ -6,7 +6,7 @@ import {
   member_ministries,
   attendance_sessions,
 } from "@/db/schema";
-import { eq, isNotNull, desc, sql, gte, count } from "drizzle-orm";
+import { eq, isNotNull, desc, sql, gte, count, or } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,8 +25,9 @@ import {
 import Link from "next/link";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable";
-import { UpcomingBirthdaysCard } from "@/components/dashboard/UpcomingBirthdaysCard";
+import { UpcomingBirthdaysCard, AnniversaryCelebrant } from "@/components/dashboard/UpcomingBirthdaysCard";
 import { RecentAttendanceCard, LatestServiceAttendance } from "@/components/dashboard/RecentAttendanceCard";
+import { formatName, formatAnniversaryMilestone } from "@/lib/utils/utils";
 
 export const revalidate = 0
 
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
     newBaptismsResult,
     recentMembers,
     growthDataQuery,
-    birthdayMembersQuery,
+    celebrationMembersQuery,
     ministryEngagementResult,
     previousYearGrowthQuery,
     attendanceResult,
@@ -92,10 +93,20 @@ export default async function DashboardPage() {
         first_name: members.first_name,
         last_name: members.last_name,
         birth_date: members.birth_date,
+        marital_status: members.marital_status,
+        spouse_name: members.spouse_name,
+        spouse_member_id: members.spouse_member_id,
+        anniversary_date: members.anniversary_date,
         contact_number: members.contact_number,
       })
       .from(members)
-      .where(isNotNull(members.birth_date)),
+      .where(
+        or(
+          isNotNull(members.birth_date),
+          isNotNull(members.anniversary_date),
+          eq(members.marital_status, "Married")
+        )
+      ),
     db
       .select({ count: sql<number>`cast(count(distinct member_id) as int)` })
       .from(member_ministries),
@@ -180,7 +191,7 @@ export default async function DashboardPage() {
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
 
-  const validBirthdayMembers = birthdayMembersQuery.filter((m) => Boolean(m.birth_date)) as {
+  const validBirthdayMembers = celebrationMembersQuery.filter((m) => Boolean(m.birth_date)) as {
     id: string;
     first_name: string;
     last_name: string;
@@ -233,6 +244,97 @@ export default async function DashboardPage() {
       birth_date: string;
       contact_number: string | null;
     }[];
+
+  // Wedding Anniversaries calculation & couple deduplication
+  const validAnniversaryMembers = celebrationMembersQuery.filter((m) => Boolean(m.anniversary_date));
+  const processedCoupleIds = new Set<string>();
+  const coupleAnniversaries: AnniversaryCelebrant[] = [];
+
+  validAnniversaryMembers.forEach((member) => {
+    if (processedCoupleIds.has(member.id)) return;
+
+    let coupleName = "";
+    const memberName = formatName(`${member.first_name} ${member.last_name}`);
+
+    // Check if spouse is a registered member in the database
+    if (member.spouse_member_id) {
+      const spouseMember = validAnniversaryMembers.find((m) => m.id === member.spouse_member_id);
+      if (spouseMember) {
+        processedCoupleIds.add(spouseMember.id);
+        const spouseFormatted = formatName(`${spouseMember.first_name} ${spouseMember.last_name}`);
+        if (member.last_name && spouseMember.last_name && member.last_name.toLowerCase().trim() === spouseMember.last_name.toLowerCase().trim()) {
+          coupleName = `${formatName(member.first_name)} & ${formatName(spouseMember.first_name)} ${formatName(member.last_name)}`;
+        } else {
+          coupleName = `${memberName} & ${spouseFormatted}`;
+        }
+      }
+    }
+
+    if (!coupleName) {
+      if (member.spouse_name && member.spouse_name.trim()) {
+        const spouseFormatted = formatName(member.spouse_name);
+        if (member.last_name && spouseFormatted.toLowerCase().includes(member.last_name.toLowerCase())) {
+          coupleName = `${formatName(member.first_name)} & ${spouseFormatted}`;
+        } else {
+          coupleName = `${memberName} & ${spouseFormatted}`;
+        }
+      } else {
+        coupleName = `${memberName} & Spouse`;
+      }
+    }
+
+    processedCoupleIds.add(member.id);
+    const milestone = formatAnniversaryMilestone(member.anniversary_date);
+
+    coupleAnniversaries.push({
+      id: member.id,
+      spouse_member_id: member.spouse_member_id,
+      couple_name: coupleName,
+      anniversary_date: member.anniversary_date!,
+      milestone,
+      contact_number: member.contact_number,
+    });
+  });
+
+  const anniversariesThisMonth = coupleAnniversaries.filter((a) => {
+    const parts = String(a.anniversary_date).split("T")[0].split("-");
+    if (parts.length === 3) {
+      return parseInt(parts[1], 10) === currentMonth;
+    }
+    const d = new Date(a.anniversary_date);
+    return !isNaN(d.getTime()) && d.getMonth() + 1 === currentMonth;
+  });
+
+  const upcomingAnniversaries30Days = coupleAnniversaries
+    .map((a) => {
+      const parts = String(a.anniversary_date).split("T")[0].split("-");
+      let bMonth = -1;
+      let bDay = -1;
+      if (parts.length === 3) {
+        bMonth = parseInt(parts[1], 10);
+        bDay = parseInt(parts[2], 10);
+      } else {
+        const d = new Date(a.anniversary_date);
+        if (!isNaN(d.getTime())) {
+          bMonth = d.getMonth() + 1;
+          bDay = d.getDate();
+        }
+      }
+      if (bMonth === -1) return null;
+
+      const thisYearAnn = new Date(now.getFullYear(), bMonth - 1, bDay);
+      if (thisYearAnn < now && Math.abs(now.getDate() - bDay) > 0) {
+        thisYearAnn.setFullYear(now.getFullYear() + 1);
+      }
+      const diffTime = thisYearAnn.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0 && diffDays <= 30) {
+        return { ...a, diffDays };
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.diffDays - b.diffDays) as AnniversaryCelebrant[];
 
   // Process age demographics
   const ageDemographics = {
@@ -435,15 +537,15 @@ export default async function DashboardPage() {
         <Link href="/members?birth_month=this_month" className="block group">
           <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-pink-500 cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium group-hover:text-pink-600 transition-colors">Birthdays This Month</CardTitle>
+              <CardTitle className="text-sm font-medium group-hover:text-pink-600 transition-colors">Birthdays & Anniversaries</CardTitle>
               <div className="h-8 w-8 bg-pink-500/10 rounded-full flex items-center justify-center">
                 <Cake className="h-4 w-4 text-pink-500" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{celebrantsThisMonth.length}</div>
+              <div className="text-3xl font-bold">{celebrantsThisMonth.length + anniversariesThisMonth.length}</div>
               <p className="text-xs text-muted-foreground mt-1 font-medium">
-                Celebrants in {new Date().toLocaleString("default", { month: "long" })} →
+                {celebrantsThisMonth.length} Birthdays • {anniversariesThisMonth.length} Anniversaries →
               </p>
             </CardContent>
           </Card>
@@ -463,6 +565,8 @@ export default async function DashboardPage() {
         <UpcomingBirthdaysCard
           celebrantsThisMonth={celebrantsThisMonth}
           upcoming30Days={upcoming30Days}
+          anniversariesThisMonth={anniversariesThisMonth}
+          upcomingAnniversaries30Days={upcomingAnniversaries30Days}
         />
       </div>
 
@@ -478,3 +582,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
