@@ -39,7 +39,11 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
       id: members.id,
       first_name: members.first_name,
       last_name: members.last_name,
+      suffix: members.suffix,
+      sex: members.sex,
       contact_number: members.contact_number,
+      position: members.position,
+      company: members.company,
     }).from(members).orderBy(asc(members.last_name))
 
     return (

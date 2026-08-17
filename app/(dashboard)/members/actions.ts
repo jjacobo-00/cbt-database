@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import { db } from "@/db"
 import { members, ministries, member_ministries, commitments, commitment_ministries, commitment_offerings, invitation_links, children, org_chart_nodes, missions } from "@/db/schema"
 import crypto from "crypto"
-import { eq, and, gt, desc, isNull, inArray, notInArray, ne } from "drizzle-orm"
+import { eq, and, gt, desc, asc, isNull, inArray, notInArray, ne } from "drizzle-orm"
 import { requireAdmin, requireSelfOrAdmin } from "@/lib/utils/action-helpers"
 import { formatName, normalizeCity } from "@/lib/utils/utils"
 
@@ -768,9 +768,9 @@ export async function submitInviteForm(token: string, payloadStr: string) {
   revalidatePath("/commitments")
 }
 
-export async function getMembersList(limit = 100, offset = 0) {
+export async function getMembersList(limit?: number, offset = 0) {
   await requireAdmin()
-  const result = await db.select({
+  const query = db.select({
     id: members.id,
     first_name: members.first_name,
     middle_name: members.middle_name,
@@ -783,7 +783,11 @@ export async function getMembersList(limit = 100, offset = 0) {
     company: members.company,
     birth_date: members.birth_date,
     last_login_at: members.last_login_at,
-  }).from(members).limit(limit).offset(offset)
-  return result
+  }).from(members).orderBy(asc(members.last_name))
+
+  if (limit !== undefined) {
+    return await query.limit(limit).offset(offset)
+  }
+  return await query
 }
 
