@@ -43,7 +43,7 @@ export default async function DashboardPage() {
   // Fetch counts and data in parallel
   const [
     totalMembersResult,
-    newMembersThisMonthResult,
+    newMembersThisYearResult,
     newBaptismsResult,
     recentMembers,
     growthDataQuery,
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(members)
       .where(
-        sql`${members.membership_date} IS NOT NULL AND EXTRACT(MONTH FROM ${members.membership_date}) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM ${members.membership_date}) = EXTRACT(YEAR FROM CURRENT_DATE)`
+        sql`${members.membership_date} IS NOT NULL AND EXTRACT(YEAR FROM ${members.membership_date}) = ${currentYear}`
       ),
     db
       .select({ count: sql<number>`cast(count(*) as int)` })
@@ -148,7 +148,7 @@ export default async function DashboardPage() {
   ]);
 
   const totalMembers = totalMembersResult[0]?.count || 0;
-  const newMembersThisMonth = newMembersThisMonthResult[0]?.count || 0;
+  const newMembersThisYear = newMembersThisYearResult[0]?.count || 0;
   const newBaptismsThisYear = newBaptismsResult[0]?.count || 0;
   const ministryEngagedMembers = ministryEngagementResult[0]?.count || 0;
   const attPresent = attendanceResult[0]?.present || 0;
@@ -520,18 +520,18 @@ export default async function DashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/members?joined=this_month" className="block group">
+        <Link href="/members?joined=this_year" className="block group">
           <Card className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-t-4 border-t-purple-500 cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium group-hover:text-purple-600 transition-colors">New Members This Month</CardTitle>
+              <CardTitle className="text-sm font-medium group-hover:text-purple-600 transition-colors">New Members This Year</CardTitle>
               <div className="h-8 w-8 bg-purple-500/10 rounded-full flex items-center justify-center">
                 <UserPlus className="h-4 w-4 text-purple-500" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{newMembersThisMonth}</div>
+              <div className="text-3xl font-bold">{newMembersThisYear}</div>
               <p className="text-xs text-muted-foreground mt-1 font-medium">
-                Registered in current month →
+                Joined in {currentYear} →
               </p>
             </CardContent>
           </Card>
