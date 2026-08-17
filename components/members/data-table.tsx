@@ -223,7 +223,7 @@ export function DataTable<TData, TValue>({
       if (activeJoined) {
         const currentYear = new Date().getFullYear()
         const currentMonth = new Date().getMonth()
-        const targetDate = member.membership_date || member.created_at
+        const targetDate = member.membership_date
         if (!targetDate) return false
         const d = new Date(targetDate)
         if (isNaN(d.getTime())) return false

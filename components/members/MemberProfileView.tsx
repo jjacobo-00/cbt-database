@@ -731,12 +731,7 @@ export function MemberProfileView({
                       Membership Date
                     </p>
                     <p className="font-semibold text-primary">
-                      {member.membership_date ||
-                        (member.created_at
-                          ? new Date(member.created_at)
-                              .toISOString()
-                              .split("T")[0]
-                          : "—")}
+                      {member.membership_date || "—"}
                     </p>
                   </div>
                   <div>
@@ -800,11 +795,7 @@ export function MemberProfileView({
                           member.membership_date ||
                           member.date_saved ||
                           member.baptism_date ||
-                          (member.created_at
-                            ? new Date(member.created_at)
-                                .toISOString()
-                                .split("T")[0]
-                            : null);
+                          null;
                         if (targetDate) {
                           const date = new Date(targetDate);
                           if (!isNaN(date.getTime())) {
@@ -2174,13 +2165,7 @@ export function MemberProfileView({
                       "en-US",
                       { year: "numeric", month: "short", day: "numeric" },
                     )
-                  : member.created_at
-                    ? new Date(member.created_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })
-                    : "—"}
+                  : "—"}
               </span>
             </div>
           </div>

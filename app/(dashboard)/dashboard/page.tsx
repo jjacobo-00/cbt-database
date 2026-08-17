@@ -6,7 +6,7 @@ import {
   member_ministries,
   attendance_sessions,
 } from "@/db/schema";
-import { eq, isNotNull, desc, sql, gte, count, or } from "drizzle-orm";
+import { eq, isNotNull, desc, sql, gte, count, or, and } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(members)
       .where(
-        sql`EXTRACT(MONTH FROM COALESCE(${members.membership_date}, ${members.created_at})) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM COALESCE(${members.membership_date}, ${members.created_at})) = EXTRACT(YEAR FROM CURRENT_DATE)`
+        sql`${members.membership_date} IS NOT NULL AND EXTRACT(MONTH FROM ${members.membership_date}) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM ${members.membership_date}) = EXTRACT(YEAR FROM CURRENT_DATE)`
       ),
     db
       .select({ count: sql<number>`cast(count(*) as int)` })
@@ -78,13 +78,16 @@ export default async function DashboardPage() {
       .limit(5),
     db
       .select({
-        membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
+        membership_date: members.membership_date,
       })
       .from(members)
       .where(
-        gte(
-          sql`COALESCE(${members.membership_date}, ${members.created_at})`,
-          sixMonthsAgo,
+        and(
+          isNotNull(members.membership_date),
+          gte(
+            members.membership_date,
+            sixMonthsAgo.toISOString().split("T")[0],
+          ),
         ),
       ),
     db
@@ -112,11 +115,11 @@ export default async function DashboardPage() {
       .from(member_ministries),
     db
       .select({
-        membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
+        membership_date: members.membership_date,
       })
       .from(members)
       .where(
-        sql`${sql`COALESCE(${members.membership_date}, ${members.created_at})`} >= (date_trunc('month', current_date - interval '12 months')) AND ${sql`COALESCE(${members.membership_date}, ${members.created_at})`} < (date_trunc('month', current_date - interval '6 months'))`,
+        sql`${members.membership_date} IS NOT NULL AND ${members.membership_date} >= (date_trunc('month', current_date - interval '12 months')) AND ${members.membership_date} < (date_trunc('month', current_date - interval '6 months'))`,
       ),
     db
       .select({

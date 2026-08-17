@@ -100,7 +100,7 @@ export default async function ReportsPage() {
       emergency_contact_number: members.emergency_contact_number,
       years_in_church: members.years_in_church,
       date_baptized: members.date_baptized,
-      membership_date: sql`COALESCE(${members.membership_date}, ${members.created_at})`,
+      membership_date: members.membership_date,
       created_at: members.created_at
     }).from(members)
       .leftJoin(missions, eq(members.mission_id, missions.id)),

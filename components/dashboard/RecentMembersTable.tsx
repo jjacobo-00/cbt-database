@@ -42,7 +42,7 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
           <CardTitle>Recent Members</CardTitle>
-          <CardDescription>The 5 most recently joined members.</CardDescription>
+          <CardDescription>The 5 most recently added members.</CardDescription>
         </div>
         <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
           <Users className="h-5 w-5 text-primary" />
