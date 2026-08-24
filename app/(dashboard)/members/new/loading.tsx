@@ -17,12 +17,12 @@ export default function MemberFormLoading() {
         <Skeleton className="h-11 w-full sm:w-36 rounded-xl" />
       </div>
 
-      {/* Stepper Progress Bar Skeleton */}
+      {/* Stepper Progress Bar Skeleton (8 Steps) */}
       <div className="py-4 border-b border-border mb-8 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
-        {Array.from({ length: 6 }).map((_, idx) => (
+        {Array.from({ length: 8 }).map((_, idx) => (
           <div key={idx} className="flex items-center gap-2 shrink-0">
             <Skeleton className="h-8 w-8 rounded-full" />
-            <Skeleton className="h-4 w-24 rounded-md hidden sm:block" />
+            <Skeleton className="h-4 w-20 rounded-md hidden md:block" />
           </div>
         ))}
       </div>

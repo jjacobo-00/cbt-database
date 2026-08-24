@@ -1,5 +1,5 @@
 import React from "react"
-import { CalendarCheck } from "lucide-react"
+import { CalendarCheck, FileText } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
@@ -46,38 +46,58 @@ export default function AttendanceLoading() {
         ))}
       </div>
 
-      {/* Attendance Checklist / Table Container */}
-      <Card className="rounded-2xl shadow-xs">
-        <CardHeader className="space-y-1.5 pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <Skeleton className="h-5 w-48 rounded-lg" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-9 w-full sm:w-40 rounded-xl" />
-              <Skeleton className="h-9 w-full sm:w-28 rounded-xl" />
+      {/* Attendance Checklist Search & Controls Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <Skeleton className="h-10 w-full sm:w-72 rounded-xl" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Skeleton className="h-9 w-full sm:w-36 rounded-xl" />
+          <Skeleton className="h-9 w-full sm:w-24 rounded-xl" />
+        </div>
+      </div>
+
+      {/* 3-Column Attendance Member Roster Grid Skeleton (Laptop: 3 cols, Tablet: 2 cols, Mobile: 1 col) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {Array.from({ length: 9 }).map((_, k) => (
+          <div
+            key={k}
+            className="p-3.5 rounded-xl border bg-card shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+              <div className="space-y-1.5 min-w-0 flex-1">
+                <Skeleton
+                  className="h-4 rounded-md"
+                  style={{ width: `${55 + ((k * 13) % 35)}%`, maxWidth: "160px" }}
+                />
+                <Skeleton className="h-3 w-24 rounded-md" />
+              </div>
             </div>
+            <Skeleton className="h-6 w-6 rounded-lg shrink-0" />
+          </div>
+        ))}
+      </div>
+
+      {/* Session Notes Card Skeleton */}
+      <Card className="shadow-xs bg-card">
+        <CardHeader className="py-3 px-4">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary/40" />
+            <Skeleton className="h-4 w-44 rounded-md" />
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {Array.from({ length: 8 }).map((_, k) => (
-            <div key={k} className="flex items-center justify-between p-3.5 rounded-xl border bg-muted/20">
-              <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <Skeleton
-                    className="h-4 rounded-md"
-                    style={{ width: `${55 + ((k * 13) % 35)}%`, maxWidth: "200px" }}
-                  />
-                  <Skeleton className="h-3 w-28 rounded-md" />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-8 w-20 rounded-xl hidden sm:block" />
-                <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-              </div>
-            </div>
-          ))}
+        <CardContent className="px-4 pb-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
         </CardContent>
       </Card>
+
+      {/* Turnout Summary Sticky Bottom Bar Skeleton */}
+      <div className="p-4 rounded-2xl border bg-card/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-32 rounded-md" />
+          <Skeleton className="h-5 w-48 rounded-md" />
+        </div>
+        <Skeleton className="h-11 w-full sm:w-40 rounded-xl" />
+      </div>
     </div>
   )
 }

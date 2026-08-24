@@ -1,5 +1,5 @@
 import React from "react"
-import { Network } from "lucide-react"
+import { Network, Plus } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function OrgChartLoading() {
@@ -8,15 +8,19 @@ export default function OrgChartLoading() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+          <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
             <Network className="h-6 w-6" />
           </div>
-          <div className="space-y-1.5 flex-1 min-w-0">
-            <Skeleton className="h-8 sm:h-9 w-48 sm:w-60 rounded-xl" />
-            <Skeleton className="h-4 w-64 sm:w-80 max-w-full rounded-md" />
+          <div className="space-y-1">
+            <Skeleton className="h-8 w-60 rounded-xl" />
+            <Skeleton className="h-4 w-72 sm:w-96 max-w-full rounded-md" />
           </div>
         </div>
-        <Skeleton className="h-10 w-full sm:w-32 rounded-xl" />
+      </div>
+
+      {/* Add Role Button on Top-Right */}
+      <div className="flex justify-end">
+        <Skeleton className="h-10 w-32 rounded-xl" />
       </div>
 
       {/* Org Chart Hierarchy Tree Nodes Skeleton */}
