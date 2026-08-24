@@ -6,10 +6,10 @@ import { createMinistry, deleteMinistry, updateMinistry } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn, formatName } from "@/lib/utils/utils"
+import { cn, formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 type Ministry = { id: string; name: string; for_everyone: boolean; parent_id: string | null; leader_id?: string | null; created_at: string }
-type MemberOption = { id: string; first_name: string; last_name: string }
+type MemberOption = { id: string; first_name: string; middle_name?: string | null; last_name: string; suffix?: string | null }
 
 function SearchableLeaderSelect({
   value,
@@ -56,7 +56,7 @@ function SearchableLeaderSelect({
           <span className="truncate flex items-center gap-1.5 min-w-0">
             <UserCheck className="h-3.5 w-3.5 text-primary shrink-0" />
             {selectedMember
-              ? formatName(`${selectedMember.first_name} ${selectedMember.last_name}`)
+              ? formatFullName(selectedMember)
               : placeholder}
           </span>
           <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
@@ -123,7 +123,14 @@ function SearchableLeaderSelect({
                   <div className="h-7 w-7 rounded-full bg-primary/10 text-primary font-bold text-[10px] flex items-center justify-center shrink-0">
                     {initials}
                   </div>
-                  <span className="truncate font-medium">{formatName(`${m.first_name} ${m.last_name}`)}</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="truncate font-medium">{formatName(`${m.first_name} ${m.last_name}`)}</span>
+                    {m.suffix && (
+                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                        {formatSuffix(m.suffix)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
               </button>
@@ -259,7 +266,7 @@ export function MinistriesClient({
     const isExpanded = expanded.has(m.id)
 
     const leader = members.find(mem => mem.id === m.leader_id)
-    const leaderName = leader ? formatName(`${leader.first_name} ${leader.last_name}`) : null
+    const leaderName = leader ? formatFullName(leader) : null
 
     return (
       <React.Fragment key={m.id}>

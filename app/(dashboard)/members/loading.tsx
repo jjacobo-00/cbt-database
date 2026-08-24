@@ -12,12 +12,12 @@ export default function MembersLoading() {
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
             <Users className="h-6 w-6" />
           </div>
-          <div className="space-y-1.5">
-            <Skeleton className="h-7 w-48 rounded-xl" />
-            <Skeleton className="h-4 w-64 rounded-md" />
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Skeleton className="h-8 sm:h-9 w-48 sm:w-60 rounded-xl" />
+            <Skeleton className="h-4 w-64 sm:w-80 max-w-full rounded-md" />
           </div>
         </div>
-        <Skeleton className="h-11 w-40 rounded-xl" />
+        <Skeleton className="h-11 w-full sm:w-40 rounded-xl" />
       </div>
 
       {/* Full Directory Table Skeleton */}

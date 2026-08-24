@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Lock, CheckCircle2, Sparkles } from "lucide-react"
+import { formatFullName } from "@/lib/utils/utils"
 
 export function InviteClient({ 
   token, 
@@ -89,7 +90,7 @@ export function InviteClient({
             </div>
             <CardTitle>Security Check</CardTitle>
             <CardDescription>
-              To update the profile for <strong>{inviteDetails.first_name} {inviteDetails.last_name}</strong>, please verify your identity.
+              To update the profile for <strong>{formatFullName(inviteDetails)}</strong>, please verify your identity.
             </CardDescription>
           </CardHeader>
           <CardContent>

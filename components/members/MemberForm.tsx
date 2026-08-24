@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { createMember, updateMember } from "@/app/(dashboard)/members/actions"
 import { Check, ChevronLeft, ChevronRight, ChevronDown, GraduationCap, Briefcase, UserX, Plus, Trash2, MapPin, Building, Home, Sparkles, Save, Loader2, User, User2, Heart, Church, ChevronsUpDown, X } from "lucide-react"
 import { format, parseISO } from "date-fns"
-import { cn, formatName } from "@/lib/utils/utils"
+import { cn, formatName, formatFullName, formatSuffix, calculateAge } from "@/lib/utils/utils"
 import Link from "next/link"
 import { ALL_ADDRESS_PRESETS, OLONGAPO_BARANGAYS, AddressPreset } from "@/lib/constants/addresses"
 import { isRedirectError } from "next/dist/client/components/redirect-error"
@@ -158,9 +158,23 @@ const STEPS = [
 ]
 
 type Ministry = { id: string; name: string; for_everyone?: boolean; parent_id?: string | null }
-type OfferingCategory = { id: string; name: string; is_monthly: boolean; month: number | null }
-type BaseMember = { id: string; first_name: string; last_name: string; suffix?: string | null; contact_number?: string | null }
+type OfferingCategory = { id: string; name: string; is_monthly?: boolean; month?: number | null }
 type MissionOption = { id: string; name: string; location?: string | null }
+type BaseMember = {
+  id: string
+  first_name: string
+  middle_name?: string | null
+  last_name: string
+  suffix?: string | null
+  birth_date?: string | null
+  age?: number | null
+  gender?: string | null
+  sex?: string | null
+  contact_number?: string | null
+  position?: string | null
+  company?: string | null
+  mission_name?: string | null
+}
 
 export function MemberForm({ 
   initialData, 
@@ -836,7 +850,7 @@ export function MemberForm({
                   {currentId
                     ? (() => {
                         const m = allMembers.find((member) => member.id === currentId)
-                        return m ? formatName(`${m.first_name} ${m.last_name}`) : "Select a member..."
+                        return m ? formatFullName(m) : "Select a member..."
                       })()
                     : "Select a member..."}
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -844,7 +858,7 @@ export function MemberForm({
               </PopoverTrigger>
               <PopoverContent className="w-[300px] md:w-[384px] p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Search member..." className="h-11" />
+                  <CommandInput placeholder="Search member by name or suffix..." className="h-11" />
                   <CommandList>
                     <CommandEmpty className="py-6 text-center text-sm px-4">
                       <span className="block font-medium mb-1">Profile not found.</span>
@@ -854,31 +868,55 @@ export function MemberForm({
                       {allMembers
                         .filter(m => m.id !== excludeId)
                         .filter(m => !filterGender || (m as any).gender === filterGender || (m as any).sex === filterGender)
-                        .map((m: any) => (
-                        <CommandItem
-                          key={m.id}
-                          value={`${m.first_name} ${m.last_name}`}
-                          onSelect={() => {
-                            form.setValue(idField as any, m.id, { shouldValidate: true })
-                            form.setValue(nameField as any, `${m.first_name} ${m.last_name}`, { shouldValidate: true })
-                            if (occupationField) {
-                              const occ = m.position || m.company || ""
-                              if (occ) form.setValue(occupationField as any, occ, { shouldValidate: true })
-                            }
-                            if (contactField) {
-                              if (m.contact_number) form.setValue(contactField as any, m.contact_number, { shouldValidate: true })
-                            }
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4 text-primary",
-                              currentId === m.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {formatName(`${m.first_name} ${m.last_name}`)}
-                        </CommandItem>
-                      ))}
+                        .map((m: any) => {
+                          const fullName = formatFullName(m)
+                          const baseName = formatName(`${m.first_name} ${m.last_name}`)
+                          const suffix = formatSuffix(m.suffix)
+                          const age = m.age ?? calculateAge(m.birth_date)
+                          const birthYear = m.birth_date ? String(m.birth_date).split("T")[0].split("-")[0] : null
+                          const searchKey = `${m.id} ${fullName} ${m.first_name} ${m.last_name} ${suffix} ${birthYear || ""} ${m.contact_number || ""}`
+
+                          return (
+                            <CommandItem
+                              key={m.id}
+                              value={searchKey}
+                              onSelect={() => {
+                                form.setValue(idField as any, m.id, { shouldValidate: true })
+                                form.setValue(nameField as any, fullName, { shouldValidate: true })
+                                if (occupationField) {
+                                  const occ = m.position || m.company || ""
+                                  if (occ) form.setValue(occupationField as any, occ, { shouldValidate: true })
+                                }
+                                if (contactField) {
+                                  if (m.contact_number) form.setValue(contactField as any, m.contact_number, { shouldValidate: true })
+                                }
+                              }}
+                              className="flex items-center justify-between py-2"
+                            >
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4 text-primary shrink-0",
+                                    currentId === m.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap font-medium">
+                                    <span>{baseName}</span>
+                                    {suffix && (
+                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                                        {suffix}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {birthYear ? `Born ${birthYear}${age !== null ? ` • ${age} yrs` : ""}` : m.contact_number || ""}
+                                  </div>
+                                </div>
+                              </div>
+                            </CommandItem>
+                          )
+                        })}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -939,7 +977,7 @@ export function MemberForm({
             <h2 className="text-2xl font-bold tracking-tight">{initialData ? "Edit Member Profile" : "New Member Form"}</h2>
             {initialData && (
               <p className="text-xs text-muted-foreground">
-                Editing record for {initialData.first_name} {initialData.last_name}
+                Editing record for {formatFullName(initialData)}
               </p>
             )}
           </div>
@@ -1267,7 +1305,7 @@ export function MemberForm({
                               {form.watch("spouse_member_id")
                                 ? (() => {
                                     const m = allMembers.find((member) => member.id === form.watch("spouse_member_id"))
-                                    return m ? formatName(`${m.first_name} ${m.last_name}`) : "Select a member..."
+                                    return m ? formatFullName(m) : "Select a member..."
                                   })()
                                 : "Select a member..."}
                               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1275,33 +1313,57 @@ export function MemberForm({
                           </PopoverTrigger>
                           <PopoverContent className="w-[300px] md:w-[384px] p-0" align="start">
                             <Command>
-                              <CommandInput placeholder="Search member..." className="h-11" />
+                              <CommandInput placeholder="Search spouse by name or suffix..." className="h-11" />
                               <CommandList>
                                 <CommandEmpty className="py-6 text-center text-sm px-4">
                                   <span className="block font-medium mb-1">Profile not found.</span>
                                   <span className="text-muted-foreground text-xs">Uncheck "Is CBT member?" to enter their name manually for now.</span>
                                 </CommandEmpty>
                                 <CommandGroup>
-                                  {allMembers.filter(m => m.id !== initialData?.id).map((m: any) => (
-                                    <CommandItem
-                                      key={m.id}
-                                      value={`${m.first_name} ${m.last_name}`}
-                                      onSelect={() => {
-                                        form.setValue("spouse_member_id", m.id, { shouldValidate: true })
-                                        form.setValue("spouse_name", `${m.first_name} ${m.last_name}`, { shouldValidate: true })
-                                        const occ = m.position || m.company || ""
-                                        if (occ) form.setValue("spouse_occupation", occ, { shouldValidate: true })
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4 text-primary",
-                                          form.watch("spouse_member_id") === m.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {formatName(`${m.first_name} ${m.last_name}`)}
-                                    </CommandItem>
-                                  ))}
+                                  {allMembers.filter(m => m.id !== initialData?.id).map((m: any) => {
+                                    const fullName = formatFullName(m)
+                                    const baseName = formatName(`${m.first_name} ${m.last_name}`)
+                                    const suffix = formatSuffix(m.suffix)
+                                    const age = m.age ?? calculateAge(m.birth_date)
+                                    const birthYear = m.birth_date ? String(m.birth_date).split("T")[0].split("-")[0] : null
+                                    const searchKey = `${m.id} ${fullName} ${m.first_name} ${m.last_name} ${suffix} ${birthYear || ""} ${m.contact_number || ""}`
+
+                                    return (
+                                      <CommandItem
+                                        key={m.id}
+                                        value={searchKey}
+                                        onSelect={() => {
+                                          form.setValue("spouse_member_id", m.id, { shouldValidate: true })
+                                          form.setValue("spouse_name", fullName, { shouldValidate: true })
+                                          const occ = m.position || m.company || ""
+                                          if (occ) form.setValue("spouse_occupation", occ, { shouldValidate: true })
+                                        }}
+                                        className="flex items-center justify-between py-2"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4 text-primary shrink-0",
+                                              form.watch("spouse_member_id") === m.id ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                          <div className="flex flex-col min-w-0">
+                                            <div className="flex items-center gap-1.5 flex-wrap font-medium">
+                                              <span>{baseName}</span>
+                                              {suffix && (
+                                                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                                                  {suffix}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                              {birthYear ? `Born ${birthYear}${age !== null ? ` • ${age} yrs` : ""}` : m.contact_number || ""}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </CommandItem>
+                                    )
+                                  })}
                                 </CommandGroup>
                               </CommandList>
                             </Command>
@@ -1951,13 +2013,18 @@ export function MemberForm({
                             </CommandEmpty>
                             <CommandGroup>
                               {allMembers.filter(m => m.id !== initialData?.id).map((m) => {
+                                const fullName = formatFullName(m)
+                                const baseName = formatName(`${m.first_name} ${m.last_name}`)
+                                const suffix = formatSuffix(m.suffix)
                                 const isSpouse = form.watch("spouse_member_id") === m.id
+                                const searchKey = `${m.id} ${fullName} ${m.first_name} ${m.last_name} ${suffix} ${m.contact_number || ""}`
+
                                 return (
                                   <CommandItem
                                     key={m.id}
-                                    value={`${m.first_name} ${m.last_name}`}
+                                    value={searchKey}
                                     onSelect={() => {
-                                      form.setValue("emergency_contact_name", `${m.first_name} ${m.last_name}`, { shouldDirty: true, shouldValidate: true })
+                                      form.setValue("emergency_contact_name", fullName, { shouldDirty: true, shouldValidate: true })
                                       form.setValue("emergency_contact_number", m.contact_number || "", { shouldDirty: true, shouldValidate: true })
                                       // Auto-set relationship based on member context
                                       if (isSpouse) {
@@ -1974,13 +2041,18 @@ export function MemberForm({
                                   >
                                     <Check
                                       className={cn(
-                                        "mr-2 h-4 w-4",
-                                        form.watch("emergency_contact_name") === `${m.first_name} ${m.last_name}` ? "opacity-100" : "opacity-0"
+                                        "mr-2 h-4 w-4 text-primary shrink-0",
+                                        form.watch("emergency_contact_name") === fullName ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    <div className="flex flex-col">
-                                      <div className="flex items-center gap-2">
-                                        <span>{m.first_name} {m.last_name}</span>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="font-medium">{baseName}</span>
+                                        {suffix && (
+                                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                                            {suffix}
+                                          </span>
+                                        )}
                                         {isSpouse && (
                                           <span className="text-[10px] font-medium bg-pink-500/10 text-pink-600 dark:text-pink-400 px-1.5 py-0.5 rounded-full">Spouse</span>
                                         )}
@@ -2557,8 +2629,8 @@ export function MemberForm({
                     {form.watch("first_name") || form.watch("last_name") ? `${(form.watch("first_name") || '').charAt(0)}${(form.watch("last_name") || '').charAt(0)}`.toUpperCase() : <User2 className="h-7 w-7 text-primary/70" />}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <h4 className="font-bold text-foreground text-base truncate">
-                      {form.watch("first_name") || form.watch("last_name") ? formatName(`${form.watch("first_name") || ""} ${form.watch("last_name") || ""}`) : "Member Name"}
+                    <h4 className="font-bold text-foreground text-base truncate flex items-center gap-1.5 flex-wrap">
+                      <span>{form.watch("first_name") || form.watch("last_name") ? formatFullName({ first_name: form.watch("first_name"), middle_name: form.watch("middle_name"), last_name: form.watch("last_name"), suffix: form.watch("suffix") }) : "Member Name"}</span>
                     </h4>
                     <span className="inline-flex items-center text-xs text-primary font-semibold bg-primary/10 px-2.5 py-0.5 rounded-full w-fit mt-1">
                       {form.watch("church_role") || "Member"}

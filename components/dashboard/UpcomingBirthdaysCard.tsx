@@ -5,12 +5,14 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Cake, ChevronRight, Heart, Sparkles, User2 } from "lucide-react"
-import { formatName, formatBirthday } from "@/lib/utils/utils"
+import { formatName, formatBirthday, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 export interface Celebrant {
   id: string
   first_name: string
+  middle_name?: string | null
   last_name: string
+  suffix?: string | null
   birth_date: string
   contact_number?: string | null
 }
@@ -126,7 +128,8 @@ export function UpcomingBirthdaysCard({
           ) : (
             <div className="divide-y divide-border/50 space-y-1">
               {upcoming30Days.slice(0, 5).map((member) => {
-                const fullName = formatName(`${member.first_name} ${member.last_name}`)
+                const baseName = formatName(`${member.first_name} ${member.last_name}`)
+                const suffix = formatSuffix(member.suffix)
                 const countdown = getCountdownLabel(member.birth_date, false)
                 const formattedDate = formatBirthday(member.birth_date)
 
@@ -141,9 +144,16 @@ export function UpcomingBirthdaysCard({
                         {member.first_name.charAt(0)}{member.last_name.charAt(0)}
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
-                          {fullName}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                            {baseName}
+                          </span>
+                          {suffix && (
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-pink-500/15 text-pink-700 dark:text-pink-300 border border-pink-500/30 shrink-0">
+                              {suffix}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Cake className="h-3 w-3 text-pink-500/70" />
                           {formattedDate}

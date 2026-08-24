@@ -6,15 +6,15 @@ export default function MemberFormLoading() {
   return (
     <div className="sm:bg-card rounded-xl sm:border sm:shadow-sm p-3.5 sm:p-6 md:p-10 w-full mx-auto max-w-7xl animate-in fade-in duration-300">
       {/* Form Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="space-y-1.5">
-            <Skeleton className="h-7 w-52 rounded-xl" />
-            <Skeleton className="h-4 w-40 rounded-md" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Skeleton className="h-8 sm:h-9 w-48 sm:w-60 rounded-xl" />
+            <Skeleton className="h-4 w-64 sm:w-80 max-w-full rounded-md" />
           </div>
         </div>
-        <Skeleton className="h-11 w-36 rounded-xl" />
+        <Skeleton className="h-11 w-full sm:w-36 rounded-xl" />
       </div>
 
       {/* Stepper Progress Bar Skeleton */}
@@ -33,13 +33,13 @@ export default function MemberFormLoading() {
         <div className="lg:col-span-8 space-y-6">
           <div className="space-y-2 border-b pb-3">
             <Skeleton className="h-6 w-48 rounded-lg" />
-            <Skeleton className="h-4 w-72 rounded-md" />
+            <Skeleton className="h-4 w-full max-w-md rounded-md" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-28 rounded-md" />
+                <Skeleton className="h-4 w-32 rounded-md" />
                 <Skeleton className="h-12 w-full rounded-xl" />
               </div>
             ))}
@@ -47,8 +47,8 @@ export default function MemberFormLoading() {
 
           {/* Bottom Buttons Skeleton */}
           <div className="flex items-center justify-between pt-6 border-t">
-            <Skeleton className="h-11 w-24 rounded-xl" />
-            <Skeleton className="h-11 w-32 rounded-xl" />
+            <Skeleton className="h-11 w-28 rounded-xl" />
+            <Skeleton className="h-11 w-36 rounded-xl" />
           </div>
         </div>
 

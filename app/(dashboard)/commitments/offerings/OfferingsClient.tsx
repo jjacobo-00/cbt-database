@@ -6,7 +6,7 @@ import { createOfferingCategory, deleteOfferingCategory, updateOfferingCategory 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { cn, formatName } from "@/lib/utils/utils"
+import { cn, formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 const MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -23,6 +23,7 @@ type MemberOfferingRow = {
   member_id: string
   first_name: string
   last_name: string
+  suffix?: string | null
   contact_number: string | null
   offerings: { offering_category_id: string; offering_name: string }[]
 }
@@ -57,8 +58,10 @@ export function OfferingsClient({
   const [editError, setEditError] = useState("")
 
   const filteredPledges = memberPledges.filter(m => {
-    const name = `${m.first_name} ${m.last_name}`.toLowerCase()
-    return name.includes(search.toLowerCase())
+    const fullName = `${m.first_name || ""} ${m.last_name || ""} ${m.suffix || ""}`.toLowerCase()
+    const reversed = `${m.last_name || ""}, ${m.first_name || ""} ${m.suffix || ""}`.toLowerCase()
+    const q = search.toLowerCase().trim()
+    return fullName.includes(q) || reversed.includes(q)
   })
 
   const handleAdd = () => {
@@ -151,10 +154,20 @@ export function OfferingsClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredPledges.map(m => (
+                  {filteredPledges.map(m => {
+                    const baseName = formatName(`${m.first_name} ${m.last_name}`)
+                    const suffix = formatSuffix(m.suffix)
+                    return (
                     <tr key={m.member_id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
-                        {formatName(`${m.first_name} ${m.last_name}`)}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{baseName}</span>
+                          {suffix && (
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                              {suffix}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         {m.offerings.length === 0 ? (
@@ -173,7 +186,7 @@ export function OfferingsClient({
                         {m.offerings.length}
                       </td>
                     </tr>
-                  ))}
+                  )})}
                   {filteredPledges.length === 0 && (
                     <tr>
                       <td colSpan={3} className="px-4 py-12 text-center text-muted-foreground">

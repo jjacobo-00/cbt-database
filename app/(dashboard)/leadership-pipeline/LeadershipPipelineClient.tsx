@@ -11,13 +11,16 @@ import {
   Users, Crown, TrendingUp, Award, UserCheck, Shield, 
   Filter, Download, Eye, EyeOff, Star 
 } from "lucide-react"
+import { formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
 interface LeadershipCandidate {
   id: string
   first_name: string
+  middle_name?: string | null
   last_name: string
+  suffix?: string | null
   age: number | null
   city: string | null
   occupation: string | null
@@ -326,7 +329,14 @@ export function LeadershipPipelineClient({
                       {getLevelIcon(candidate.leadershipLevel)}
                     </div>
                     <div>
-                      <h3 className="font-semibold">{candidate.first_name} {candidate.last_name}</h3>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="font-semibold">{formatName(`${candidate.first_name} ${candidate.last_name}`)}</h3>
+                        {candidate.suffix && (
+                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                            {formatSuffix(candidate.suffix)}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">{candidate.occupation || 'No occupation listed'}</p>
                     </div>
                   </div>
@@ -363,7 +373,7 @@ export function LeadershipPipelineClient({
       {selectedCandidate && (
         <Card>
           <CardHeader>
-            <CardTitle>{selectedCandidate.first_name} {selectedCandidate.last_name} - Leadership Profile</CardTitle>
+            <CardTitle>{formatFullName(selectedCandidate)} - Leadership Profile</CardTitle>
             <CardDescription>Comprehensive leadership assessment</CardDescription>
           </CardHeader>
           <CardContent>

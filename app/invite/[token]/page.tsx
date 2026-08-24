@@ -38,9 +38,11 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     const allMembers = await db.select({
       id: members.id,
       first_name: members.first_name,
+      middle_name: members.middle_name,
       last_name: members.last_name,
       suffix: members.suffix,
       sex: members.sex,
+      birth_date: members.birth_date,
       contact_number: members.contact_number,
       position: members.position,
       company: members.company,

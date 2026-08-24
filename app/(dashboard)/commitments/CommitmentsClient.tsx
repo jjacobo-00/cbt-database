@@ -5,7 +5,7 @@ import { Search, Loader2, Pencil, X, Check, Plus, AlertCircle, ChevronRight, Use
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "./actions"
-import { cn, formatName } from "@/lib/utils/utils"
+import { cn, formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 type CommitmentRow = {
   id: string
@@ -13,6 +13,7 @@ type CommitmentRow = {
   year: number
   first_name: string
   last_name: string
+  suffix?: string | null
   contact_number: string | null
   has_pledged: boolean
   ministries: { commitment_id: string; ministry_id: string; ministry_name: string; parent_id: string | null }[]
@@ -49,8 +50,10 @@ export function CommitmentsClient({
   const [editOfferings, setEditOfferings] = useState<string[]>([])
 
   const filtered = commitmentsList.filter(c => {
-    const name = `${c.first_name} ${c.last_name}`.toLowerCase()
-    return name.includes(search.toLowerCase())
+    const name = `${c.first_name || ""} ${c.last_name || ""} ${c.suffix || ""}`.toLowerCase()
+    const reversed = `${c.last_name || ""}, ${c.first_name || ""} ${c.suffix || ""}`.toLowerCase()
+    const q = search.toLowerCase().trim()
+    return name.includes(q) || reversed.includes(q)
   })
 
   const handleYearChange = (newYear: number) => {
@@ -159,53 +162,64 @@ export function CommitmentsClient({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map(c => (
-                <tr key={c.member_id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{formatName(`${c.first_name} ${c.last_name}`)}</p>
-                    <p className="text-xs text-muted-foreground">{c.contact_number || "-"}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    {c.ministries.length === 0 ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">
-                        <AlertCircle className="h-3 w-3" /> None
-                      </span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {c.ministries.map(m => (
-                          <span key={m.ministry_id} className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                            {m.ministry_name}
+              {filtered.map(c => {
+                const baseName = formatName(`${c.first_name} ${c.last_name}`)
+                const suffix = formatSuffix(c.suffix)
+                return (
+                  <tr key={c.member_id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium">{baseName}</span>
+                        {suffix && (
+                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                            {suffix}
                           </span>
-                        ))}
+                        )}
                       </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {c.offerings.length === 0 ? (
-                      <span className="text-muted-foreground text-xs font-normal">-</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {c.offerings.map(o => (
-                          <span key={o.offering_category_id} className="text-[11px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full font-medium">
-                            {o.offering_name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {c.has_pledged ? (
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(c)} className="gap-1">
-                        <Pencil className="h-3.5 w-3.5" /> Edit Commitments
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" onClick={() => openEdit(c)} className="gap-1 text-xs">
-                        <Plus className="h-3.5 w-3.5" /> Set Commitments
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      <p className="text-xs text-muted-foreground">{c.contact_number || "-"}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      {c.ministries.length === 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">
+                          <AlertCircle className="h-3 w-3" /> None
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {c.ministries.map(m => (
+                            <span key={m.ministry_id} className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                              {m.ministry_name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {c.offerings.length === 0 ? (
+                        <span className="text-muted-foreground text-xs font-normal">-</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {c.offerings.map(o => (
+                            <span key={o.offering_category_id} className="text-[11px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full font-medium">
+                              {o.offering_name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {c.has_pledged ? (
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)} className="gap-1">
+                          <Pencil className="h-3.5 w-3.5" /> Edit Commitments
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => openEdit(c)} className="gap-1 text-xs">
+                          <Plus className="h-3.5 w-3.5" /> Set Commitments
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
@@ -222,6 +236,8 @@ export function CommitmentsClient({
       <div className="flex flex-col md:hidden border rounded-xl bg-card shadow-sm overflow-hidden divide-y mt-4">
         {filtered.map(c => {
           const initials = `${c.first_name.charAt(0)}${c.last_name.charAt(0)}`.toUpperCase();
+          const baseName = formatName(`${c.first_name} ${c.last_name}`)
+          const suffix = formatSuffix(c.suffix)
           return (
             <button
               key={c.member_id}
@@ -233,9 +249,14 @@ export function CommitmentsClient({
                   {initials || <User2 className="h-5 w-5" />}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="font-semibold text-foreground truncate">
-                    {formatName(`${c.first_name} ${c.last_name}`)}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap font-semibold text-foreground">
+                    <span className="truncate">{baseName}</span>
+                    {suffix && (
+                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                        {suffix}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-muted-foreground truncate">
                     {c.has_pledged 
                       ? `${c.ministries.length} Ministries • ${c.offerings.length} Offerings`
@@ -261,7 +282,7 @@ export function CommitmentsClient({
             <div className="sticky top-0 bg-card border-b px-6 py-4 flex items-center justify-between z-10">
               <div>
                 <h2 className="text-lg font-semibold">Ministry & Offering Commitments</h2>
-                <p className="text-sm text-muted-foreground">{formatName(`${editingMember.first_name} ${editingMember.last_name}`)} — {year}</p>
+                <p className="text-sm text-muted-foreground">{formatFullName(editingMember)} — {year}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setEditingMember(null)}><X className="h-5 w-5" /></Button>
             </div>

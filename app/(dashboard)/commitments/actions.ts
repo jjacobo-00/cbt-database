@@ -14,6 +14,7 @@ export async function getCommitmentsByYear(year: number) {
       member_id: members.id,
       first_name: members.first_name,
       last_name: members.last_name,
+      suffix: members.suffix,
       contact_number: members.contact_number,
     }).from(members).orderBy(asc(members.last_name), asc(members.first_name))
 
@@ -65,6 +66,7 @@ export async function getCommitmentsByYear(year: number) {
         year,
         first_name: m.first_name,
         last_name: m.last_name,
+        suffix: m.suffix,
         contact_number: m.contact_number,
         has_pledged: !!comm && (memberMins.length > 0 || memberOffs.length > 0),
         ministries: memberMins,
@@ -87,6 +89,7 @@ export async function getRecommitmentTrackerData(targetYear: number) {
       member_id: members.id,
       first_name: members.first_name,
       last_name: members.last_name,
+      suffix: members.suffix,
       contact_number: members.contact_number,
     }).from(members).orderBy(asc(members.last_name), asc(members.first_name))
 
@@ -150,6 +153,7 @@ export async function getRecommitmentTrackerData(targetYear: number) {
         member_id: m.member_id,
         first_name: m.first_name,
         last_name: m.last_name,
+        suffix: m.suffix,
         contact_number: m.contact_number,
         status,
         targetYear,

@@ -53,7 +53,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
-import { cn, formatName } from "@/lib/utils/utils"
+import { cn, formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 import {
   saveAttendanceSession,
   getMinistryAttendanceData,
@@ -326,8 +326,10 @@ export function AttendanceClient({
 
   // Filtered members by search & status pill
   const filteredMembers = members.filter((m) => {
-    const fullName = `${m.first_name} ${m.last_name}`.toLowerCase()
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase())
+    const fullName = `${m.first_name || ""} ${m.middle_name || ""} ${m.last_name || ""} ${m.suffix || ""}`.toLowerCase()
+    const reversedName = `${m.last_name || ""}, ${m.first_name || ""} ${m.suffix || ""}`.toLowerCase()
+    const q = searchQuery.toLowerCase().trim()
+    const matchesSearch = fullName.includes(q) || reversedName.includes(q)
 
     const isPresent = Boolean(presentMap[m.id])
     if (statusFilter === "present" && !isPresent) return false
@@ -911,9 +913,16 @@ export function AttendanceClient({
                       </div>
 
                       <div className="min-w-0 space-y-0.5">
-                        <p className="font-semibold text-sm text-foreground truncate">
-                          {formatName(`${m.last_name}, ${m.first_name}`)}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-semibold text-sm text-foreground truncate">
+                            {formatName(`${m.last_name}, ${m.first_name}`)}
+                          </p>
+                          {m.suffix && (
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                              {formatSuffix(m.suffix)}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {m.church_role && (
                             <span className="text-[10px] text-muted-foreground font-medium">

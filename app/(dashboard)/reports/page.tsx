@@ -6,7 +6,9 @@ import { ReportsClient } from "./ReportsClient"
 export type ReportMember = {
   id: string
   first_name: string
+  middle_name?: string | null
   last_name: string
+  suffix?: string | null
   gender: string | null
   sex: string | null
   age: number | null
@@ -78,7 +80,9 @@ export default async function ReportsPage() {
     db.select({
       id: members.id,
       first_name: members.first_name,
+      middle_name: members.middle_name,
       last_name: members.last_name,
+      suffix: members.suffix,
       gender: members.gender,
       sex: members.sex,
       age: members.age,

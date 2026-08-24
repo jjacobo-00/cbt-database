@@ -22,7 +22,10 @@ export async function requestMemberOtp(rawEmail: string) {
       .select({
         id: members.id,
         first_name: members.first_name,
+        middle_name: members.middle_name,
         last_name: members.last_name,
+        suffix: members.suffix,
+        birth_date: members.birth_date,
         church_role: members.church_role,
       })
       .from(members)

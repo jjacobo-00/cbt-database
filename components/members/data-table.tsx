@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { formatName, normalizeCity, formatBirthday } from "@/lib/utils/utils"
+import { formatName, normalizeCity, formatBirthday, formatFullName, formatSuffix, calculateAge } from "@/lib/utils/utils"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -348,7 +348,10 @@ export function DataTable<TData, TValue>({
       const q = String(filterValue || "").trim().toLowerCase()
       if (!q) return true
       const original = row.original as any
-      const fullName = `${original.first_name || ""} ${original.middle_name || ""} ${original.last_name || ""}`.toLowerCase()
+      const fullName = `${original.first_name || ""} ${original.middle_name || ""} ${original.last_name || ""} ${original.suffix || ""}`.toLowerCase()
+      const reversedName = `${original.last_name || ""}, ${original.first_name || ""} ${original.suffix || ""}`.toLowerCase()
+      const suffix = (original.suffix || "").toLowerCase()
+      const birthYear = original.birth_date ? String(original.birth_date).split("T")[0].split("-")[0] : ""
       const missionName = (original.mission_name || "CBT Olongapo").toLowerCase()
       const churchRole = (original.church_role || "Member").toLowerCase()
       const city = (original.city || "").toLowerCase()
@@ -357,6 +360,9 @@ export function DataTable<TData, TValue>({
       const email = (original.email || "").toLowerCase()
       return (
         fullName.includes(q) ||
+        reversedName.includes(q) ||
+        suffix.includes(q) ||
+        birthYear.includes(q) ||
         missionName.includes(q) ||
         churchRole.includes(q) ||
         city.includes(q) ||
@@ -904,6 +910,8 @@ export function DataTable<TData, TValue>({
             const memberId = (row.original as any).id
             const firstName = formatName((row.original as any).first_name || "")
             const lastName = formatName((row.original as any).last_name || "")
+            const suffix = formatSuffix((row.original as any).suffix)
+            const age = (row.original as any).age ?? calculateAge((row.original as any).birth_date)
             const contact = (row.original as any).contact_number || "No contact info"
             const role = (row.original as any).occupation || "Member"
             const rawContact = (row.original as any).contact_number
@@ -927,9 +935,16 @@ export function DataTable<TData, TValue>({
                     {initials || <User2 className="h-6 w-6" />}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-semibold text-foreground text-base truncate">
-                      {firstName} {lastName}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="font-semibold text-foreground text-base truncate">
+                        {firstName} {lastName}
+                      </span>
+                      {suffix && (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                          {suffix}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                       <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
                         {missionName}
@@ -938,6 +953,7 @@ export function DataTable<TData, TValue>({
                         <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-pink-500/10 text-pink-700 dark:text-pink-300 shrink-0 flex items-center gap-1">
                           <Cake className="h-3 w-3" />
                           {formatBirthday((row.original as any).birth_date)}
+                          {age !== null && <span className="opacity-80">({age} yrs)</span>}
                         </span>
                       )}
                       {lastLoginAt && (

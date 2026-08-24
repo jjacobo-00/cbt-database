@@ -7,7 +7,7 @@ import { members, ministries, member_ministries, commitments, commitment_ministr
 import crypto from "crypto"
 import { eq, and, gt, desc, asc, isNull, inArray, notInArray, ne } from "drizzle-orm"
 import { requireAdmin, requireSelfOrAdmin } from "@/lib/utils/action-helpers"
-import { formatName, normalizeCity } from "@/lib/utils/utils"
+import { formatName, normalizeCity, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 export async function coreCreateMember(payloadStr: string) {
   const data = JSON.parse(payloadStr)
@@ -167,7 +167,7 @@ export async function coreCreateMember(payloadStr: string) {
     // Link the new spouse (set their reference back to this newly created user)
     await db.update(members).set({
       spouse_member_id: member.id,
-      spouse_name: `${member.first_name} ${member.last_name}`,
+      spouse_name: formatFullName(member),
       marital_status: data.marital_status || "Married",
       anniversary_date: data.anniversary_date || null
     }).where(eq(members.id, data.spouse_member_id))
@@ -201,9 +201,9 @@ export async function coreCreateMember(payloadStr: string) {
     for (const c of data.children) {
       if (c.child_member_id) {
         if (data.gender === "Male") {
-          await db.update(members).set({ father_member_id: member.id, father_name: `${member.first_name} ${member.last_name}` }).where(eq(members.id, c.child_member_id))
+          await db.update(members).set({ father_member_id: member.id, father_name: formatFullName(member) }).where(eq(members.id, c.child_member_id))
         } else {
-          await db.update(members).set({ mother_member_id: member.id, mother_name: `${member.first_name} ${member.last_name}` }).where(eq(members.id, c.child_member_id))
+          await db.update(members).set({ mother_member_id: member.id, mother_name: formatFullName(member) }).where(eq(members.id, c.child_member_id))
         }
       }
     }
@@ -219,7 +219,7 @@ export async function coreCreateMember(payloadStr: string) {
           const alreadyExists = theirSiblings.some((ts: any) => ts.sibling_member_id === member.id)
           if (!alreadyExists) {
             theirSiblings.push({
-              name: `${member.first_name} ${member.last_name}`,
+              name: formatFullName(member),
               birth_date: member.birth_date || "",
               sibling_is_member: true,
               sibling_member_id: member.id
@@ -426,7 +426,7 @@ export async function coreUpdateMember(payloadStr: string) {
     // Link the new spouse (set their reference back to this user)
     await db.update(members).set({
       spouse_member_id: id,
-      spouse_name: `${data.first_name} ${data.last_name}`,
+      spouse_name: formatFullName(data),
       marital_status: data.marital_status || "Married",
       anniversary_date: data.anniversary_date || null
     }).where(eq(members.id, newSpouseId))
@@ -457,9 +457,9 @@ export async function coreUpdateMember(payloadStr: string) {
     for (const c of data.children) {
       if (c.child_member_id) {
         if (data.gender === "Male") {
-          await db.update(members).set({ father_member_id: id, father_name: `${data.first_name} ${data.last_name}` }).where(eq(members.id, c.child_member_id))
+          await db.update(members).set({ father_member_id: id, father_name: formatFullName(data) }).where(eq(members.id, c.child_member_id))
         } else {
-          await db.update(members).set({ mother_member_id: id, mother_name: `${data.first_name} ${data.last_name}` }).where(eq(members.id, c.child_member_id))
+          await db.update(members).set({ mother_member_id: id, mother_name: formatFullName(data) }).where(eq(members.id, c.child_member_id))
         }
       }
     }

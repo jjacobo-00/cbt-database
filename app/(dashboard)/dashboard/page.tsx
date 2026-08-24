@@ -27,7 +27,7 @@ import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { RecentMembersTable } from "@/components/dashboard/RecentMembersTable";
 import { UpcomingBirthdaysCard, AnniversaryCelebrant } from "@/components/dashboard/UpcomingBirthdaysCard";
 import { RecentAttendanceCard, LatestServiceAttendance } from "@/components/dashboard/RecentAttendanceCard";
-import { formatName, formatAnniversaryMilestone } from "@/lib/utils/utils";
+import { formatName, formatAnniversaryMilestone, formatFullName } from "@/lib/utils/utils";
 
 export const revalidate = 0
 
@@ -68,7 +68,9 @@ export default async function DashboardPage() {
       .select({
         id: members.id,
         first_name: members.first_name,
+        middle_name: members.middle_name,
         last_name: members.last_name,
+        suffix: members.suffix,
         contact_number: members.contact_number,
         city: members.city,
         membership_date: members.created_at,
@@ -94,7 +96,9 @@ export default async function DashboardPage() {
       .select({
         id: members.id,
         first_name: members.first_name,
+        middle_name: members.middle_name,
         last_name: members.last_name,
+        suffix: members.suffix,
         birth_date: members.birth_date,
         marital_status: members.marital_status,
         spouse_name: members.spouse_name,

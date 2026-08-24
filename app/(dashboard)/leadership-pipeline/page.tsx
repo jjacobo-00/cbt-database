@@ -19,7 +19,9 @@ export default async function LeadershipPipelinePage() {
     db.select({
       id: members.id,
       first_name: members.first_name,
+      middle_name: members.middle_name,
       last_name: members.last_name,
+      suffix: members.suffix,
       age: members.age,
       city: members.city,
       occupation: members.occupation,

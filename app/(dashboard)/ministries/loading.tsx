@@ -1,7 +1,7 @@
 import React from "react"
 import { Church } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 
 export default function MinistriesLoading() {
   return (
@@ -13,11 +13,11 @@ export default function MinistriesLoading() {
             <Church className="h-6 w-6" />
           </div>
           <div className="space-y-1.5">
-            <Skeleton className="h-7 w-40 rounded-xl" />
-            <Skeleton className="h-4 w-72 rounded-md" />
+            <Skeleton className="h-8 sm:h-9 w-44 sm:w-56 rounded-xl" />
+            <Skeleton className="h-4 w-64 sm:w-80 max-w-full rounded-md" />
           </div>
         </div>
-        <Skeleton className="h-11 w-36 rounded-xl" />
+        <Skeleton className="h-11 w-full sm:w-36 rounded-xl" />
       </div>
 
       {/* Search Toolbar Skeleton */}
@@ -30,22 +30,25 @@ export default function MinistriesLoading() {
         {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="rounded-2xl shadow-xs p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1.5 flex-1">
-                <Skeleton className="h-5 w-3/4 rounded-lg" />
-                <Skeleton className="h-3.5 w-full rounded-md" />
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <Skeleton
+                  className="h-5 rounded-lg"
+                  style={{ width: `${65 + ((i * 11) % 30)}%`, maxWidth: "200px" }}
+                />
+                <Skeleton className="h-3.5 w-full max-w-[240px] rounded-md" />
               </div>
               <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
             </div>
 
-            <div className="flex items-center gap-3 pt-2 border-t">
+            <div className="flex items-center gap-3 pt-3 border-t">
               <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-              <div className="space-y-1 flex-1">
-                <Skeleton className="h-4 w-32 rounded-md" />
-                <Skeleton className="h-3 w-20 rounded-md" />
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <Skeleton className="h-4 w-3/4 max-w-[140px] rounded-md" />
+                <Skeleton className="h-3 w-1/2 max-w-[90px] rounded-md" />
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-2 border-t text-xs">
               <Skeleton className="h-6 w-24 rounded-full" />
               <Skeleton className="h-6 w-20 rounded-full" />
             </div>

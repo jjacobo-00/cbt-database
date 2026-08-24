@@ -21,6 +21,7 @@ export default async function OfferingsPage({ searchParams }: { searchParams: Pr
     member_id: c.member_id,
     first_name: c.first_name,
     last_name: c.last_name,
+    suffix: c.suffix,
     contact_number: c.contact_number,
     offerings: c.offerings,
   }))

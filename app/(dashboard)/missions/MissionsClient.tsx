@@ -65,12 +65,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DatePicker } from "@/components/ui/date-picker"
 import { toast } from "sonner"
 import { createMission, updateMission, deleteMission } from "./actions"
-import { cn, formatName } from "@/lib/utils/utils"
+import { cn, formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 export type MemberOption = {
   id: string
   first_name: string
+  middle_name?: string | null
   last_name: string
+  suffix?: string | null
   church_role?: string | null
   gender?: string | null
 }
@@ -796,7 +798,7 @@ export function MissionsClient({
                                 setFormAndDraft((prev) => ({
                                   ...prev,
                                   pastor_id: m.id,
-                                  pastor_name: formatName(`${m.first_name} ${m.last_name}`),
+                                  pastor_name: formatFullName(m),
                                 }))
                                 setPastorSelectorOpen(false)
                                 setPastorSearchQuery("")
@@ -813,9 +815,16 @@ export function MissionsClient({
                                   {initials}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-xs sm:text-sm font-semibold truncate">
-                                    {formatName(`${m.first_name} ${m.last_name}`)}
-                                  </p>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <p className="text-xs sm:text-sm font-semibold truncate">
+                                      {formatName(`${m.first_name} ${m.last_name}`)}
+                                    </p>
+                                    {m.suffix && (
+                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                                        {formatSuffix(m.suffix)}
+                                      </span>
+                                    )}
+                                  </div>
                                   <p className="text-[10px] text-muted-foreground truncate">
                                     {m.church_role || "Member"}
                                   </p>

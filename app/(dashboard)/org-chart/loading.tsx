@@ -11,12 +11,12 @@ export default function OrgChartLoading() {
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
             <Network className="h-6 w-6" />
           </div>
-          <div className="space-y-1.5">
-            <Skeleton className="h-7 w-60 rounded-xl" />
-            <Skeleton className="h-4 w-72 rounded-md" />
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Skeleton className="h-8 sm:h-9 w-48 sm:w-60 rounded-xl" />
+            <Skeleton className="h-4 w-64 sm:w-80 max-w-full rounded-md" />
           </div>
         </div>
-        <Skeleton className="h-10 w-32 rounded-xl" />
+        <Skeleton className="h-10 w-full sm:w-32 rounded-xl" />
       </div>
 
       {/* Org Chart Hierarchy Tree Nodes Skeleton */}
@@ -25,7 +25,7 @@ export default function OrgChartLoading() {
         <div className="p-4 rounded-xl border bg-card shadow-md flex items-center justify-between border-primary/40">
           <div className="flex items-center gap-3 w-full">
             <Skeleton className="h-12 w-12 rounded-full shrink-0" />
-            <div className="space-y-1.5 flex-1">
+            <div className="space-y-1.5 flex-1 min-w-0">
               <Skeleton className="h-5 w-44 rounded-lg" />
               <Skeleton className="h-3.5 w-32 rounded-md" />
             </div>
@@ -46,7 +46,7 @@ export default function OrgChartLoading() {
               <div className="p-3.5 rounded-xl border bg-card shadow-xs flex items-center justify-between">
                 <div className="flex items-center gap-3 w-full">
                   <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                  <div className="space-y-1.5 flex-1">
+                  <div className="space-y-1.5 flex-1 min-w-0">
                     <Skeleton className="h-4 w-36 rounded-lg" />
                     <Skeleton className="h-3 w-28 rounded-md" />
                   </div>

@@ -31,7 +31,8 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatName } from "@/lib/utils/utils";
+import { cn } from "@/lib/utils/utils";
+import { formatName, formatFullName, formatSuffix } from "@/lib/utils/utils";
 import {
   Card,
   CardContent,
@@ -39,7 +40,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils/utils";
 import { deleteMember } from "@/app/(dashboard)/members/actions";
 import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton";
 import {
@@ -345,7 +345,7 @@ export function MemberProfileView({
               <div className="space-y-1 pb-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                    {formatName([member.first_name, member.middle_name, member.last_name, member.suffix].filter(Boolean).join(" "))}
+                    {formatFullName(member, { includeMiddle: true, middleFormat: "full" })}
                   </h2>
                 </div>
 

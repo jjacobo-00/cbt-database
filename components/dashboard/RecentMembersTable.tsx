@@ -2,12 +2,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Users, ChevronRight, User2 } from "lucide-react"
-import { formatName } from "@/lib/utils/utils"
+import { formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 
 interface RecentMember {
   id: string
   first_name: string
+  middle_name?: string | null
   last_name: string
+  suffix?: string | null
   contact_number: string | null
   city: string | null
   membership_date: Date | null
@@ -64,6 +66,8 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
             <tbody>
               {recentMembers.map((member) => {
                 const isNew = isNewMember(member.membership_date)
+                const baseName = formatName(`${member.first_name} ${member.last_name}`)
+                const suffix = formatSuffix(member.suffix)
                 
                 return (
                   <tr key={member.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
@@ -72,8 +76,13 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
                         <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-medium text-xs">
                           {getInitials(member.first_name, member.last_name)}
                         </div>
-                        <div className="font-medium flex items-center gap-2">
-                          {formatName(`${member.first_name} ${member.last_name}`)}
+                        <div className="font-medium flex items-center gap-2 flex-wrap">
+                          <span>{baseName}</span>
+                          {suffix && (
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                              {suffix}
+                            </span>
+                          )}
                           {isNew && (
                             <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
                               New
@@ -111,6 +120,9 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
           {recentMembers.map((member) => {
             const isNew = isNewMember(member.membership_date)
             const initials = getInitials(member.first_name, member.last_name)
+            const baseName = formatName(`${member.first_name} ${member.last_name}`)
+            const suffix = formatSuffix(member.suffix)
+
             return (
               <Link 
                 key={member.id} 
@@ -125,9 +137,14 @@ export function RecentMembersTable({ recentMembers }: RecentMembersTableProps) {
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-semibold text-foreground truncate">
-                      {formatName(`${member.first_name} ${member.last_name}`)}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap font-semibold text-foreground">
+                      <span className="truncate">{baseName}</span>
+                      {suffix && (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                          {suffix}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground truncate">
                       {member.city || member.contact_number || "No contact info"}
                     </span>

@@ -13,12 +13,12 @@ export default function OfferingsLoading() {
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
             <Gift className="h-6 w-6" />
           </div>
-          <div className="space-y-1.5">
-            <Skeleton className="h-7 w-60 rounded-xl" />
-            <Skeleton className="h-4 w-72 rounded-md" />
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Skeleton className="h-8 sm:h-9 w-48 sm:w-60 rounded-xl" />
+            <Skeleton className="h-4 w-64 sm:w-80 max-w-full rounded-md" />
           </div>
         </div>
-        <Skeleton className="h-11 w-40 rounded-xl" />
+        <Skeleton className="h-11 w-full sm:w-40 rounded-xl" />
       </div>
 
       {/* 4 Summary KPI Cards */}
@@ -26,19 +26,19 @@ export default function OfferingsLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="rounded-2xl shadow-xs">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-28 rounded-lg" />
-              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 w-32 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
             </CardHeader>
             <CardContent className="space-y-2">
-              <Skeleton className="h-8 w-16 rounded-lg" />
-              <Skeleton className="h-3 w-36 rounded-md" />
+              <Skeleton className="h-9 w-24 sm:w-28 rounded-lg" />
+              <Skeleton className="h-3.5 w-36 rounded-md" />
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Offerings Table Skeleton */}
-      <TableSkeleton rows={6} showToolbar={true} />
+      <TableSkeleton rows={8} showToolbar={true} />
     </div>
   )
 }

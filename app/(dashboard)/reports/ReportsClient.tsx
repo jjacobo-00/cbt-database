@@ -59,7 +59,7 @@ import {
 } from "lucide-react";
 import { AreaChart, Area } from "recharts";
 import type { ReportMember, ReportAttendanceSession } from "./page";
-import { normalizeCity, formatBirthday, formatAnniversaryMilestone, formatName } from "@/lib/utils/utils";
+import { normalizeCity, formatBirthday, formatAnniversaryMilestone, formatName, formatFullName, formatSuffix } from "@/lib/utils/utils";
 import { formatServiceSlotBadge } from "@/lib/constants/church-schedule";
 
 export type MinistryParticipation = {
@@ -627,7 +627,7 @@ export function ReportsClient({
         }
 
         const age = m.age ? `${m.age} yrs old` : "-";
-        const fullName = formatName(`${m.first_name} ${m.last_name}`);
+        const fullName = formatFullName(m);
         return {
           id: m.id,
           type: "birthday" as const,
@@ -652,15 +652,15 @@ export function ReportsClient({
       if (processedCoupleIds.has(member.id)) return;
 
       let coupleName = "";
-      const memberName = formatName(`${member.first_name} ${member.last_name}`);
+      const memberName = formatFullName(member);
 
       if (member.spouse_member_id) {
         const spouse = anniversaryMembers.find((m) => m.id === member.spouse_member_id);
         if (spouse) {
           processedCoupleIds.add(spouse.id);
-          const spouseFormatted = formatName(`${spouse.first_name} ${spouse.last_name}`);
+          const spouseFormatted = formatFullName(spouse);
           if (member.last_name && spouse.last_name && member.last_name.toLowerCase().trim() === spouse.last_name.toLowerCase().trim()) {
-            coupleName = `${formatName(member.first_name)} & ${formatName(spouse.first_name)} ${formatName(member.last_name)}`;
+            coupleName = `${formatFullName({ first_name: member.first_name, suffix: member.suffix })} & ${formatFullName({ first_name: spouse.first_name, suffix: spouse.suffix })} ${formatName(member.last_name)}`;
           } else {
             coupleName = `${memberName} & ${spouseFormatted}`;
           }

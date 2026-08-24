@@ -5,13 +5,14 @@ import { Search, Loader2, Check, X, ArrowRight, History, CheckCircle2, Clock, He
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { upsertCommitment } from "../actions"
-import { cn, formatName } from "@/lib/utils/utils"
+import { cn, formatName, formatFullName, formatSuffix } from "@/lib/utils/utils"
 import { useRouter } from "next/navigation"
 
 type TrackerMember = {
   member_id: string
   first_name: string
   last_name: string
+  suffix?: string | null
   contact_number: string | null
   status: "recommitted" | "pending" | "unassigned"
   targetYear: number
@@ -105,7 +106,10 @@ export function RecommitmentClient({
   }
 
   const filtered = list.filter(m => {
-    const matchesSearch = `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())
+    const fullName = `${m.first_name || ""} ${m.last_name || ""} ${m.suffix || ""}`.toLowerCase()
+    const reversed = `${m.last_name || ""}, ${m.first_name || ""} ${m.suffix || ""}`.toLowerCase()
+    const q = search.toLowerCase().trim()
+    const matchesSearch = fullName.includes(q) || reversed.includes(q)
     if (filterStatus === "all") return matchesSearch
     return matchesSearch && m.status === filterStatus
   })
@@ -206,10 +210,20 @@ export function RecommitmentClient({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map(m => (
+              {filtered.map(m => {
+                const baseName = formatName(`${m.first_name} ${m.last_name}`)
+                const suffix = formatSuffix(m.suffix)
+                return (
                 <tr key={m.member_id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium">{formatName(`${m.first_name} ${m.last_name}`)}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-medium">{baseName}</span>
+                      {suffix && (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                          {suffix}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">{m.contact_number || "-"}</p>
                   </td>
 
@@ -279,7 +293,7 @@ export function RecommitmentClient({
                     )}
                   </td>
                 </tr>
-              ))}
+              )})}
 
               {filtered.length === 0 && (
                 <tr>
@@ -302,7 +316,7 @@ export function RecommitmentClient({
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <span>Recommitment for {targetYear}</span>
                 </h2>
-                <p className="text-sm text-muted-foreground">{formatName(`${selectedMember.first_name} ${selectedMember.last_name}`)}</p>
+                <p className="text-sm text-muted-foreground">{formatFullName(selectedMember)}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setSelectedMember(null)}><X className="h-5 w-5" /></Button>
             </div>

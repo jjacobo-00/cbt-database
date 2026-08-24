@@ -8,12 +8,15 @@ import { Mail, KeyRound, Loader2, ArrowRight, UserCheck, RefreshCw, AlertCircle,
 import { requestMemberOtp, loginMemberWithOtp } from "@/app/(auth)/login/actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { formatName } from "@/lib/utils/utils"
+import { formatName, formatFullName, formatSuffix, calculateAge } from "@/lib/utils/utils"
 
 interface SharedMember {
   id: string
   first_name: string
+  middle_name?: string | null
   last_name: string
+  suffix?: string | null
+  birth_date?: string | null
   church_role: string | null
 }
 
@@ -164,10 +167,18 @@ export function MemberLoginForm() {
                   <div className="flex items-center gap-2.5">
                     <UserCheck className="h-4 w-4 text-primary" />
                     <div>
-                      <div className="text-sm">
-                        {formatName(`${m.first_name} ${m.last_name}`)}
+                      <div className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
+                        <span>{formatName(`${m.first_name} ${m.last_name}`)}</span>
+                        {m.suffix && (
+                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                            {formatSuffix(m.suffix)}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-[10px] text-muted-foreground">{m.church_role || "Member"}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {m.church_role || "Member"}
+                        {m.birth_date ? ` • Born ${String(m.birth_date).split("T")[0].split("-")[0]}` : ""}
+                      </div>
                     </div>
                   </div>
                   {selectedMemberId === m.id && <CheckCircle2 className="h-4 w-4 text-primary" />}

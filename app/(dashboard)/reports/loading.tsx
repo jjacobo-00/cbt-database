@@ -8,22 +8,22 @@ export default function ReportsLoading() {
     <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-in fade-in duration-300">
       {/* Header with Title and Date Filter Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 flex-1 min-w-0 max-w-xl">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-primary/10 text-primary">
               <BarChart3 className="h-6 w-6" />
             </div>
-            <Skeleton className="h-8 w-60 rounded-xl" />
+            <Skeleton className="h-8 md:h-9 w-48 sm:w-64 rounded-xl" />
           </div>
-          <Skeleton className="h-4 w-96 rounded-md" />
+          <Skeleton className="h-4 w-full max-w-md rounded-md" />
         </div>
-        <Skeleton className="h-10 w-48 rounded-xl" />
+        <Skeleton className="h-10 w-full sm:w-48 rounded-xl" />
       </div>
 
       {/* Tab Triggers Strip Skeleton */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-36 rounded-xl shrink-0" />
+          <Skeleton key={i} className="h-10 w-32 sm:w-36 rounded-xl shrink-0" />
         ))}
       </div>
 
@@ -32,12 +32,12 @@ export default function ReportsLoading() {
         {Array.from({ length: 5 }).map((_, idx) => (
           <Card key={idx} className="rounded-2xl shadow-xs">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-28 rounded-lg" />
-              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 w-32 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
             </CardHeader>
             <CardContent className="space-y-2">
-              <Skeleton className="h-8 w-20 rounded-lg" />
-              <Skeleton className="h-3 w-32 rounded-md" />
+              <Skeleton className="h-9 w-24 sm:w-28 rounded-lg" />
+              <Skeleton className="h-3.5 w-36 rounded-md" />
             </CardContent>
           </Card>
         ))}
@@ -48,8 +48,8 @@ export default function ReportsLoading() {
         {/* Gender Distribution Donut Chart */}
         <Card className="col-span-1 min-w-0 rounded-2xl shadow-xs">
           <CardHeader className="space-y-1.5 pb-2">
-            <Skeleton className="h-5 w-36 rounded-lg" />
-            <Skeleton className="h-3 w-48 rounded-md" />
+            <Skeleton className="h-5 w-40 rounded-lg" />
+            <Skeleton className="h-3.5 w-52 rounded-md" />
           </CardHeader>
           <CardContent className="h-[240px] flex flex-col items-center justify-center gap-3">
             <Skeleton className="h-36 w-36 rounded-full" />
@@ -63,8 +63,8 @@ export default function ReportsLoading() {
         {/* Marital Status Bar Chart */}
         <Card className="col-span-1 md:col-span-1 xl:col-span-2 min-w-0 rounded-2xl shadow-xs">
           <CardHeader className="space-y-1.5 pb-2">
-            <Skeleton className="h-5 w-32 rounded-lg" />
-            <Skeleton className="h-3 w-48 rounded-md" />
+            <Skeleton className="h-5 w-40 rounded-lg" />
+            <Skeleton className="h-3.5 w-56 rounded-md" />
           </CardHeader>
           <CardContent className="h-[240px] flex items-end gap-3 pt-6 px-4">
             {Array.from({ length: 4 }).map((_, k) => (
@@ -79,8 +79,8 @@ export default function ReportsLoading() {
         {/* Age Demographics Bar Chart */}
         <Card className="col-span-1 md:col-span-2 min-w-0 rounded-2xl shadow-xs">
           <CardHeader className="space-y-1.5 pb-2">
-            <Skeleton className="h-5 w-40 rounded-lg" />
-            <Skeleton className="h-3 w-52 rounded-md" />
+            <Skeleton className="h-5 w-44 rounded-lg" />
+            <Skeleton className="h-3.5 w-60 rounded-md" />
           </CardHeader>
           <CardContent className="h-[260px] flex items-end gap-3 pt-6 px-4">
             {Array.from({ length: 6 }).map((_, m) => (
@@ -95,8 +95,8 @@ export default function ReportsLoading() {
         {/* Mission Church Branches Bar Chart */}
         <Card className="col-span-1 md:col-span-2 min-w-0 rounded-2xl shadow-xs">
           <CardHeader className="space-y-1.5 pb-2">
-            <Skeleton className="h-5 w-56 rounded-lg" />
-            <Skeleton className="h-3 w-64 rounded-md" />
+            <Skeleton className="h-5 w-48 rounded-lg" />
+            <Skeleton className="h-3.5 w-64 rounded-md" />
           </CardHeader>
           <CardContent className="h-[260px] flex items-end gap-3 pt-6 px-4">
             {Array.from({ length: 5 }).map((_, n) => (

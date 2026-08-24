@@ -1,10 +1,10 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, Pencil, Eye, Cake } from "lucide-react"
-import Link from "next/link"
-import { formatName, formatBirthday } from "@/lib/utils/utils"
+import { formatName, formatBirthday, formatFullName, formatSuffix, calculateAge } from "@/lib/utils/utils"
 import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 
 export type MemberType = {
@@ -69,12 +69,44 @@ export const columns: ColumnDef<MemberType>[] = [
         </Button>
       )
     },
-    accessorFn: (row) => formatName(`${row.first_name} ${row.last_name}`),
+    accessorFn: (row) => formatFullName(row),
     cell: ({ row }) => {
-      const fullName = formatName(`${row.original.first_name} ${row.original.last_name}`)
+      const member = row.original
+      const firstName = formatName(member.first_name || "")
+      const lastName = formatName(member.last_name || "")
+      const middleName = member.middle_name ? formatName(member.middle_name) : ""
+      const middleInitial = middleName ? `${middleName.charAt(0)}.` : ""
+      const suffix = formatSuffix(member.suffix)
+      const baseName = `${firstName} ${lastName}`
+      
+      const age = member.age ?? calculateAge(member.birth_date)
+      const birthYear = member.birth_date ? String(member.birth_date).split("T")[0].split("-")[0] : null
+      const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+
       return (
-        <div className="font-medium flex items-center gap-2">
-          <span>{fullName}</span>
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner">
+            {initials}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+              <span>{baseName}</span>
+              {suffix && (
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                  {suffix}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {middleInitial && <span>{middleInitial}</span>}
+              {middleInitial && (age !== null || member.church_role) && <span>•</span>}
+              {age !== null ? (
+                <span>{age} yrs old{birthYear ? ` (${birthYear})` : ""}</span>
+              ) : member.church_role && member.church_role !== "Member" ? (
+                <span className="text-primary/80 font-medium">{member.church_role}</span>
+              ) : null}
+            </div>
+          </div>
         </div>
       )
     },

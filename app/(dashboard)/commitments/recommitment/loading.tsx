@@ -13,14 +13,14 @@ export default function RecommitmentLoading() {
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
             <RefreshCw className="h-6 w-6" />
           </div>
-          <div className="space-y-1.5">
-            <Skeleton className="h-7 w-64 rounded-xl" />
-            <Skeleton className="h-4 w-72 rounded-md" />
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Skeleton className="h-8 sm:h-9 w-48 sm:w-64 rounded-xl" />
+            <Skeleton className="h-4 w-64 sm:w-80 max-w-full rounded-md" />
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-10 w-28 rounded-xl" />
-          <Skeleton className="h-10 w-36 rounded-xl" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Skeleton className="h-10 w-full sm:w-28 rounded-xl" />
+          <Skeleton className="h-10 w-full sm:w-36 rounded-xl" />
         </div>
       </div>
 
@@ -29,19 +29,19 @@ export default function RecommitmentLoading() {
         {Array.from({ length: 3 }).map((_, i) => (
           <Card key={i} className="rounded-2xl shadow-xs">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-32 rounded-lg" />
-              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 w-32 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
             </CardHeader>
             <CardContent className="space-y-2">
-              <Skeleton className="h-8 w-20 rounded-lg" />
-              <Skeleton className="h-3 w-40 rounded-md" />
+              <Skeleton className="h-9 w-24 sm:w-28 rounded-lg" />
+              <Skeleton className="h-3.5 w-40 rounded-md" />
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Recommitment Status Table Skeleton */}
-      <TableSkeleton rows={7} showToolbar={true} />
+      {/* Recommitment Table Skeleton */}
+      <TableSkeleton rows={8} showToolbar={true} />
     </div>
   )
 }
