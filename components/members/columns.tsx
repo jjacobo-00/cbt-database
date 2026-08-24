@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, Pencil, Eye, Cake } from "lucide-react"
+import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Eye, Cake, Calendar } from "lucide-react"
 import { formatName, formatBirthday, formatFullName, formatSuffix, calculateAge } from "@/lib/utils/utils"
 import { GenerateInviteLinkButton } from "@/components/members/GenerateInviteLinkButton"
 
@@ -59,13 +59,22 @@ export const columns: ColumnDef<MemberType>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
+      const sort = column.getIsSorted()
       return (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          size="sm"
+          onClick={() => column.toggleSorting(sort === "asc")}
+          className="h-8 -ml-3 text-xs font-semibold"
         >
-          Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <span>Name</span>
+          {sort === "asc" ? (
+            <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : sort === "desc" ? (
+            <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : (
+            <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50" />
+          )}
         </Button>
       )
     },
@@ -113,7 +122,26 @@ export const columns: ColumnDef<MemberType>[] = [
   },
   {
     accessorKey: "mission_name",
-    header: "Mission Branch",
+    header: ({ column }) => {
+      const sort = column.getIsSorted()
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(sort === "asc")}
+          className="h-8 -ml-3 text-xs font-semibold"
+        >
+          <span>Mission Branch</span>
+          {sort === "asc" ? (
+            <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : sort === "desc" ? (
+            <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : (
+            <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50" />
+          )}
+        </Button>
+      )
+    },
     cell: ({ row }) => {
       const missionName = row.original.mission_name || "CBT Olongapo"
       return (
@@ -126,15 +154,23 @@ export const columns: ColumnDef<MemberType>[] = [
   {
     accessorKey: "birth_date",
     header: ({ column }) => {
+      const sort = column.getIsSorted()
       return (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
+          size="sm"
+          onClick={() => column.toggleSorting(sort === "asc")}
+          className="h-8 -ml-3 text-xs font-semibold hover:bg-pink-500/10 hover:text-pink-600 dark:hover:text-pink-400"
         >
-          <Cake className="mr-1.5 h-3.5 w-3.5 text-pink-500" />
-          Birthday
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <Cake className="mr-1 h-3.5 w-3.5 text-pink-500" />
+          <span>Birthday</span>
+          {sort === "asc" ? (
+            <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-pink-500" />
+          ) : sort === "desc" ? (
+            <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-pink-500" />
+          ) : (
+            <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50" />
+          )}
         </Button>
       )
     },
@@ -177,7 +213,31 @@ export const columns: ColumnDef<MemberType>[] = [
   },
   {
     accessorKey: "last_login_at",
-    header: "Last Login",
+    header: ({ column }) => {
+      const sort = column.getIsSorted()
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(sort === "asc")}
+          className="h-8 -ml-3 text-xs font-semibold"
+        >
+          <span>Last Login</span>
+          {sort === "asc" ? (
+            <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : sort === "desc" ? (
+            <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : (
+            <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50" />
+          )}
+        </Button>
+      )
+    },
+    sortingFn: (rowA, rowB) => {
+      const timeA = rowA.original.last_login_at ? new Date(rowA.original.last_login_at).getTime() : 0
+      const timeB = rowB.original.last_login_at ? new Date(rowB.original.last_login_at).getTime() : 0
+      return timeA - timeB
+    },
     cell: ({ row }) => {
       const val = row.original.last_login_at
       if (!val) return <span className="text-muted-foreground text-xs italic">Never</span>
@@ -192,7 +252,32 @@ export const columns: ColumnDef<MemberType>[] = [
   },
   {
     accessorKey: "created_at",
-    header: "Date Added",
+    header: ({ column }) => {
+      const sort = column.getIsSorted()
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(sort === "asc")}
+          className="h-8 -ml-3 text-xs font-semibold"
+        >
+          <Calendar className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
+          <span>Date Added</span>
+          {sort === "asc" ? (
+            <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : sort === "desc" ? (
+            <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-primary" />
+          ) : (
+            <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50" />
+          )}
+        </Button>
+      )
+    },
+    sortingFn: (rowA, rowB) => {
+      const timeA = rowA.original.created_at ? new Date(rowA.original.created_at).getTime() : 0
+      const timeB = rowB.original.created_at ? new Date(rowB.original.created_at).getTime() : 0
+      return timeA - timeB
+    },
     cell: ({ row }) => {
       const date = new Date(row.getValue("created_at"))
       return <div>{date.toLocaleDateString()}</div>

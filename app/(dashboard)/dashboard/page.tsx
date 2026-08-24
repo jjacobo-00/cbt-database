@@ -206,14 +206,35 @@ export default async function DashboardPage() {
     contact_number: string | null;
   }[];
 
-  const celebrantsThisMonth = validBirthdayMembers.filter((m) => {
-    const parts = String(m.birth_date).split("T")[0].split("-");
-    if (parts.length === 3) {
-      return parseInt(parts[1], 10) === currentMonth;
-    }
-    const d = new Date(m.birth_date);
-    return !isNaN(d.getTime()) && d.getMonth() + 1 === currentMonth;
-  });
+  const celebrantsThisMonth = validBirthdayMembers
+    .map((m) => {
+      const parts = String(m.birth_date).split("T")[0].split("-");
+      let bMonth = -1;
+      let bDay = -1;
+      if (parts.length === 3) {
+        bMonth = parseInt(parts[1], 10);
+        bDay = parseInt(parts[2], 10);
+      } else {
+        const d = new Date(m.birth_date);
+        if (!isNaN(d.getTime())) {
+          bMonth = d.getMonth() + 1;
+          bDay = d.getDate();
+        }
+      }
+      if (bMonth !== currentMonth) return null;
+      return { ...m, bDay };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => {
+      if (a.bDay !== b.bDay) return a.bDay - b.bDay;
+      return (a.last_name || "").localeCompare(b.last_name || "");
+    }) as {
+      id: string;
+      first_name: string;
+      last_name: string;
+      birth_date: string;
+      contact_number: string | null;
+    }[];
 
   const upcoming30Days = validBirthdayMembers
     .map((m) => {
@@ -303,14 +324,29 @@ export default async function DashboardPage() {
     });
   });
 
-  const anniversariesThisMonth = coupleAnniversaries.filter((a) => {
-    const parts = String(a.anniversary_date).split("T")[0].split("-");
-    if (parts.length === 3) {
-      return parseInt(parts[1], 10) === currentMonth;
-    }
-    const d = new Date(a.anniversary_date);
-    return !isNaN(d.getTime()) && d.getMonth() + 1 === currentMonth;
-  });
+  const anniversariesThisMonth = coupleAnniversaries
+    .map((a) => {
+      const parts = String(a.anniversary_date).split("T")[0].split("-");
+      let aMonth = -1;
+      let aDay = -1;
+      if (parts.length === 3) {
+        aMonth = parseInt(parts[1], 10);
+        aDay = parseInt(parts[2], 10);
+      } else {
+        const d = new Date(a.anniversary_date);
+        if (!isNaN(d.getTime())) {
+          aMonth = d.getMonth() + 1;
+          aDay = d.getDate();
+        }
+      }
+      if (aMonth !== currentMonth) return null;
+      return { ...a, aDay };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => {
+      if (a.aDay !== b.aDay) return a.aDay - b.aDay;
+      return (a.couple_name || "").localeCompare(b.couple_name || "");
+    }) as AnniversaryCelebrant[];
 
   const upcomingAnniversaries30Days = coupleAnniversaries
     .map((a) => {

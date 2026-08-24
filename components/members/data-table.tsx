@@ -19,7 +19,7 @@ import { GenerateInviteLinkButton } from "./GenerateInviteLinkButton"
 import { AGE_GROUPS, GENDER_OPTIONS, MARITAL_OPTIONS, JOINED_OPTIONS } from "@/lib/constants/directory"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw, Phone, Mail, Cake } from "lucide-react"
+import { ChevronRight, User2, Filter, X, Sparkles, RotateCcw, Phone, Mail, Cake, ArrowUp, ArrowDown, ArrowUpDown, Calendar } from "lucide-react"
 import { TablePagination } from "@/components/ui/table-pagination"
 import {
   Popover,
@@ -70,6 +70,42 @@ const BIRTH_MONTH_OPTIONS = [
   { id: "12", label: "December" },
 ]
 
+// Helper to parse birth month and day accurately
+const getBirthMonthAndDay = (birthDate?: string | null) => {
+  if (!birthDate) return { month: 99, day: 99 }
+  const parts = String(birthDate).split("T")[0].split("-")
+  if (parts.length === 3) {
+    const m = parseInt(parts[1], 10)
+    const d = parseInt(parts[2], 10)
+    if (!isNaN(m) && !isNaN(d)) return { month: m, day: d }
+  }
+  const d = new Date(birthDate)
+  if (!isNaN(d.getTime())) {
+    return { month: d.getMonth() + 1, day: d.getDate() }
+  }
+  return { month: 99, day: 99 }
+}
+
+// Helper to get upcoming countdown days
+const getCountdownDays = (birthDate?: string | null) => {
+  const { month: bMonth, day: bDay } = getBirthMonthAndDay(birthDate)
+  if (bMonth === 99) return 9999
+  const now = new Date()
+  const thisYearBday = new Date(now.getFullYear(), bMonth - 1, bDay)
+  if (thisYearBday < now && Math.abs(now.getDate() - bDay) > 0) {
+    thisYearBday.setFullYear(now.getFullYear() + 1)
+  }
+  const diffTime = thisYearBday.getTime() - now.getTime()
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+
+// Helper to get time value of a date string
+const getTimestamp = (dateStr?: string | null) => {
+  if (!dateStr) return Infinity
+  const t = new Date(dateStr).getTime()
+  return isNaN(t) ? Infinity : t
+}
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -98,9 +134,12 @@ export function DataTable<TData, TValue>({
   const activeCity = searchParams.get("city") || ""
   const activeBirthMonth = searchParams.get("birth_month") || ""
   const activeBirthdayPreset = searchParams.get("birthday_preset") || ""
+  const activeSortDir = (searchParams.get("sort_dir") || "asc").toLowerCase() === "desc" ? "desc" : "asc"
 
   // Helper to update URL search parameters
   const updateFilters = (newParams: Record<string, string | null>) => {
+    // Reset manual column sorting so smart contextual sorting applies cleanly
+    setSorting([])
     const params = new URLSearchParams(searchParams.toString())
     Object.entries(newParams).forEach(([key, val]) => {
       if (val === null || val === "") {
@@ -114,6 +153,7 @@ export function DataTable<TData, TValue>({
 
   const clearAllFilters = () => {
     setGlobalFilter("")
+    setSorting([])
     router.push("/members", { scroll: false })
   }
 
@@ -134,10 +174,13 @@ export function DataTable<TData, TValue>({
     activeBirthdayPreset,
   ].filter(Boolean).length
 
-  // Filter dataset based on active smart filters
+  // Filter & Contextually Sort dataset based on active smart filters and sort direction
   const filteredData = React.useMemo(() => {
-    return data.filter((member: any) => {
-      // Birth Month & Birthday Preset Filter
+    const isDesc = activeSortDir === "desc"
+    const dirMultiplier = isDesc ? -1 : 1
+
+    const list = data.filter((member: any) => {
+      // 1. Birth Month & Birthday Preset Filter
       if (activeBirthMonth || activeBirthdayPreset) {
         const bDateStr = member.birth_date
         if (!bDateStr) return false
@@ -192,7 +235,8 @@ export function DataTable<TData, TValue>({
           }
         }
       }
-      // Age Group Filter
+
+      // 2. Age Group Filter
       if (activeAgeGroup) {
         let age = member.age
         if ((age === null || age === undefined) && member.birth_date) {
@@ -201,25 +245,25 @@ export function DataTable<TData, TValue>({
         }
         if (age === null || age === undefined) return false
         if (activeAgeGroup === "kids" && (age < 0 || age > 12)) return false
-        if (activeAgeGroup === "teens" && (age < 13 || age > 17)) return false
+        if (activeAgeGroup === "youth" && (age < 13 || age > 17)) return false
         if (activeAgeGroup === "young_adults" && (age < 18 || age > 35)) return false
         if (activeAgeGroup === "adults" && (age < 36 || age > 59)) return false
         if (activeAgeGroup === "seniors" && age < 60) return false
       }
 
-      // Gender / Sex Filter
+      // 3. Gender / Sex Filter
       if (activeGender) {
         const mGender = (member.gender || member.sex || "").toLowerCase()
         if (mGender !== activeGender.toLowerCase()) return false
       }
 
-      // Marital Status Filter
+      // 4. Marital Status Filter
       if (activeMarital) {
         const mStatus = (member.marital_status || "").toLowerCase()
         if (mStatus !== activeMarital.toLowerCase()) return false
       }
 
-      // Joined Date Filter
+      // 5. Joined Date Filter
       if (activeJoined) {
         const currentYear = new Date().getFullYear()
         const currentMonth = new Date().getMonth()
@@ -249,7 +293,7 @@ export function DataTable<TData, TValue>({
         }
       }
 
-      // Baptized Filter
+      // 6. Baptized Filter
       if (activeBaptized) {
         const bDate = member.date_baptized || member.baptism_date
         if (activeBaptized === "true" && !bDate) return false
@@ -260,7 +304,7 @@ export function DataTable<TData, TValue>({
         }
       }
 
-      // Ministry Filter
+      // 7. Ministry Filter
       if (activeMinistry) {
         const mList: string[] = Array.isArray(member.ministries) ? member.ministries : []
         if (activeMinistry === "not_serving") {
@@ -272,13 +316,13 @@ export function DataTable<TData, TValue>({
         }
       }
 
-      // Educational Attainment Filter
+      // 8. Educational Attainment Filter
       if (activeEducation) {
         const edu = (member.highest_educational_attainment || "").toLowerCase()
         if (edu !== activeEducation.toLowerCase()) return false
       }
 
-      // Blood Type Filter
+      // 9. Blood Type Filter
       if (activeBloodType) {
         const blood = (member.blood_type || "").trim().toLowerCase()
         const target = activeBloodType.trim().toLowerCase()
@@ -295,7 +339,7 @@ export function DataTable<TData, TValue>({
         }
       }
 
-      // Allergies Filter
+      // 10. Allergies Filter
       if (activeHasAllergies) {
         const allergies = (member.allergies || "").trim()
         const hasAllergies = allergies !== "" && allergies.toLowerCase() !== "none"
@@ -303,19 +347,71 @@ export function DataTable<TData, TValue>({
         if (activeHasAllergies === "false" && hasAllergies) return false
       }
 
-      // Employment Status Filter
+      // 11. Employment Status Filter
       if (activeEmployment) {
         const emp = (member.employment_status || "").toLowerCase()
         if (emp !== activeEmployment.toLowerCase()) return false
       }
 
-      // City Filter (normalized matching)
+      // 12. City Filter (normalized matching)
       if (activeCity) {
         const memberCity = normalizeCity(member.city)
         if (memberCity.toLowerCase() !== activeCity.toLowerCase()) return false
       }
 
       return true
+    })
+
+    // Apply smart contextual ordering ("who's first") + bidirectional ASC / DESC support
+    return list.slice().sort((a: any, b: any) => {
+      // 1. Birthday Month Filters: Specific Month (this_month, next_month, 1..12)
+      if (
+        (activeBirthMonth && activeBirthMonth !== "all") ||
+        activeBirthdayPreset === "this_month" ||
+        activeBirthdayPreset === "next_month"
+      ) {
+        const dayA = getBirthMonthAndDay(a.birth_date).day
+        const dayB = getBirthMonthAndDay(b.birth_date).day
+        if (dayA !== dayB) return (dayA - dayB) * dirMultiplier
+        return (a.last_name || "").localeCompare(b.last_name || "") * dirMultiplier
+      }
+
+      // 2. Birthday Countdown Presets (next_30_days, today_this_week)
+      if (activeBirthdayPreset === "next_30_days" || activeBirthdayPreset === "today_this_week") {
+        const cdA = getCountdownDays(a.birth_date)
+        const cdB = getCountdownDays(b.birth_date)
+        if (cdA !== cdB) return (cdA - cdB) * dirMultiplier
+        return (a.last_name || "").localeCompare(b.last_name || "") * dirMultiplier
+      }
+
+      // 3. Joined / Membership Date (this_year, this_month, last_year, recent_growth, month_*)
+      if (activeJoined && activeJoined !== "all") {
+        const timeA = getTimestamp(a.membership_date)
+        const timeB = getTimestamp(b.membership_date)
+        if (timeA !== timeB) return (timeA - timeB) * dirMultiplier
+        return (a.last_name || "").localeCompare(b.last_name || "") * dirMultiplier
+      }
+
+      // 4. Baptized Date (this_year)
+      if (activeBaptized === "this_year") {
+        const bTimeA = getTimestamp(a.date_baptized || a.baptism_date)
+        const bTimeB = getTimestamp(b.date_baptized || b.baptism_date)
+        if (bTimeA !== bTimeB) return (bTimeA - bTimeB) * dirMultiplier
+        return (a.last_name || "").localeCompare(b.last_name || "") * dirMultiplier
+      }
+
+      // 5. Age Demographic
+      if (activeAgeGroup && activeAgeGroup !== "all") {
+        const ageA = a.age ?? calculateAge(a.birth_date) ?? 999
+        const ageB = b.age ?? calculateAge(b.birth_date) ?? 999
+        if (ageA !== ageB) return (ageA - ageB) * dirMultiplier
+        return (a.last_name || "").localeCompare(b.last_name || "") * dirMultiplier
+      }
+
+      // 6. Default: Last Name, First Name
+      const lastNameDiff = (a.last_name || "").localeCompare(b.last_name || "")
+      if (lastNameDiff !== 0) return lastNameDiff * dirMultiplier
+      return (a.first_name || "").localeCompare(b.first_name || "") * dirMultiplier
     })
   }, [
     data,
@@ -332,7 +428,33 @@ export function DataTable<TData, TValue>({
     activeCity,
     activeBirthMonth,
     activeBirthdayPreset,
+    activeSortDir,
   ])
+
+  // Helper to determine the current contextual sort description
+  const getSortDescription = () => {
+    const isDesc = activeSortDir === "desc"
+    if (
+      (activeBirthMonth && activeBirthMonth !== "all") ||
+      activeBirthdayPreset === "this_month" ||
+      activeBirthdayPreset === "next_month"
+    ) {
+      return isDesc ? "Day 31 → 1 (Latest)" : "Day 1 → 31 (Earliest)"
+    }
+    if (activeBirthdayPreset === "next_30_days" || activeBirthdayPreset === "today_this_week") {
+      return isDesc ? "Furthest → Closest" : "Closest (Today) → Furthest"
+    }
+    if (activeJoined && activeJoined !== "all") {
+      return isDesc ? "Recently Joined First" : "Earliest Joined First"
+    }
+    if (activeBaptized === "this_year") {
+      return isDesc ? "Recently Baptized First" : "Earliest Baptized First"
+    }
+    if (activeAgeGroup && activeAgeGroup !== "all") {
+      return isDesc ? "Oldest → Youngest" : "Youngest → Oldest"
+    }
+    return isDesc ? "Z → A (Descending)" : "A → Z (Ascending)"
+  }
 
   const table = useReactTable({
     data: filteredData,
@@ -552,6 +674,34 @@ export function DataTable<TData, TValue>({
           ))}
         </select>
       </div>
+
+      {/* Sort Direction Reordering Control */}
+      <div className="space-y-2 pt-3 border-t">
+        <Label className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+          <span>Sort Direction / Reorder</span>
+          <span className="text-[11px] text-primary font-medium">{getSortDescription()}</span>
+        </Label>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            type="button"
+            variant={activeSortDir === "asc" ? "default" : "outline"}
+            size="sm"
+            onClick={() => updateFilters({ sort_dir: "asc" })}
+            className="h-9 text-xs gap-1.5"
+          >
+            <ArrowUp className="h-3.5 w-3.5" /> Ascending (Earliest / A-Z)
+          </Button>
+          <Button
+            type="button"
+            variant={activeSortDir === "desc" ? "default" : "outline"}
+            size="sm"
+            onClick={() => updateFilters({ sort_dir: "desc" })}
+            className="h-9 text-xs gap-1.5"
+          >
+            <ArrowDown className="h-3.5 w-3.5" /> Descending (Latest / Z-A)
+          </Button>
+        </div>
+      </div>
     </div>
   )
 
@@ -730,6 +880,21 @@ export function DataTable<TData, TValue>({
         >
           Serving in Ministry
         </button>
+
+        {/* Reorder ASC / DESC Toggle Button in Presets Bar */}
+        <button
+          onClick={() => updateFilters({ sort_dir: activeSortDir === "desc" ? "asc" : "desc" })}
+          title={`Click to reorder: currently ${getSortDescription()}`}
+          className={cn(
+            "h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all border flex items-center gap-1.5 ml-auto",
+            activeSortDir === "desc"
+              ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+              : "bg-card text-foreground border-border hover:bg-muted"
+          )}
+        >
+          {activeSortDir === "desc" ? <ArrowDown className="h-3.5 w-3.5 text-primary" /> : <ArrowUp className="h-3.5 w-3.5 text-primary" />}
+          <span>{getSortDescription()}</span>
+        </button>
       </div>
 
       {/* Active Filter Chips Bar */}
@@ -738,6 +903,16 @@ export function DataTable<TData, TValue>({
           <span className="text-xs font-bold text-primary flex items-center gap-1">
             <Filter className="h-3.5 w-3.5" /> Active ({filteredData.length} matching):
           </span>
+
+          {/* Active Sort Direction Pill with One-Click Flip */}
+          <button
+            onClick={() => updateFilters({ sort_dir: activeSortDir === "desc" ? "asc" : "desc" })}
+            title="Click to flip sort order"
+            className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary border border-primary/30 px-2.5 py-1 rounded-full font-medium hover:bg-primary/20 transition-colors shadow-2xs"
+          >
+            {activeSortDir === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />}
+            <span>Sort: {getSortDescription()}</span>
+          </button>
 
           {activeBirthMonth && (
             <span className="inline-flex items-center gap-1 text-xs bg-pink-500/10 text-pink-700 dark:text-pink-300 border border-pink-500/30 px-2.5 py-1 rounded-full font-medium">
@@ -919,6 +1094,8 @@ export function DataTable<TData, TValue>({
             const missionName = (row.original as any).mission_name || "CBT Olongapo"
             const isBaptized = Boolean((row.original as any).date_baptized || (row.original as any).baptism_date)
             const lastLoginAt = (row.original as any).last_login_at
+            const membershipDate = (row.original as any).membership_date
+            const dateBaptized = (row.original as any).date_baptized || (row.original as any).baptism_date
             
             const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 
@@ -954,6 +1131,17 @@ export function DataTable<TData, TValue>({
                           <Cake className="h-3 w-3" />
                           {formatBirthday((row.original as any).birth_date)}
                           {age !== null && <span className="opacity-80">({age} yrs)</span>}
+                        </span>
+                      )}
+                      {activeJoined && membershipDate && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-primary/10 text-primary shrink-0 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Joined: {formatBirthday(membershipDate)}
+                        </span>
+                      )}
+                      {activeBaptized && dateBaptized && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 shrink-0">
+                          Baptized: {formatBirthday(dateBaptized)}
                         </span>
                       )}
                       {lastLoginAt && (
