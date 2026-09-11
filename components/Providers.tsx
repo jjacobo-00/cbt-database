@@ -3,6 +3,7 @@
 import React, { useEffect } from "react"
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "@/components/ThemeProvider"
+import { SessionTimeoutMonitor } from "@/components/auth/SessionTimeoutMonitor"
 
 // Global Pointer Events Reset Safeguard on Modal Close / Navigation
 function PointerEventsResetter() {
@@ -40,6 +41,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <PointerEventsResetter />
+        <SessionTimeoutMonitor />
         {children}
       </ThemeProvider>
     </SessionProvider>

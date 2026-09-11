@@ -12,7 +12,7 @@ import Image from "next/image";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; info?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
 
@@ -39,6 +39,12 @@ export default async function LoginPage({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {resolvedSearchParams?.info === "session_expired" && (
+            <div className="p-3 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-medium">
+              Your session has expired after 12 hours. Please sign in again.
+            </div>
+          )}
+
           {resolvedSearchParams?.error && (
             <div className="p-3 rounded-lg bg-destructive/15 border border-destructive/30 text-destructive text-xs font-medium">
               {resolvedSearchParams.error}

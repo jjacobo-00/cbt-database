@@ -111,6 +111,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: {
     strategy: "jwt",
+    maxAge: 12 * 60 * 60, // 12 hours
   },
   callbacks: {
     async signIn({ user, account }) {
@@ -209,6 +210,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
+      if (user) {
+        token.loginAt = Math.floor(Date.now() / 1000)
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -223,6 +228,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       if (token?.permissions) {
         session.user.permissions = token.permissions
+      }
+      if (typeof token?.exp === "number") {
+        session.expiresAt = token.exp * 1000
       }
       return session
     },

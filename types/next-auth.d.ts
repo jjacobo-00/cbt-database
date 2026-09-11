@@ -17,6 +17,7 @@ declare module "next-auth" {
       memberId?: string
       permissions?: MemberPermissionsType
     } & DefaultSession["user"]
+    expiresAt?: number
   }
 
   interface User {
@@ -31,5 +32,6 @@ declare module "next-auth/jwt" {
     role?: "admin" | "member"
     memberId?: string
     permissions?: MemberPermissionsType
+    loginAt?: number
   }
 }
