@@ -400,7 +400,22 @@ export function OrgChartClient({
 
       {/* Role Edit/Add Modal */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent
+          className="max-w-md"
+          onPointerDownOutside={(e) => {
+            // Prevent Dialog dismiss when clicking inside portaled Popover
+            const target = e.target as HTMLElement
+            if (target?.closest?.("[data-radix-popover-content]") || target?.closest?.("[cmdk-root]")) {
+              e.preventDefault()
+            }
+          }}
+          onInteractOutside={(e) => {
+            const target = e.target as HTMLElement
+            if (target?.closest?.("[data-radix-popover-content]") || target?.closest?.("[cmdk-root]")) {
+              e.preventDefault()
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{editingNode ? "Edit Role" : "Add New Role"}</DialogTitle>
             <DialogDescription>
@@ -422,7 +437,7 @@ export function OrgChartClient({
             {/* Assigned Member Combobox (Searchable) */}
             <div className="space-y-2">
               <Label>Assigned Member (Optional)</Label>
-              <Popover open={memberComboboxOpen} onOpenChange={setMemberComboboxOpen}>
+              <Popover open={memberComboboxOpen} onOpenChange={setMemberComboboxOpen} modal={false}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -447,7 +462,11 @@ export function OrgChartClient({
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[340px] sm:w-[380px] p-0" align="start">
+                <PopoverContent
+                  className="w-[340px] sm:w-[380px] p-0"
+                  align="start"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                >
                   <Command>
                     <CommandInput placeholder="Search member by name or suffix..." className="h-10" />
                     <CommandList className="max-h-64">
